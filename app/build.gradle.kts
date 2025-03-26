@@ -42,6 +42,7 @@ android {
 dependencies {
     implementation(libs.generativeai)
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.runtime)
 
     implementation(libs.zephyr.vbclass)
     implementation(libs.zephyr.scaling.layout)
