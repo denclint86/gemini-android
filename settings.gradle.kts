@@ -34,3 +34,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "phone-bot"
+include(":app")
