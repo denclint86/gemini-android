@@ -1,5 +1,6 @@
 [versions]
 agp = "8.5.1"
+generativeai = "0.9.0"
 gsonVersion = "2.11.0"
 kotlin = "1.9.0"
 material = "1.12.0"
@@ -11,6 +12,7 @@ coreKtx = "1.13.1"
 
 [libraries]
 converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "retrofit" }
+generativeai = { module = "com.google.ai.client.generativeai:generativeai", version.ref = "generativeai" }
 google-gson = { module = "com.google.code.gson:gson", version.ref = "gsonVersion" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 zephyr-extension = { module = "com.github.p1ay1s.Zephyr:extension", version.ref = "zephyr" }

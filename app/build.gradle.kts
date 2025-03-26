@@ -40,6 +40,7 @@ android {
 }
 
 dependencies {
+    implementation(libs.generativeai)
     implementation(libs.androidx.core.ktx)
 
     implementation(libs.zephyr.vbclass)
