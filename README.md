@@ -4,14 +4,14 @@
 
 ## 项目概述
 
-PhoneBot利用Gemini模型的能力，结合Android无障碍服务API，实现了智能化的手机操作控制。通过自然语言交互，用户可以指示LLM执行各种手机操作，而无需直接与设备交互。
+PhoneBot利用Google的Gemini模型的能力，结合Android无障碍服务API，实现了智能化的手机操作控制。通过自然语言交互，用户可以指示LLM执行各种手机操作，而无需直接与设备交互。
 
 ## 主要功能
 
-- 基于LLM的自然语言理解
-- 通过函数调用执行设备操作
+- 基于Gemini的自然语言理解与处理
+- 通过函数调用框架执行设备操作
 - 利用Android无障碍服务实现UI交互
-- 安全的设备控制机制
+- 支持多轮对话的聊天界面
 
 ## 技术实现
 
@@ -20,88 +20,119 @@ PhoneBot利用Gemini模型的能力，结合Android无障碍服务API，实现�
 项目使用Google的Gemini AI模型，通过官方SDK进行集成：
 - 使用`GenerativeModel`与Gemini进行通信
 - 支持流式响应处理
-- 利用ChatViewModel管理对话状态
+- 利用ChatViewModel管理对话状态和多轮对话流程
 
 ### 函数调用实现
 
-函数调用是本项目的核心，允许LLM执行预定义的操作。请参考`FunctionCallingTest.kt`文件中的实现：
+函数调用是本项目的核心，允许LLM执行预定义的操作：
 
-1. 定义函数工具（Tool）：
+1. 函数管理器设计：
    ```kotlin
-   val exampleTool = Tool(
-       functionDeclarations = listOf(
-           defineFunction(
-               name = EXAMPLE_TOOL_FUNC_NAME,
-               description = "enter user's given string, returns an email address if correct",
-               parameters = listOf(
-                   Schema.str(EXAMPLE_TOOL_ARG_NAME, "a string given by user"),
-               ),
-               requiredParameters = listOf(EXAMPLE_TOOL_ARG_NAME)
+   object FuncManager {
+       // map: <function_name, func_model>
+       val functionMap = mapOf<String, BaseFuncModel<*>>(
+           ExampleFuncModel.FUNC_NAME to ExampleFuncModel()
+       )
+
+       fun executeFunction(functionName: String, args: Map<String, String?>): String {
+           val function = functionMap[functionName]?.getFuncInstance()
+           val result = function?.invoke(args) ?: "{\"unknown_function\": \"$functionName\"}"
+           return result.toJson()
+       }
+   }
+   ```
+
+2. 函数模型基类：
+   ```kotlin
+   abstract class BaseFuncModel<T> {
+       abstract val name: String
+       abstract val description: String
+       abstract val parameters: List<Schema<*>>
+       abstract val requiredParameters: List<String>
+       
+       abstract fun call(args: Map<String, Any?>): T
+       
+       fun getFuncDeclaration(): FunctionDeclaration { ... }
+       fun getFuncInstance(): (Map<String, String?>) -> T { ... }
+   }
+   ```
+
+3. 函数实现示例：
+   ```kotlin
+   class ExampleFuncModel : BaseFuncModel<ExampleFuncModel.JSONResult>() {
+       companion object {
+           const val FUNC_NAME = "get_user_email_address"
+       }
+
+       override fun call(args: Map<String, Any?>): JSONResult {
+           val arg = args["key"] ?: return JSONResult("error", "incorrect function calling")
+           return if (arg == "niki") JSONResult("ok", "asd@gmail.com") 
+                  else JSONResult("error", "incorrect key")
+       }
+
+       data class JSONResult(val status: String, val result: String)
+   }
+   ```
+
+4. 工具注册：
+   ```kotlin
+   val AppTools: List<Tool> by lazy {
+       listOf(
+           Tool(
+               functionDeclarations = FuncManager.functionMap.values.map { it.getFuncDeclaration() }
            )
        )
-   )
-   ```
-
-2. 函数实现类：
-   ```kotlin
-   class FunctionProvider {
-       private fun test(args: Map<String, String?>): String {
-           val arg = args[EXAMPLE_TOOL_ARG_NAME] ?: return "incorrect function calling"
-           return if (arg == "niki") "asd@gmail.com" else "incorrect key"
-       }
-
-       private val functionMap = mapOf<String, (Map<String, String?>) -> String>(
-           EXAMPLE_TOOL_FUNC_NAME to ::test
-       )
-
-       fun executeFunction(functionName: String, args: Map<String, String?>): FunctionResult {
-           // 执行函数并返回结果
-       }
    }
    ```
 
-3. 处理函数调用结果：
-   ```kotlin
-   // 在ChatViewModel中
-   chunk.functionCalls.forEach { func ->
-       pendingFunctionCalls.add(func.name to func.args)
-   }
-   
-   // 处理函数调用并将结果返回给LLM
-   pendingFunctionCalls.forEach { (name, args) ->
-       val result = functionProvider.executeFunction(name, args).toJson()
-       // 将函数结果发送回LLM
-   }
-   ```
+## 无障碍服务实现
+
+项目利用Android的无障碍服务API实现界面交互：
+
+```kotlin
+class MyAccessibilityService : AccessibilityService() {
+    override fun onAccessibilityEvent(event: AccessibilityEvent?) {
+        // 处理无障碍事件
+    }
+
+    override fun onServiceConnected() {
+        super.onServiceConnected()
+        // 服务连接后的初始化
+    }
+    
+    // 更多无障碍服务相关方法
+}
+```
 
 ## 开发自定义功能
 
-要添加新的函数调用功能，需要参考以下步骤：
+要添加新的函数调用功能，需要遵循以下步骤：
 
-1. 在新建的类中定义函数声明（Tool）
-2. 在FunctionProvider中实现相应的处理逻辑
-3. 将函数映射添加到functionMap中
-4. 确保函数返回值遵循FunctionResult格式
+1. 创建新的函数模型类，继承BaseFuncModel
+2. 实现必要的抽象方法和属性
+3. 在FuncManager的functionMap中注册该函数
+4. 确保函数返回值格式规范，推荐使用自定义数据类
 
-## 使用方法
+## 项目依赖
 
-1. 启动应用
-2. 输入自然语言指令
-3. LLM会理解指令并执行相应的函数调用
-4. 查看执行结果并根据需要继续交互
-
-## 依赖项
-
-- Google Generative AI SDK
-- Android Accessibility Service API
-- Zephyr工具库（用于UI组件、日志等）
+- Google Generative AI SDK - Gemini模型访问
+- Android Accessibility Service API - 无障碍服务支持
+- Zephyr工具库 - UI组件、网络、日志等基础功能
+  - vbclass - ViewBinding简化
+  - scaling-layout - UI适配
+  - global-values - 全局常量
+  - datastore - 数据存储
+  - net - 网络操作
+  - log - 日志工具
+  - extension - Kotlin扩展
 
 ## 未来计划
 
-- 增加更多设备控制功能
-- 提升无障碍服务的稳定性
-- 支持更复杂的多轮交互场景
+- 完善无障碍服务实现
+- 增加更多实用的设备控制功能
 - 优化函数调用的错误处理
+- 改进用户交互界面
+- 支持更复杂的多轮对话场景
 
 ## 许可证
 
