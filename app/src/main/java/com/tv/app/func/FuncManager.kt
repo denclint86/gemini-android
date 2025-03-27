@@ -1,6 +1,7 @@
 package com.tv.app.func
 
 import com.tv.app.func.models.ExampleFuncModel
+import com.tv.app.func.models.ExampleFuncModel2
 import com.zephyr.global_values.TAG
 import com.zephyr.log.logE
 import com.zephyr.net.toJson
@@ -11,7 +12,8 @@ import com.zephyr.net.toPrettyJson
  */
 object FuncManager {
     val functionMap = mapOf<String, BaseFuncModel<*>>(
-        ExampleFuncModel.name to ExampleFuncModel
+        ExampleFuncModel.name to ExampleFuncModel,
+        ExampleFuncModel2.name to ExampleFuncModel2
     )
 
     fun getDeclarations() = functionMap.values.map { it.getFuncDeclaration() }

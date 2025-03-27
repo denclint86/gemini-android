@@ -34,3 +34,9 @@ fun userMsg(text: String, isPending: Boolean = false) =
 
 fun modelMsg(text: String, isPending: Boolean = false) =
     ChatMessage(text = text, role = Role.MODEL, isPending = isPending)
+
+fun funcMsg(text: String, isPending: Boolean) =
+    ChatMessage(text = text, role = Role.FUNC, isPending = isPending)
+
+fun systemMsg(text: String) =
+    ChatMessage(text = text, role = Role.SYSTEM, isPending = false)
