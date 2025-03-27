@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.asTextOrNull
 import com.google.ai.client.generativeai.type.content
+import com.tv.app.func.FuncManager
 import com.zephyr.global_values.TAG
 import com.zephyr.log.logE
 import com.zephyr.net.toJson
@@ -21,11 +22,13 @@ enum class Role(val str: String) {
     FUNC("function") // 不可用于请求
 }
 
+/**
+ * 十分基础的 vm，待优化
+ */
 class ChatViewModel(
     private val generativeModel: GenerativeModel
 ) : ViewModel() {
     private var chat = newChat()
-    private val functionProvider = FunctionProvider()
 
     private val _uiState: MutableStateFlow<ChatUiState> =
         MutableStateFlow(ChatUiState(chat.history.map { content ->
@@ -71,8 +74,7 @@ class ChatViewModel(
                 // 处理所有函数调用并反馈结果
                 if (pendingFunctionCalls.isNotEmpty()) {
                     pendingFunctionCalls.forEach { (name, args) ->
-                        val result = functionProvider.executeFunction(name, args).toJson()
-                        logE(TAG, "Function result: $result")
+                        val result = FuncManager.executeFunction(name, args).toJson()
 
                         _uiState.value.addMessage(
                             ChatMessage(text = result, role = Role.FUNC, isPending = true)
