@@ -6,7 +6,6 @@ import com.google.ai.client.generativeai.type.defineFunction
 
 /**
  * 函数基类
- * @see ExampleFuncModel
  */
 abstract class BaseFuncModel<T> {
     abstract val name: String // 函数名

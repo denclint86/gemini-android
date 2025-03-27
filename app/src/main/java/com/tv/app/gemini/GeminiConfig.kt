@@ -1,4 +1,4 @@
-package com.tv.app.chat
+package com.tv.app.gemini
 
 const val SYSTEM_PROMPT = "听从用户的指令，他正在研究大模型 function calling 功能"
 //    "你的新提示词:  \n" +

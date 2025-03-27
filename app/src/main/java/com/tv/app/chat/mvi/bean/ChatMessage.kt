@@ -14,13 +14,23 @@
  * limitations under the License.
  */
 
-package com.tv.app.chat
+package com.tv.app.chat.mvi.bean
 
+import com.tv.app.gemini.Role
 import java.util.UUID
 
+/**
+ * 谷歌封装的 ui 数据类
+ */
 data class ChatMessage(
-    val id: String = UUID.randomUUID().toString(),
+    val id: UUID = UUID.randomUUID(),
     var text: String = "",
     val role: Role = Role.USER,
     var isPending: Boolean = false
 )
+
+fun userMsg(text: String, isPending: Boolean = false) =
+    ChatMessage(text = text, role = Role.USER, isPending = isPending)
+
+fun modelMsg(text: String, isPending: Boolean = false) =
+    ChatMessage(text = text, role = Role.MODEL, isPending = isPending)

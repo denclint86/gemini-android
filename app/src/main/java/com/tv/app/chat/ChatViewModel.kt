@@ -1,118 +1,155 @@
 package com.tv.app.chat
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.ai.client.generativeai.GenerativeModel
-import com.google.ai.client.generativeai.type.asTextOrNull
-import com.google.ai.client.generativeai.type.content
+import com.google.ai.client.generativeai.type.GenerateContentResponse
+import com.tv.app.chat.mvi.ChatEffect
+import com.tv.app.chat.mvi.ChatIntent
+import com.tv.app.chat.mvi.ChatState
+import com.tv.app.chat.mvi.bean.modelMsg
+import com.tv.app.chat.mvi.bean.userMsg
 import com.tv.app.func.FuncManager
+import com.tv.app.gemini.createContent
+import com.tv.app.gemini.userContent
+import com.zephyr.extension.mvi.MVIViewModel
 import com.zephyr.global_values.TAG
 import com.zephyr.log.logE
+import com.zephyr.log.logI
 import com.zephyr.net.toJson
+import com.zephyr.net.toPrettyJson
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 
-enum class Role(val str: String) {
-    //    SYSTEM("system"),
-    USER("user"),
-    MODEL("model"),
-    FUNC("function") // 不可用于请求
-}
-
-/**
- * 十分基础的 vm，待优化
- */
 class ChatViewModel(
-    private val generativeModel: GenerativeModel
-) : ViewModel() {
-    private var chat = newChat()
+    private val generativeModel: GenerativeModel // Gemini 通信用
+) : MVIViewModel<ChatIntent, ChatState, ChatEffect>() {
+    private val chatManager: ChatManager by lazy { ChatManager(generativeModel) }
 
-    private val _uiState: MutableStateFlow<ChatUiState> =
-        MutableStateFlow(ChatUiState(chat.history.map { content ->
-            ChatMessage(
-                text = content.parts.first().asTextOrNull() ?: "",
-                role = Role.entries.find { it.str == content.role }!!,
-                isPending = false
+    private val _uiState: MutableStateFlow<ChatState> =
+        MutableStateFlow(ChatState())
+    val uiState: StateFlow<ChatState> = _uiState.asStateFlow()
+
+    override fun handleIntent(intent: ChatIntent) {
+        when (intent) {
+            is ChatIntent.Chat -> intent.apply {
+                chat(text)
+            }
+
+            ChatIntent.ResetChat -> resetChat()
+        }
+    }
+
+    override fun initUiState(): ChatState {
+        return ChatState()
+    }
+
+    private fun resetChat() {
+        chatManager.resetChat()
+    }
+
+    private fun chat(text: String) = viewModelScope.launch(Dispatchers.IO) {
+        logI(TAG, "user: $text")
+        val flow = createChatFlow(text)
+
+        var responseText = ""
+        val funcList = mutableListOf<Pair<String, Map<String, Any?>>>()
+
+        val modelMsg = modelMsg("", true)
+        updateState {
+            modifyList {
+                add(modelMsg)
+            }
+        }
+
+        flow.catch { e ->
+            logE(TAG, chatManager.getHistory().toPrettyJson())
+            throw e
+        }
+
+        flow.collect { chunk ->
+            responseText += chunk.text
+            updateState {
+                modifyMsg(modelMsg.id) {
+                    copy(text = responseText)
+                }
+            }
+            funcList.addAll(chunk.functionCalls.map { Pair(it.name, it.args) })
+        }
+
+        logI(TAG, "llm: $responseText")
+        handleFuncCalls(funcList)
+    }
+
+    private suspend fun createChatFlow(text: String): Flow<GenerateContentResponse> {
+        val msg = userMsg(text, true)
+        updateState {
+            modifyList { add(msg) }
+        }
+
+        val flow = chatManager.sendMsgStream(createContent { text(text) })
+        updateState {
+            setLastPending()
+        }
+
+        return flow
+    }
+
+    /**
+     * 递归地处理所有函数请求
+     */
+    private suspend fun handleFuncCalls(list: List<Pair<String, Map<String, Any?>>>) {
+        list.forEach { (name, args) ->
+            val result = withContext(Dispatchers.IO) {
+                FuncManager.executeFunction(name, args).toJson()
+            }
+
+            updateState {
+                modifyList { add(userMsg(result, true)) }
+            }
+
+            // 将每个函数结果发送给 LLM
+            val funcResponse = chatManager.sendMsgStream(
+                userContent { text(result) }
             )
-        }))
-    val uiState: StateFlow<ChatUiState> = _uiState.asStateFlow()
 
-    private fun newChat() = generativeModel.startChat(history = emptyList())
+            updateState {
+                setLastPending()
+            }
 
-    fun sendMessage(userMessage: String) {
-        _uiState.value.addMessage(
-            ChatMessage(text = userMessage, role = Role.USER, isPending = true)
-        )
+            var funcResponseText = ""
+            val funcList = mutableListOf<Pair<String, Map<String, Any?>>>()
 
-        viewModelScope.launch {
-            try {
-                val response = chat.sendMessageStream(userMessage)
-                _uiState.value.replaceLastPendingMessage()
+            funcResponse.catch { e ->
+                logE(TAG, chatManager.getHistory().toPrettyJson())
+                throw e
+            }
 
-                var responseText = ""
-                val pendingFunctionCalls = mutableListOf<Pair<String, Map<String, String?>>>()
+            // 收集响应并检查是否有新的函数调用
+            funcResponse.collect { chunk ->
+                funcResponseText += chunk.text ?: ""
+                funcList.addAll(chunk.functionCalls.map { Pair(it.name, it.args) })
+            }
 
-                // 收集 LLM 的响应和函数调用
-                response.collect { chunk ->
-                    responseText += chunk.text ?: ""
-                    print(chunk.text)
-                    chunk.functionCalls.forEach { func ->
-                        pendingFunctionCalls.add(func.name to func.args)
-                    }
+            // 显示 LLM 对函数结果的响应
+            if (funcResponseText.isNotEmpty()) {
+                updateState {
+                    modifyList { add(modelMsg(funcResponseText, false)) }
                 }
+                logI(TAG, "llm: $funcResponseText")
+            }
 
-                // 显示 LLM 的初步响应
-                if (responseText.isNotEmpty()) {
-                    _uiState.value.addMessage(
-                        ChatMessage(text = responseText, role = Role.MODEL, isPending = false)
-                    )
-                }
-
-                // 处理所有函数调用并反馈结果
-                if (pendingFunctionCalls.isNotEmpty()) {
-                    pendingFunctionCalls.forEach { (name, args) ->
-                        val result = FuncManager.executeFunction(name, args).toJson()
-
-                        _uiState.value.addMessage(
-                            ChatMessage(text = result, role = Role.FUNC, isPending = true)
-                        )
-
-                        // 将每个函数结果发送给 LLM
-                        if (result.isBlank()) return@forEach
-                        chat
-                        val funcResponse = chat.sendMessageStream(content {
-                            role = Role.USER.str
-                            text(result)
-                        })
-                        _uiState.value.replaceLastPendingMessage()
-
-                        var funcResponseText = ""
-                        funcResponse.collect { chunk ->
-                            print(chunk.text)
-                            funcResponseText += chunk.text ?: ""
-                        }
-
-                        // 显示 LLM 对函数结果的响应
-                        if (funcResponseText.isNotEmpty()) {
-                            _uiState.value.addMessage(
-                                ChatMessage(
-                                    text = funcResponseText,
-                                    role = Role.MODEL,
-                                    isPending = false
-                                )
-                            )
-                        }
-                    }
-                }
-            } catch (e: Exception) {
-                e.logE(TAG)
-                _uiState.value.addMessage(
-                    ChatMessage(text = "Error: ${e.message}", role = Role.MODEL, isPending = false)
-                )
+            // 如果响应中包含新的函数调用，递归处理
+            if (funcList.isNotEmpty()) {
+                handleFuncCalls(funcList)
             }
         }
     }
+
 }

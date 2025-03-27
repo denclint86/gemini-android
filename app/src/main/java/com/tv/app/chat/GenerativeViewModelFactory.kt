@@ -6,8 +6,10 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.content
 import com.google.ai.client.generativeai.type.generationConfig
-import com.tv.app.R
 import com.tv.app.AppTools
+import com.tv.app.R
+import com.tv.app.gemini.MODEL_NAME
+import com.tv.app.gemini.SYSTEM_PROMPT
 import com.zephyr.global_values.globalContext
 
 /**

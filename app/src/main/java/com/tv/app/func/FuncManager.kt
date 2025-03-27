@@ -21,7 +21,7 @@ object FuncManager {
      *
      * 保证输出一个 json 字串（虽然没有硬性要求）
      */
-    fun executeFunction(functionName: String, args: Map<String, String?>): String {
+    fun executeFunction(functionName: String, args: Map<String, Any?>): String {
         val result =
             functionMap[functionName]?.call(args) ?: "{\"unknown_function\": \"$functionName\"}"
 

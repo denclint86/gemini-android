@@ -9,7 +9,8 @@ import com.tv.app.func.BaseFuncModel
  */
 object ExampleFuncModel : BaseFuncModel<ExampleFuncModel.JSONResult>() {
     override val name: String = "get_user_email_address"
-    override val description: String = "通过传入一个密钥 'key' 来获取邮箱地址"
+    override val description: String =
+        "通过传入一个密钥 `key` 来获取邮箱地址，返回值是含有调用状态的结果的`json`语句"
     override val parameters: List<Schema<*>> = listOf(
         Schema.str("key", "a string given by user")
     )
@@ -18,10 +19,19 @@ object ExampleFuncModel : BaseFuncModel<ExampleFuncModel.JSONResult>() {
     override fun call(args: Map<String, Any?>): JSONResult {
         val arg = args["key"] ?: return JSONResult("error", "incorrect function calling")
 
-        return if (arg == "niki") JSONResult("ok", "asd@gmail.com") else JSONResult(
-            "error",
-            "incorrect key"
-        )
+        return when (arg) {
+            "niki" ->
+                JSONResult("ok", "ni@gmail.com")
+
+            "tom" ->
+                JSONResult("ok", "tom1998@gmail.com")
+
+            "den" ->
+                JSONResult("ok", "d_e_nnn@gmail.com")
+
+            else ->
+                JSONResult("error", "incorrect key")
+        }
     }
 
     /**
