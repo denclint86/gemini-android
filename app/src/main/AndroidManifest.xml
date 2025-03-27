@@ -10,8 +10,19 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Bot">
-
-        <activity
+        <service
+            android:name = ".accessibility.MyAccessibilityService"
+            android:exported="true"
+            android:label = "@string/accessibility_service_label"
+            android:permission = "android.permission.BIND_ACCESSIBILITY_SERVICE" >
+            <intent-filter>
+                <action  android:name = "android.accessibilityservice.AccessibilityService"  />
+            </intent-filter>
+            <meta-data
+            android:name = "android.accessibilityservice"
+            android:resource = "@xml/accessibility_service_config"  />
+        </service>
+    <activity
             android:name=".MainActivity"
             android:exported="true"
             android:windowSoftInputMode="adjustResize">

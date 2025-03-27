@@ -1,4 +1,6 @@
 <resources>
     <string name="app_name">phone bot</string>
+    <string name="accessibility_service_description">无障碍服务</string>
+    <string name="accessibility_service_label">phone-bot"</string>
     <string name="api_key">AIzaSyC6PC29ZVvivYSOlUDYm2lILfqJsOtfyc4</string>
 </resources>
