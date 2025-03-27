@@ -1,22 +1,19 @@
-package com.tv.app.func
+package com.tv.app.func.models
 
 import com.google.ai.client.generativeai.type.Schema
+import com.tv.app.func.BaseFuncModel
 
 
 /**
  * 实现示例
  */
-class ExampleFuncModel(
-    override val name: String = FUNC_NAME,
-    override val description: String = "通过传入一个密钥 'key' 来获取邮箱地址",
+object ExampleFuncModel : BaseFuncModel<ExampleFuncModel.JSONResult>() {
+    override val name: String = "get_user_email_address"
+    override val description: String = "通过传入一个密钥 'key' 来获取邮箱地址"
     override val parameters: List<Schema<*>> = listOf(
-        Schema.str("key", "a string given by user"),
-    ),
+        Schema.str("key", "a string given by user")
+    )
     override val requiredParameters: List<String> = listOf("key")
-) : BaseFuncModel<ExampleFuncModel.JSONResult>() {
-    companion object {
-        const val FUNC_NAME = "get_user_email_address"
-    }
 
     override fun call(args: Map<String, Any?>): JSONResult {
         val arg = args["key"] ?: return JSONResult("error", "incorrect function calling")

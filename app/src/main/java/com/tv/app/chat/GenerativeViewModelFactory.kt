@@ -7,7 +7,7 @@ import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.content
 import com.google.ai.client.generativeai.type.generationConfig
 import com.tv.app.R
-import com.tv.app.func.tool.AppTools
+import com.tv.app.AppTools
 import com.zephyr.global_values.globalContext
 
 /**
