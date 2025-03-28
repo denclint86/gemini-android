@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:background="#80000000">
+    android:layout_width="60dp"
+    android:layout_height="60dp"
+    android:background="@drawable/circle_background">
 
     <TextView
         android:layout_width="60dp"
         android:layout_height="60dp"
         android:gravity="center"
-        android:text="悬浮球"
+        android:text="@string/suspend_text"
         android:textColor="#FFFFFF"
         android:textSize="16sp" />
 </FrameLayout>

@@ -75,7 +75,7 @@ class ChatViewModel(
         val userMessage = userMsg(text, false)
         updateState { modifyList { add(userMessage) } }
 
-        val flow = chatManager.sendMsgStream(createContent { text(text) })
+        val flow = chatManager.sendMsgStream(userContent { text(text) })
 
         val modelMsg = modelMsg("", true)
         updateState { modifyList { add(modelMsg) } }
