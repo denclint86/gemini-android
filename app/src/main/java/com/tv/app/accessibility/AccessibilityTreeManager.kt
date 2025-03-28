@@ -2,6 +2,7 @@ package com.tv.app.accessibility
 
 /**
  * 用于管理界面视图树
+ * 注意更新UI要切换回主线程
  */
 object AccessibilityTreeManager {
     private var _nodeTree: List<Node>? = null
