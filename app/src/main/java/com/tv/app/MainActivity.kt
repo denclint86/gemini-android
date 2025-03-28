@@ -1,5 +1,10 @@
 package com.tv.app
 
+import android.content.ComponentName
+import android.content.Context
+import android.content.Intent
+import android.content.ServiceConnection
+import android.os.IBinder
 import androidx.activity.enableEdgeToEdge
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -10,7 +15,9 @@ import com.tv.app.chat.GenerativeViewModelFactory
 import com.tv.app.chat.mvi.ChatEffect
 import com.tv.app.chat.mvi.ChatIntent
 import com.tv.app.databinding.ActivityMainBinding
-import com.tv.app.func.models.ShellExecutorModel
+import com.tv.app.suspend.SuspendService
+import com.tv.app.suspend.SuspendViewModel
+import com.tv.app.suspend.Utils
 import com.tv.app.ui.ChatAdapter
 import com.zephyr.extension.ui.PreloadLayoutManager
 import com.zephyr.extension.widget.toast
@@ -20,15 +27,25 @@ import com.zephyr.vbclass.ViewBindingActivity
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
 class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
     private lateinit var viewModel: ChatViewModel
     private lateinit var chatAdapter: ChatAdapter
     private lateinit var preloadLayoutManager: PreloadLayoutManager
 
+    private var isBound = false
+    private var binder: SuspendService.SuspendServiceBinder? = null
+
     override fun ActivityMainBinding.initBinding() {
         enableEdgeToEdge()
+
+        Utils.checkSuspendedWindowPermission(this@MainActivity) {
+            val intent = Intent(this@MainActivity, SuspendService::class.java)
+            startService(intent) // 先启动服务
+            bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE) // 再绑定服务
+            isBound = true
+            SuspendViewModel.isShowSuspendWindow.postValue(true)
+        }
 
 //        runCatching {
 //            val shell =
@@ -83,5 +100,44 @@ class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
                 }
             }
         }
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == Utils.REQUEST_FLOAT_CODE) {
+            if (Utils.commonROMPermissionCheck(this)) {
+                val intent = Intent(this, SuspendService::class.java)
+                startService(intent)
+                bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
+                isBound = true
+                SuspendViewModel.isShowSuspendWindow.postValue(true)
+            } else {
+                "悬浮窗权限未开启".toast()
+            }
+        }
+    }
+
+    private val serviceConnection = object : ServiceConnection {
+        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
+            binder = service as SuspendService.SuspendServiceBinder
+            logE(TAG, "suspend window binder has connected")
+            binder?.setOnTouchEventListener(viewModel)
+        }
+
+        override fun onServiceDisconnected(name: ComponentName?) {
+            binder?.setOnTouchEventListener(null)
+            binder = null
+            logE(TAG, "suspend window binder has disconnected")
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        if (isBound) {
+            unbindService(serviceConnection) // 解绑服务，但不会停止服务
+            isBound = false
+        }
+        // 注意：这里不调用 stopService，除非你明确想停止服务
     }
 }

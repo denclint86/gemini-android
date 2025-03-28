@@ -2,6 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- 悬浮窗权限 -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.SYSTEM_OVERLAY_WINDOW" />
+
     <!-- 普通权限 -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission
@@ -11,7 +15,7 @@
         android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         tools:ignore="ScopedStorage" />
 
-    <!-- 系统级权限（声明后仍需特殊方式激活） -->
+    <!-- 系统级权限 -->
     <uses-permission
         android:name="android.permission.INJECT_EVENTS"
         tools:ignore="ProtectedPermissions" />
@@ -35,6 +39,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Bot">
+        <service android:name=".suspend.SuspendService" />
         <service
             android:name=".accessibility.MyAccessibilityService"
             android:exported="true"
@@ -47,6 +52,7 @@
                 android:name="android.accessibilityservice"
                 android:resource="@xml/accessibility_service_config" />
         </service>
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

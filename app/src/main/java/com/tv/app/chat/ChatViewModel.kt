@@ -13,7 +13,9 @@ import com.tv.app.chat.mvi.bean.modelMsg
 import com.tv.app.chat.mvi.bean.systemMsg
 import com.tv.app.chat.mvi.bean.userMsg
 import com.tv.app.func.FuncManager
+import com.tv.app.suspend.ItemViewTouchListener
 import com.zephyr.extension.mvi.MVIViewModel
+import com.zephyr.extension.widget.toast
 import com.zephyr.global_values.TAG
 import com.zephyr.log.logE
 import com.zephyr.log.logI
@@ -29,10 +31,21 @@ import kotlinx.coroutines.withContext
 
 class ChatViewModel(
     private val generativeModel: GenerativeModel
-) : MVIViewModel<ChatIntent, ChatState, ChatEffect>() {
+) : MVIViewModel<ChatIntent, ChatState, ChatEffect>(), ItemViewTouchListener.OnTouchEventListener {
     private val chatManager: ChatManager by lazy { ChatManager(generativeModel) }
     private val _uiState: MutableStateFlow<ChatState> = MutableStateFlow(initUiState())
     val uiState: StateFlow<ChatState> = _uiState.asStateFlow()
+
+    override fun onClick() {
+        "已发送".toast()
+        sendIntent(ChatIntent.Chat("[application-reminding]"))
+    }
+
+    override fun onDrag() {
+    }
+
+    override fun onLongPress() {
+    }
 
     override fun handleIntent(intent: ChatIntent) {
         when (intent) {
