@@ -23,7 +23,7 @@ class MyAccessibilityService : AccessibilityService() {
                 try {
                     val rootNodeInfo = rootInActiveWindow
                     if (rootNodeInfo != null) {
-                        with(rootNodeInfo){
+                        with(rootNodeInfo) {
                             val rect = Rect()
                             getBoundsInScreen(rect)
                             nodeTree.add(
@@ -46,26 +46,25 @@ class MyAccessibilityService : AccessibilityService() {
     }
 
 
-    private fun traverseNodeTree(node: AccessibilityNodeInfo?) : List<Node>?{
-
-        if (node==null) return null
+    private fun traverseNodeTree(node: AccessibilityNodeInfo?): List<Node>? {
+        if (node == null) return null
         val childNodeTree = ArrayList<Node>()
 
         for (i in 0 until node.childCount) {
-            node.getChild(i).run {
+            val childNode = node.getChild(i)
+            if (childNode != null) {
                 val rect = Rect()
-                getBoundsInScreen(rect)
-                if (this != null) {
-                    childNodeTree.add(
-                        Node(
-                            if(text == null) "null" else text.toString(),
-                            className.toString(),
-                            rect.left,
-                            rect.top,
-                            traverseNodeTree(node)
-                        )
+                childNode.getBoundsInScreen(rect)
+                childNodeTree.add(
+                    Node(
+                        childNode.text?.toString() ?: "null",
+                        childNode.className.toString(),
+                        rect.left,
+                        rect.top,
+                        traverseNodeTree(childNode)  // 这里传入childNode而不是node
                     )
-                }
+                )
+                childNode.recycle() // 记得回收AccessibilityNodeInfo对象
             }
         }
 
