@@ -31,6 +31,8 @@ class ChatManager(
         chat = createNewChat()
     }
 
+    fun isActive(): Boolean = mutex.isLocked
+
     suspend fun sendMsg(content: Content): GenerateContentResponse =
         withContext(chatScope.coroutineContext) {
             logE(TAG, "普通请求被调用")

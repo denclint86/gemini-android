@@ -228,18 +228,19 @@ object ShizukuManager {
      * 执行命令
      * @param command 要执行的命令
      */
-    fun exec(command: String): String? {
-        return try {
+    fun exec(command: String): Pair<Int?, String?> {
+        try {
             if (!isConnected()) {
                 logE(TAG, "服务未连接，无法执行命令: $command")
-                return null
+                return Pair(null, null)
             }
-            userService?.exec(command).also { result ->
+            val r = userService?.exec(command).also { result ->
                 logD(TAG, "命令执行结果: $command -> $result")
             }
+            return Pair(r?.exitCode, r?.output)
         } catch (e: Exception) {
             logE(TAG, "执行命令失败: $command\n${e.toLogString()}")
-            return null
+            return Pair(null, null)
         }
     }
 }

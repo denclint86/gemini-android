@@ -13,9 +13,19 @@ import kotlinx.coroutines.withContext
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
+data class ShellResult(
+    val exitCode: Int?,
+    val output: String?
+) {
+    fun toMap(): Map<String, Any?> = mapOf(
+        "exit_code" to exitCode,
+        "output" to output
+    )
+}
+
 interface Shelly {
     fun isAvailable(): Boolean
-    suspend fun exec(command: String): String
+    suspend fun exec(command: String): ShellResult
 }
 
 // Root 执行器
@@ -30,16 +40,16 @@ class RootExecutor : Shelly {
         }
     }
 
-    override suspend fun exec(command: String): String = withContext(Dispatchers.IO) {
+    override suspend fun exec(command: String): ShellResult = withContext(Dispatchers.IO) {
         try {
             val process = Runtime.getRuntime().exec("su -c $command")
             val output = process.inputStream.bufferedReader().use { it.readText() }
-            process.waitFor()
+            val code = process.waitFor()
             logD(TAG, "Root 执行: $command -> $output")
-            output.trim()
+            ShellResult(code, output.trim())
         } catch (e: Exception) {
             logE(TAG, "Root 执行失败: $command\n${e.toLogString()}")
-            e.feedback()
+            ShellResult(null, e.feedback())
         }
     }
 }
@@ -56,9 +66,9 @@ class ShizukuExecutor : Shelly {
         return isRunning && hasPermission
     }
 
-    override suspend fun exec(command: String): String = suspendCoroutine { continuation ->
+    override suspend fun exec(command: String): ShellResult = suspendCoroutine { continuation ->
         if (!isAvailable()) {
-            continuation.resume("Shizuku is unavailable".feedbackStr())
+            continuation.resume(ShellResult(null, "Shizuku is unavailable".feedbackStr()))
             return@suspendCoroutine
         }
 
@@ -70,25 +80,41 @@ class ShizukuExecutor : Shelly {
             val connectionListener = object : ShizukuManager.ConnectionListener {
                 override fun onServiceConnected() {
                     ShizukuManager.removeConnectionListener(this)
-                    val result = ShizukuManager.exec(command) ?: "execution failed".feedbackStr()
-                    continuation.resume(result)
+                    val pair = ShizukuManager.exec(command)
+                    continuation.resume(
+                        ShellResult(
+                            pair.first,
+                            pair.second ?: "execution failed".feedbackStr()
+                        )
+                    )
                 }
 
                 override fun onServiceDisconnected() {
                     ShizukuManager.removeConnectionListener(this)
-                    continuation.resume("Shizuku service disconnected".feedbackStr())
+                    continuation.resume(
+                        ShellResult(
+                            null,
+                            "Shizuku service disconnected".feedbackStr()
+                        )
+                    )
                 }
             }
 
             ShizukuManager.addConnectionListener(connectionListener)
 
             if (ShizukuManager.isConnected()) {
-                val result = ShizukuManager.exec(command) ?: "execution failed".feedbackStr()
+                val pair = ShizukuManager.exec(command)
                 ShizukuManager.removeConnectionListener(connectionListener)
-                continuation.resume(result)
+                continuation.resume(
+                    ShellResult(
+                        pair.first,
+                        pair.second ?: "execution failed".feedbackStr()
+                    )
+                )
             }
         } catch (e: Exception) {
-            continuation.resume(e.feedback())
+            val r = ShellResult(null, e.feedback())
+            continuation.resume(r)
         }
     }
 
@@ -101,16 +127,16 @@ class ShizukuExecutor : Shelly {
 class UserExecutor : Shelly {
     override fun isAvailable(): Boolean = true // User 模式总是可用
 
-    override suspend fun exec(command: String): String = withContext(Dispatchers.IO) {
+    override suspend fun exec(command: String): ShellResult = withContext(Dispatchers.IO) {
         try {
             val process = Runtime.getRuntime().exec(command)
             val output = process.inputStream.bufferedReader().use { it.readText() }
-            process.waitFor()
+            val code = process.waitFor()
             logD(TAG, "User 执行: $command -> $output")
-            output.trim()
+            ShellResult(code, output.trim())
         } catch (e: Exception) {
             logE(TAG, "User 执行失败: $command\n${e.toLogString()}")
-            e.feedback()
+            ShellResult(null, e.feedback())
         }
     }
 }

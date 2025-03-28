@@ -13,77 +13,74 @@ import com.zephyr.log.logE
 class MyAccessibilityService : AccessibilityService() {
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
+        // 对于不相关的事件，提前返回
         if (event?.eventType != AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED) return
 
-        val nodeTree = mutableListOf<Node>()
-        val rootNodeInfo = rootInActiveWindow ?: return
-
-        try {
-            with(rootNodeInfo) {
-                val rect = Rect()
-                getBoundsInScreen(rect)
-                nodeTree.add(
-                    Node(
-                        text?.toString(),
-                        className.toString(),
-                        rect.toNRect(),
-                        traverseNodeTree(this)
-                    )
-                )
+        // 使用 use() 确保资源正确管理
+        rootInActiveWindow?.let { rootNodeInfo ->
+            try {
+                val nodeTree = createNodeTree(rootNodeInfo)
+                AccessibilityTreeManager.updateNodeTree(nodeTree)
+            } catch (e: Exception) {
+                e.logE(TAG)
+            } finally {
+                rootNodeInfo.recycle()
             }
-            // 更新单例数据
-            AccessibilityTreeManager.updateNodeTree(nodeTree)
-        } catch (e: Exception) {
-            e.logE(TAG)
-        } finally {
-            rootNodeInfo.recycle() // 回收根节点
         }
     }
 
-    private fun traverseNodeTree(node: AccessibilityNodeInfo?): List<Node>? {
-        if (node == null) return null
-        val childNodeTree = mutableListOf<Node>()
+    // 重构为更高效地创建节点树的方法
+    private fun createNodeTree(rootNode: AccessibilityNodeInfo): List<Node> {
+        val nodeTree = mutableListOf<Node>()
 
-        for (i in 0 until node.childCount) {
-            val childNode = node.getChild(i)
-            if (childNode != null) {
-                val rect = Rect()
-                childNode.getBoundsInScreen(rect)
-                childNodeTree.add(
-                    Node(
-                        childNode.text?.toString(),
-                        childNode.className.toString(),
-                        rect.toNRect(),
-                        traverseNodeTree(childNode)
-                    )
-                )
-                childNode.recycle() // 回收子节点
+        // 使用递归帮助器构建性能更好的树
+        fun traverseNode(node: AccessibilityNodeInfo): Node? {
+            val rect = Rect()
+            node.getBoundsInScreen(rect)
+
+            // 对于空节点提前返回
+            if (node.text.isNullOrEmpty() && node.className.isNullOrEmpty()) return null
+
+            val childNodes = mutableListOf<Node>()
+            for (i in 0 until node.childCount) {
+                node.getChild(i)?.let { childNode ->
+                    traverseNode(childNode)?.let { childNodes.add(it) }
+                    childNode.recycle()
+                }
             }
+
+            return Node(
+                node.text?.toString(),
+                node.className?.toString(),
+                rect.toNRect(),
+                childNodes
+            )
         }
-        return childNodeTree
+
+        traverseNode(rootNode)?.let { nodeTree.add(it) }
+        return nodeTree
     }
 
     override fun onInterrupt() {
-        logD(TAG, "onInterrupt")
+        logD(TAG, "无障碍服务中断")
         "无障碍服务中断".toast()
     }
 
     override fun onServiceConnected() {
-        logD(TAG, "onServiceConnected")
-//        performGlobalAction(GLOBAL_ACTION_HOME) // 回到桌面
-        "无障碍服务连接".toast()
+        logD(TAG, "无障碍服务已连接")
+        "无障碍服务已连接".toast()
     }
 
     override fun onDestroy() {
-        logD(TAG, "onDestroy")
-        "无障碍服务销毁".toast()
-        AccessibilityTreeManager.clearListeners() // 避免内存泄漏
+        logD(TAG, "无障碍服务已销毁")
+        "无障碍服务已销毁".toast()
+        AccessibilityTreeManager.clearListeners()
         super.onDestroy()
     }
 
     override fun onUnbind(intent: Intent?): Boolean {
-        logD(TAG, "onUnbind")
-        "无障碍服务解绑".toast()
+        logD(TAG, "无障碍服务已解绑")
+        "无障碍服务已解绑".toast()
         return super.onUnbind(intent)
     }
 }

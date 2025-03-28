@@ -8,10 +8,10 @@ import com.zephyr.log.toLogString
 data object ToastModel : BaseFuncModel() {
     override val name: String = "send_android_toast"
     override val description: String =
-        "Displays a toast message on the user's Android device"
+        "Displays a toast message on the user's Android device."
     override val parameters: List<Schema<*>> = listOf(
-        Schema.str("msg", "the message to display in the toast"),
-        Schema.int("duration", "optional duration in seconds (default: 2)")
+        Schema.str("msg", "the message to display in the toast."),
+        Schema.int("duration", "optional duration in seconds (default: 2).")
     )
     override val requiredParameters: List<String> = listOf("msg")
     override suspend fun call(args: Map<String, Any?>): Map<String, Any?> {

@@ -23,7 +23,7 @@ class ShellManager {
         logD(TAG, "working as: $selectedName")
     }
 
-    suspend fun exec(command: String): String {
+    suspend fun exec(command: String): ShellResult {
         val executor = selectedExecutor ?: throw Throwable("tf")
         if (!executor.isAvailable())
             throw Throwable("$selectedName is unavailable!")

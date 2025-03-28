@@ -3,6 +3,7 @@ package com.tv.app.chat
 import androidx.lifecycle.viewModelScope
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.GenerateContentResponse
+import com.tv.app.SYSTEM_PROMPT
 import com.tv.app.chat.mvi.ChatEffect
 import com.tv.app.chat.mvi.ChatIntent
 import com.tv.app.chat.mvi.ChatState
@@ -12,7 +13,6 @@ import com.tv.app.chat.mvi.bean.modelMsg
 import com.tv.app.chat.mvi.bean.systemMsg
 import com.tv.app.chat.mvi.bean.userMsg
 import com.tv.app.func.FuncManager
-import com.tv.app.SYSTEM_PROMPT
 import com.zephyr.extension.mvi.MVIViewModel
 import com.zephyr.global_values.TAG
 import com.zephyr.log.logE
@@ -52,13 +52,17 @@ class ChatViewModel(
     }
 
     private fun chat(text: String) = viewModelScope.launch(Dispatchers.IO) {
+        if (chatManager.isActive()) {
+            sendEffect(ChatEffect.Generating)
+            return@launch
+        }
+        sendEffect(ChatEffect.ChatSent)
+
         logI(TAG, "user:\n$text")
-        val userMessage = userMsg(text, true)
+        val userMessage = userMsg(text, false)
         updateState { modifyList { add(userMessage) } }
 
         val flow = chatManager.sendMsgStream(createContent { text(text) })
-
-        updateState { setLastPending() }
 
         val modelMsg = modelMsg("", true)
         updateState { modifyList { add(modelMsg) } }
@@ -66,6 +70,9 @@ class ChatViewModel(
         processResponseFlow(flow, modelMsg)
     }
 
+    /**
+     * 处理对话流
+     */
     private suspend fun processResponseFlow(
         flow: Flow<GenerateContentResponse>,
         modelMsg: ChatMessage
@@ -73,10 +80,7 @@ class ChatViewModel(
         var responseText = ""
         val funcCalls = mutableListOf<Pair<String, Map<String, Any?>>>()
 
-        flow.catch { e ->
-            logE(TAG, chatManager.getHistory().toPrettyJson())
-            e.logE(TAG)
-        }.collect { chunk ->
+        flow.setCatchEvent(modelMsg).collect { chunk ->
             responseText += chunk.text
             updateState {
                 modifyMsg(modelMsg.id) { copy(text = responseText) }
@@ -84,7 +88,9 @@ class ChatViewModel(
             funcCalls.addAll(chunk.functionCalls.map { Pair(it.name, it.args) })
         }
 
-        updateState { setLastPending() }
+        updateState {
+            modifyMsg(modelMsg.id) { copy(isPending = false) }
+        }
 
         logI(TAG, "llm:\n$responseText")
         if (funcCalls.isNotEmpty()) {
@@ -92,6 +98,9 @@ class ChatViewModel(
         }
     }
 
+    /**
+     * 调用本地函数，统一将结果发送给大模型
+     */
     private suspend fun handleFunctionCalls(funcCalls: List<Pair<String, Map<String, Any?>>>) {
         // 统一执行函数再发送
         val resultsBuilder = StringBuilder()
@@ -106,7 +115,7 @@ class ChatViewModel(
         val jsons = resultsBuilder.toString()
 
         updateState {
-            modifyList { add(funcMsg(jsons, true)) }
+            modifyList { add(funcMsg(jsons, false)) }
         }
 
         logI(TAG, "tools:\n$jsons")
@@ -114,8 +123,6 @@ class ChatViewModel(
         val funcResponse = chatManager.sendMsgStream(
             userContent { text(jsons) }
         )
-
-        updateState { setLastPending() }
 
         val responseMsg = modelMsg("", true)
         updateState {
@@ -125,10 +132,7 @@ class ChatViewModel(
         var funcResponseText = ""
         val newFunCalls = mutableListOf<Pair<String, Map<String, Any?>>>()
 
-        funcResponse.catch { e ->
-            logE(TAG, chatManager.getHistory().toPrettyJson())
-            e.logE(TAG)
-        }.collect { chunk ->
+        funcResponse.setCatchEvent(responseMsg).collect { chunk ->
             funcResponseText += chunk.text ?: ""
             updateState {
                 modifyMsg(responseMsg.id) { copy(text = funcResponseText) }
@@ -138,7 +142,9 @@ class ChatViewModel(
             })
         }
 
-        updateState { setLastPending() }
+        updateState {
+            modifyMsg(responseMsg.id) { copy(isPending = false) }
+        }
 
         if (funcResponseText.isNotEmpty()) {
             logI(TAG, "llm:\n$funcResponseText")
@@ -146,6 +152,20 @@ class ChatViewModel(
 
         if (newFunCalls.isNotEmpty()) {
             handleFunctionCalls(newFunCalls)
+        }
+    }
+
+    /**
+     * 捕捉流中的异常，并更新 ui
+     */
+    private fun <T> Flow<T>.setCatchEvent(bindMsg: ChatMessage): Flow<T> {
+        return catch { e ->
+            logE(TAG, chatManager.getHistory().toPrettyJson())
+            e.logE(TAG)
+            updateState {
+                modifyMsg(bindMsg.id) { copy(text = "$text\n出错了，请重试") }
+            }
+            sendEffect(ChatEffect.Error(e))
         }
     }
 }

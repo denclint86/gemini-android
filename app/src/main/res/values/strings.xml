@@ -3,4 +3,6 @@
     <string name="accessibility_service_description">无障碍服务</string>
     <string name="accessibility_service_label">phone-bot"</string>
     <string name="api_key">AIzaSyC6PC29ZVvivYSOlUDYm2lILfqJsOtfyc4</string>
+    <string name="hint">输入指令</string>
+    <string name="send">发送</string>
 </resources>

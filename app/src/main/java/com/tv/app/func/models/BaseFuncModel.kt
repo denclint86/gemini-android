@@ -27,7 +27,7 @@ sealed class BaseFuncModel {
 
     fun getFuncInstance() = ::call
 
-    fun defaultMap(status: String, result: String = "") =
+    fun defaultMap(status: String, result: Any = "") =
         mapOf<String, Any?>("status" to status, "result" to result)
 }
 

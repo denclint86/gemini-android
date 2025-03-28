@@ -4,7 +4,7 @@ import android.graphics.Rect
 
 data class Node(
     val text: String?,
-    val className: String,
+    val className: String?,
     val rect: NRect,
     val childNode: List<Node>?
 ) {
