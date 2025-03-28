@@ -40,6 +40,9 @@ android {
 }
 
 dependencies {
+    implementation(project(":shizuku"))
+    implementation(libs.shizuku.provider)
+
     implementation(libs.generativeai)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.runtime)

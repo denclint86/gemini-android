@@ -36,9 +36,7 @@ class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
         rv.layoutManager = preloadLayoutManager
         (rv.itemAnimator as? SimpleItemAnimator)?.supportsChangeAnimations = false
 
-        val order =
-//            "我在测试`function calling`,你现在应该有两个可用tool,描述这是个什么样的tool，然后分别使用`niki`,`tom`,`den`和`jay`去调用第一个函数（电话）,最后告诉我你得到的结果。然后再调用第二个，在获得结果后你应该继续调用剩余的函数，然后获取结果并告诉我。"
-            "我在测试`function calling`,你现在应该有若干可用tool,描述这是个什么样的tool，现在测试一个简单的shell命令来打开play商店（通过am打开，加上超时参数）,最后调用toast来告诉我你得到的结果。然后再调用第二个，在获得结果后你应该继续调用剩余的函数，然后获取结果并告诉我。"
+        val order ="帮我在play store安装多邻国"
         viewModel.sendIntent(ChatIntent.Chat(order))
 
         viewModel.observeState {

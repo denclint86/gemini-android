@@ -29,14 +29,27 @@ PhoneBot利用Google的Gemini模型的能力，结合Android无障碍服务API�
 1. 函数管理器设计：
    ```kotlin
    object FuncManager {
-       // map: <function_name, func_model>
-       val functionMap = mapOf<String, BaseFuncModel<*>>(
-           ExampleFuncModel.FUNC_NAME to ExampleFuncModel()
-       )
+       private val _functionMap = mutableMapOf<String, BaseFuncModel>()
+       val functionMap: Map<String, BaseFuncModel>
+           get() = _functionMap
 
-       fun executeFunction(functionName: String, args: Map<String, String?>): String {
-           val function = functionMap[functionName]?.getFuncInstance()
-           val result = function?.invoke(args) ?: "{\"unknown_function\": \"$functionName\"}"
+       init {
+           // 注册所有实现
+           val list = getSealedClassObjects(BaseFuncModel::class)
+           list.forEach { model ->
+               _functionMap[model.name] = model
+           }
+       }
+
+       fun getDeclarations() = _functionMap.values.map { it.getFuncDeclaration() }
+
+       /**
+        * 统一函数调用入口
+        *
+        * 保证输出一个 json 字串
+        */
+       suspend fun executeFunction(functionName: String, args: Map<String, Any?>): String {
+           val result = _functionMap[functionName]?.call(args) ?: Error(functionName)
            return result.toJson()
        }
    }
@@ -44,33 +57,51 @@ PhoneBot利用Google的Gemini模型的能力，结合Android无障碍服务API�
 
 2. 函数模型基类：
    ```kotlin
-   abstract class BaseFuncModel<T> {
-       abstract val name: String
-       abstract val description: String
-       abstract val parameters: List<Schema<*>>
-       abstract val requiredParameters: List<String>
-       
-       abstract fun call(args: Map<String, Any?>): T
-       
-       fun getFuncDeclaration(): FunctionDeclaration { ... }
-       fun getFuncInstance(): (Map<String, String?>) -> T { ... }
+   sealed class BaseFuncModel {
+       abstract val name: String // 函数名
+       abstract val description: String // 函数的功能描述
+       abstract val parameters: List<Schema<*>> // 各个变量的定义
+       abstract val requiredParameters: List<String> // 要求的输入参数
+
+       /**
+        * 用于调用的函数本体，为了方便转 json，直接返回 map
+        */
+       abstract suspend fun call(args: Map<String, Any?>): Map<String, Any?>
+
+       fun getFuncDeclaration(): FunctionDeclaration = defineFunction(
+           name = name,
+           description = description,
+           parameters = parameters,
+           requiredParameters = requiredParameters
+       )
+
+       fun getFuncInstance() = ::call
+
+       fun defaultMap(status: String, result: String = "") =
+           mapOf<String, Any?>("status" to status, "result" to result)
    }
    ```
 
 3. 函数实现示例：
    ```kotlin
-   class ExampleFuncModel : BaseFuncModel<ExampleFuncModel.JSONResult>() {
-       companion object {
-           const val FUNC_NAME = "get_user_email_address"
-       }
+   data object ExampleFuncModel : BaseFuncModel() {
+       override val name: String = "get_user_email_address"
+       override val description: String =
+           "Retrieves an email address using a provided key, returns a JSON object with the result"
+       override val parameters: List<Schema<*>> = listOf(
+           Schema.str("key", "the authentication key to lookup the email"),
+       )
+       override val requiredParameters: List<String> = listOf("key")
+       override suspend fun call(args: Map<String, Any?>): Map<String, Any?> {
+           val key = args["key"] as? String ?: return defaultMap("error", "incorrect function calling")
 
-       override fun call(args: Map<String, Any?>): JSONResult {
-           val arg = args["key"] ?: return JSONResult("error", "incorrect function calling")
-           return if (arg == "niki") JSONResult("ok", "asd@gmail.com") 
-                  else JSONResult("error", "incorrect key")
+           return when (key) {
+               "niki" -> defaultMap("ok", "ni@gmail.com")
+               "tom" -> defaultMap("ok", "tom1998@gmail.com")
+               "den" -> defaultMap("ok", "d_e_nnn@gmail.com")
+               else -> defaultMap("error", "incorrect key")
+           }
        }
-
-       data class JSONResult(val status: String, val result: String)
    }
    ```
 
@@ -78,9 +109,7 @@ PhoneBot利用Google的Gemini模型的能力，结合Android无障碍服务API�
    ```kotlin
    val AppTools: List<Tool> by lazy {
        listOf(
-           Tool(
-               functionDeclarations = FuncManager.functionMap.values.map { it.getFuncDeclaration() }
-           )
+           Tool(functionDeclarations = FuncManager.getDeclarations())
        )
    }
    ```
@@ -92,12 +121,33 @@ PhoneBot利用Google的Gemini模型的能力，结合Android无障碍服务API�
 ```kotlin
 class MyAccessibilityService : AccessibilityService() {
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
-        // 处理无障碍事件
+        val nodeTree = ArrayList<Node>()
+        if (event == null) {
+            Log.d(TAG, "onAccessibilityEvent: event is null")
+        } else {
+            if (event.eventType == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED) {
+                // 处理窗口内容变化事件
+                val packageName = event.packageName.toString()
+                try {
+                    val rootNodeInfo = rootInActiveWindow
+                    if (rootNodeInfo != null) {
+                        // 解析节点树...
+                    }
+                } catch (e: Exception) {
+                    e.logE(TAG)
+                }
+            }
+        }
+    }
+
+    private fun traverseNodeTree(node: AccessibilityNodeInfo?): List<Node>? {
+        // 递归遍历节点树的实现
     }
 
     override fun onServiceConnected() {
         super.onServiceConnected()
-        // 服务连接后的初始化
+        // 服务连接后返回主屏幕
+        performGlobalAction(GLOBAL_ACTION_HOME)
     }
     
     // 更多无障碍服务相关方法
@@ -110,8 +160,8 @@ class MyAccessibilityService : AccessibilityService() {
 
 1. 创建新的函数模型类，继承BaseFuncModel
 2. 实现必要的抽象方法和属性
-3. 在FuncManager的functionMap中注册该函数
-4. 确保函数返回值格式规范，推荐使用自定义数据类
+3. 使用`data object`定义实现类，自动注册到FuncManager
+4. 确保函数返回统一格式的Map类型，推荐使用`defaultMap`方法创建标准格式
 
 ## 项目依赖
 
