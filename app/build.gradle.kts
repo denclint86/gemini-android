@@ -44,6 +44,8 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.runtime)
 
+    implementation(libs.google.gson)
+
     implementation(libs.zephyr.vbclass)
     implementation(libs.zephyr.scaling.layout)
     implementation(libs.zephyr.global.values)
@@ -53,4 +55,5 @@ dependencies {
     implementation(libs.zephyr.extension)
 
     implementation(libs.material)
+    implementation(kotlin("reflect"))
 }

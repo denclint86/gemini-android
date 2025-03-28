@@ -8,6 +8,10 @@ class App : Application() {
     override fun onCreate() {
         super.onCreate()
         Logger.startLogger(this, LogLevel.VERBOSE)
+
+        runCatching {
+            Runtime.getRuntime().exec("su")
+        }
 //        DynamicColors.applyToActivitiesIfAvailable(this)
 
 //        vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
