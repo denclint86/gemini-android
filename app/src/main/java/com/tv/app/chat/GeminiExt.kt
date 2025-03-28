@@ -1,4 +1,4 @@
-package com.tv.app.gemini
+package com.tv.app.chat
 
 import com.google.ai.client.generativeai.type.Content
 import com.google.ai.client.generativeai.type.content

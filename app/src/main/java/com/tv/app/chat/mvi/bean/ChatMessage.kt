@@ -16,7 +16,7 @@
 
 package com.tv.app.chat.mvi.bean
 
-import com.tv.app.gemini.Role
+import com.tv.app.chat.Role
 import java.util.UUID
 
 /**

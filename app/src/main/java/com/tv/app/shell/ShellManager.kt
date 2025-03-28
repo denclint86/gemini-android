@@ -1,4 +1,4 @@
-package com.tv.app.func.models.shell
+package com.tv.app.shell
 
 import com.zephyr.global_values.TAG
 import com.zephyr.log.logD

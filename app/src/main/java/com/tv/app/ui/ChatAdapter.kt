@@ -4,7 +4,7 @@ import android.graphics.Color
 import androidx.recyclerview.widget.DiffUtil
 import com.tv.app.chat.mvi.bean.ChatMessage
 import com.tv.app.databinding.ItemChatBinding
-import com.tv.app.gemini.Role
+import com.tv.app.chat.Role
 import com.zephyr.vbclass.ui.ViewBindingListAdapter
 
 class ChatAdapter : ViewBindingListAdapter<ItemChatBinding, ChatMessage>(Callback()) {

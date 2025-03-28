@@ -12,9 +12,7 @@ import com.tv.app.chat.mvi.bean.modelMsg
 import com.tv.app.chat.mvi.bean.systemMsg
 import com.tv.app.chat.mvi.bean.userMsg
 import com.tv.app.func.FuncManager
-import com.tv.app.gemini.SYSTEM_PROMPT
-import com.tv.app.gemini.createContent
-import com.tv.app.gemini.userContent
+import com.tv.app.SYSTEM_PROMPT
 import com.zephyr.extension.mvi.MVIViewModel
 import com.zephyr.global_values.TAG
 import com.zephyr.log.logE

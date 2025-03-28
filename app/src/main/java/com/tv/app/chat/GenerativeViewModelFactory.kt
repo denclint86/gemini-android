@@ -6,10 +6,10 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.content
 import com.google.ai.client.generativeai.type.generationConfig
-import com.tv.app.AppTools
+import com.tv.app.APP_TOOLS
+import com.tv.app.MODEL_NAME
 import com.tv.app.R
-import com.tv.app.gemini.MODEL_NAME
-import com.tv.app.gemini.SYSTEM_PROMPT
+import com.tv.app.SYSTEM_PROMPT
 import com.zephyr.global_values.globalContext
 
 /**
@@ -22,18 +22,16 @@ val GenerativeViewModelFactory = object : ViewModelProvider.Factory {
     ): T {
         val config = generationConfig {
             temperature = 0.7f
-//            maxOutputTokens=2048
         }
 
         return with(modelClass) {
             when {
-
                 isAssignableFrom(ChatViewModel::class.java) -> {
                     val generativeModel = GenerativeModel(
                         modelName = MODEL_NAME,
                         apiKey = globalContext!!.getString(R.string.api_key),
                         systemInstruction = content { text(SYSTEM_PROMPT) },
-                        tools = AppTools,
+                        tools = APP_TOOLS,
                         generationConfig = config
                     )
                     ChatViewModel(generativeModel)

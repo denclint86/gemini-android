@@ -1,7 +1,7 @@
 package com.tv.app.func.models
 
 import com.google.ai.client.generativeai.type.Schema
-import com.tv.app.func.models.shell.ShellManager
+import com.tv.app.shell.ShellManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
@@ -9,7 +9,7 @@ import kotlinx.coroutines.withTimeout
 data object ShellExecutorModel : BaseFuncModel() {
     override val name: String = "run_android_shell"
     override val description: String =
-        "Executes a shell command on a rooted Android device with superuser privileges if available, otherwise runs as normal user"
+        "Executes a shell command on a rooted Android device with superuser privileges if available, otherwise runs as shizuku or normal user"
     override val parameters: List<Schema<*>> = listOf(
         Schema.str("command", "the shell command to execute"),
         Schema.str(
