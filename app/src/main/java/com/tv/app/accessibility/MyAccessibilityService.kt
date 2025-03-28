@@ -3,12 +3,12 @@ package com.tv.app.accessibility
 import android.accessibilityservice.AccessibilityService
 import android.content.Intent
 import android.graphics.Rect
-import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
+import com.zephyr.extension.widget.toast
 import com.zephyr.global_values.TAG
+import com.zephyr.log.logD
 import com.zephyr.log.logE
-import com.zephyr.net.toPrettyJson
 
 class MyAccessibilityService : AccessibilityService() {
 
@@ -24,15 +24,13 @@ class MyAccessibilityService : AccessibilityService() {
                 getBoundsInScreen(rect)
                 nodeTree.add(
                     Node(
-                        text?.toString() ?: "null",
+                        text?.toString(),
                         className.toString(),
-                        rect.left,
-                        rect.top,
+                        rect.toNRect(),
                         traverseNodeTree(this)
                     )
                 )
             }
-            Log.d(TAG, nodeTree.toPrettyJson())
             // 更新单例数据
             AccessibilityTreeManager.updateNodeTree(nodeTree)
         } catch (e: Exception) {
@@ -53,10 +51,9 @@ class MyAccessibilityService : AccessibilityService() {
                 childNode.getBoundsInScreen(rect)
                 childNodeTree.add(
                     Node(
-                        childNode.text?.toString() ?: "null",
+                        childNode.text?.toString(),
                         childNode.className.toString(),
-                        rect.left,
-                        rect.top,
+                        rect.toNRect(),
                         traverseNodeTree(childNode)
                     )
                 )
@@ -67,22 +64,26 @@ class MyAccessibilityService : AccessibilityService() {
     }
 
     override fun onInterrupt() {
-        Log.d(TAG, "onInterrupt")
+        logD(TAG, "onInterrupt")
+        "无障碍服务中断".toast()
     }
 
     override fun onServiceConnected() {
-        Log.d(TAG, "onServiceConnected")
-        performGlobalAction(GLOBAL_ACTION_HOME) // 回到桌面
+        logD(TAG, "onServiceConnected")
+//        performGlobalAction(GLOBAL_ACTION_HOME) // 回到桌面
+        "无障碍服务连接".toast()
     }
 
     override fun onDestroy() {
-        Log.d(TAG, "onDestroy")
+        logD(TAG, "onDestroy")
+        "无障碍服务销毁".toast()
         AccessibilityTreeManager.clearListeners() // 避免内存泄漏
         super.onDestroy()
     }
 
     override fun onUnbind(intent: Intent?): Boolean {
-        Log.d(TAG, "onUnbind")
+        logD(TAG, "onUnbind")
+        "无障碍服务解绑".toast()
         return super.onUnbind(intent)
     }
 }

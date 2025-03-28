@@ -5,8 +5,8 @@ import android.accessibilityservice.GestureDescription
 import android.graphics.Path
 import android.os.Bundle
 import android.os.Handler
-import android.util.Log
 import android.view.accessibility.AccessibilityNodeInfo
+import com.zephyr.log.logE
 
 const val CLS_VIEW_GROUP = "android.view.ViewGroup"
 const val CLS_FRAME_LAYOUT = "android.widget.FrameLayout"
@@ -98,7 +98,7 @@ fun AccessibilityService.scroll(
     val path = Path()
     path.moveTo(startX, startY)
     path.lineTo(endX, endY)
-    Log.e("path","startX${startX},startY$startY,endX$endX,endY$endY")
+    logE("path", "startX${startX},startY$startY,endX$endX,endY$endY")
     val stroke = GestureDescription.StrokeDescription(path, startTime, duration)
     val gesture = GestureDescription.Builder()
         .addStroke(stroke)

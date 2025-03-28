@@ -1,5 +1,9 @@
 package com.tv.app.accessibility
 
+import com.zephyr.global_values.TAG
+import com.zephyr.log.logE
+import com.zephyr.net.toPrettyJson
+
 /**
  * 用于管理界面视图树
  * 注意更新UI要切换回主线程
@@ -8,10 +12,17 @@ object AccessibilityTreeManager {
     private var _nodeTree: List<Node>? = null
     private val listeners = mutableListOf<(List<Node>) -> Unit>()
 
+    init {
+        addNodeTreeListener { list ->
+            val json = list.toPrettyJson()
+            logE(TAG, json)
+        }
+    }
+
     // 更新节点树
     fun updateNodeTree(nodeTree: List<Node>) {
         _nodeTree = nodeTree
-        listeners.forEach { it(nodeTree) }
+        listeners.forEach { listener -> listener.invoke(nodeTree) }
     }
 
     // 获取最新的节点树（可能为null）

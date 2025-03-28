@@ -146,7 +146,6 @@ class ChatViewModel(
             logI(TAG, "llm:\n$funcResponseText")
         }
 
-        logE(TAG, "第二次函数数量: ${newFunCalls.size}")
         if (newFunCalls.isNotEmpty()) {
             handleFunctionCalls(newFunCalls)
         }
