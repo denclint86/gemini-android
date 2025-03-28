@@ -1,17 +1,21 @@
 package com.tv.app.func.models.shell
 
 
-import com.tv.app.ShizukuHelper
+import com.tv.shizuku.ShizukuManager
+import com.tv.shizuku.feedback
+import com.tv.shizuku.feedbackStr
 import com.zephyr.global_values.TAG
 import com.zephyr.log.logD
 import com.zephyr.log.logE
 import com.zephyr.log.toLogString
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 interface Shelly {
     fun isAvailable(): Boolean
-    suspend fun exec(command: String): String?
+    suspend fun exec(command: String): String
 }
 
 // Root 执行器
@@ -26,7 +30,7 @@ class RootExecutor : Shelly {
         }
     }
 
-    override suspend fun exec(command: String): String? = withContext(Dispatchers.IO) {
+    override suspend fun exec(command: String): String = withContext(Dispatchers.IO) {
         try {
             val process = Runtime.getRuntime().exec("su -c $command")
             val output = process.inputStream.bufferedReader().use { it.readText() }
@@ -35,29 +39,61 @@ class RootExecutor : Shelly {
             output.trim()
         } catch (e: Exception) {
             logE(TAG, "Root 执行失败: $command\n${e.toLogString()}")
-            null
+            e.feedback()
         }
     }
 }
 
 // Shizuku 执行器
 class ShizukuExecutor : Shelly {
-    private val shizukuHelper = ShizukuHelper()
-
     init {
-        shizukuHelper.init()
+        ShizukuManager.init()
     }
 
     override fun isAvailable(): Boolean {
-        return shizukuHelper.isShizukuAvailable()
+        val isRunning = ShizukuManager.isShizukuRunning()
+        val hasPermission = ShizukuManager.hasPermission()
+        return isRunning && hasPermission
     }
 
-    override suspend fun exec(command: String): String? {
-        return shizukuHelper.execCommand(command)
+    override suspend fun exec(command: String): String = suspendCoroutine { continuation ->
+        if (!isAvailable()) {
+            continuation.resume("Shizuku is unavailable".feedbackStr())
+            return@suspendCoroutine
+        }
+
+        if (!ShizukuManager.isConnected()) {
+            ShizukuManager.bindService()
+        }
+
+        try {
+            val connectionListener = object : ShizukuManager.ConnectionListener {
+                override fun onServiceConnected() {
+                    ShizukuManager.removeConnectionListener(this)
+                    val result = ShizukuManager.exec(command) ?: "execution failed".feedbackStr()
+                    continuation.resume(result)
+                }
+
+                override fun onServiceDisconnected() {
+                    ShizukuManager.removeConnectionListener(this)
+                    continuation.resume("Shizuku service disconnected".feedbackStr())
+                }
+            }
+
+            ShizukuManager.addConnectionListener(connectionListener)
+
+            if (ShizukuManager.isConnected()) {
+                val result = ShizukuManager.exec(command) ?: "execution failed".feedbackStr()
+                ShizukuManager.removeConnectionListener(connectionListener)
+                continuation.resume(result)
+            }
+        } catch (e: Exception) {
+            continuation.resume(e.feedback())
+        }
     }
 
     fun release() {
-        shizukuHelper.release()
+        ShizukuManager.release()
     }
 }
 
@@ -65,7 +101,7 @@ class ShizukuExecutor : Shelly {
 class UserExecutor : Shelly {
     override fun isAvailable(): Boolean = true // User 模式总是可用
 
-    override suspend fun exec(command: String): String? = withContext(Dispatchers.IO) {
+    override suspend fun exec(command: String): String = withContext(Dispatchers.IO) {
         try {
             val process = Runtime.getRuntime().exec(command)
             val output = process.inputStream.bufferedReader().use { it.readText() }
@@ -74,7 +110,7 @@ class UserExecutor : Shelly {
             output.trim()
         } catch (e: Exception) {
             logE(TAG, "User 执行失败: $command\n${e.toLogString()}")
-            null
+            e.feedback()
         }
     }
 }

@@ -36,7 +36,7 @@ class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
         rv.layoutManager = preloadLayoutManager
         (rv.itemAnimator as? SimpleItemAnimator)?.supportsChangeAnimations = false
 
-        val order ="帮我在play store安装多邻国"
+        val order = "帮我在play store安装多邻国"
         viewModel.sendIntent(ChatIntent.Chat(order))
 
         viewModel.observeState {
