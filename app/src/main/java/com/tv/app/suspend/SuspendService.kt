@@ -12,7 +12,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.WindowManager
 import com.tv.app.R
-import com.tv.app.suspend.Utils.isNull
 
 class SuspendService : Service() {
     private val binder = SuspendServiceBinder()
@@ -34,12 +33,10 @@ class SuspendService : Service() {
             if (isShow) {
                 showWindow()
             } else {
-                if (!isNull(floatRootView)) {
-                    if (!isNull(floatRootView?.windowToken)) {
-                        if (!isNull(windowManager)) {
-                            windowManager.removeView(floatRootView)
-                            floatRootView = null
-                        }
+                floatRootView?.windowToken?.let {
+                    runCatching {
+                        windowManager.removeView(floatRootView)
+                        floatRootView = null
                     }
                 }
             }
@@ -80,11 +77,14 @@ class SuspendService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
-        if (!isNull(floatRootView)) {
-            windowManager.removeView(floatRootView)
+        floatRootView?.let {
+            runCatching {
+                windowManager.removeView(it)
+            }
         }
     }
 
+    // 代理
     private var listenerImpl = object : ItemViewTouchListener.OnTouchEventListener {
         override fun onClick() {
             listener?.onClick()

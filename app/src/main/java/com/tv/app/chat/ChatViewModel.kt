@@ -29,6 +29,8 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+var windowListener: ItemViewTouchListener.OnTouchEventListener? = null
+
 class ChatViewModel(
     private val generativeModel: GenerativeModel
 ) : MVIViewModel<ChatIntent, ChatState, ChatEffect>(), ItemViewTouchListener.OnTouchEventListener {
@@ -36,15 +38,24 @@ class ChatViewModel(
     private val _uiState: MutableStateFlow<ChatState> = MutableStateFlow(initUiState())
     val uiState: StateFlow<ChatState> = _uiState.asStateFlow()
 
+    init {
+        windowListener = this
+    }
+
     override fun onClick() {
         "已发送".toast()
-        sendIntent(ChatIntent.Chat("[application-reminding]"))
+        sendIntent(ChatIntent.Chat("[application-reminding]:call functions if needed"))
     }
 
     override fun onDrag() {
     }
 
     override fun onLongPress() {
+    }
+
+    override fun onCleared() {
+        windowListener = null
+        super.onCleared()
     }
 
     override fun handleIntent(intent: ChatIntent) {

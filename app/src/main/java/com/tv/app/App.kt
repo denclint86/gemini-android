@@ -1,10 +1,23 @@
 package com.tv.app
 
 import android.app.Application
+import android.content.ComponentName
+import android.content.Context
+import android.content.Intent
+import android.content.ServiceConnection
+import android.os.IBinder
+import com.tv.app.chat.windowListener
+import com.tv.app.suspend.SuspendService
+import com.tv.app.suspend.SuspendViewModel
+import com.tv.app.suspend.hasOverlayPermission
+import com.zephyr.global_values.TAG
 import com.zephyr.log.LogLevel
 import com.zephyr.log.Logger
+import com.zephyr.log.logE
 
 class App : Application() {
+    private var binder: SuspendService.SuspendServiceBinder? = null
+
     override fun onCreate() {
         super.onCreate()
         Logger.startLogger(this, LogLevel.VERBOSE)
@@ -12,12 +25,29 @@ class App : Application() {
         runCatching {
             Runtime.getRuntime().exec("su")
         }
-//        DynamicColors.applyToActivitiesIfAvailable(this)
 
-//        vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-//            (getSystemService(VIBRATOR_MANAGER_SERVICE) as VibratorManager).defaultVibrator
-//        } else {
-//            getSystemService(VIBRATOR_SERVICE) as Vibrator
-//        }
+        if (hasOverlayPermission())
+            startSuspendService()
+    }
+
+    fun startSuspendService() {
+        val intent = Intent(this, SuspendService::class.java)
+        startService(intent)
+        bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
+        SuspendViewModel.isShowSuspendWindow.postValue(true)
+    }
+
+    private val serviceConnection = object : ServiceConnection {
+        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
+            binder = service as SuspendService.SuspendServiceBinder
+            logE(TAG, "suspend window binder has connected")
+            binder?.setOnTouchEventListener(windowListener)
+        }
+
+        override fun onServiceDisconnected(name: ComponentName?) {
+            binder?.setOnTouchEventListener(null)
+            binder = null
+            logE(TAG, "suspend window binder has disconnected")
+        }
     }
 }

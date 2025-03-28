@@ -1,40 +1,29 @@
 package com.tv.app.suspend
 
-import android.app.Activity
 import android.content.Context
-import android.content.Intent
-import android.net.Uri
+import android.os.Build
 import android.provider.Settings
-import com.zephyr.extension.widget.toast
-import com.zephyr.global_values.TAG
-import com.zephyr.log.logE
+import android.util.DisplayMetrics
+import android.view.WindowManager
+import com.zephyr.global_values.globalContext
 
-object Utils {
-    const val REQUEST_FLOAT_CODE = 1001
+fun hasOverlayPermission(): Boolean =
+    Settings.canDrawOverlays(globalContext)
 
-    fun isNull(any: Any?): Boolean = any == null
 
-    fun commonROMPermissionCheck(context: Context?): Boolean {
-        var result = true
-        try {
-            val clazz: Class<*> = Settings::class.java
-            val canDrawOverlays =
-                clazz.getDeclaredMethod("canDrawOverlays", Context::class.java)
-            result = canDrawOverlays.invoke(null, context) as Boolean
-        } catch (e: Exception) {
-            e.logE(TAG)
-        }
-        return result
-    }
+/**
+ * 屏幕信息，pair<宽，高>
+ */
+fun getScreenSize(): Pair<Int, Int> {
+    val windowManager = globalContext!!.getSystemService(Context.WINDOW_SERVICE) as WindowManager
 
-    fun checkSuspendedWindowPermission(context: Activity, block: () -> Unit) {
-        if (commonROMPermissionCheck(context)) {
-            block()
-        } else {
-            "请开启悬浮窗权限".toast()
-            context.startActivityForResult(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION).apply {
-                data = Uri.parse("package:${context.packageName}")
-            }, REQUEST_FLOAT_CODE)
-        }
+    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+        val bounds = windowManager.currentWindowMetrics.bounds
+        Pair(bounds.width(), bounds.height())
+    } else {
+        val displayMetrics = DisplayMetrics()
+        @Suppress("DEPRECATION")
+        windowManager.defaultDisplay.getMetrics(displayMetrics)
+        Pair(displayMetrics.widthPixels, displayMetrics.heightPixels)
     }
 }
