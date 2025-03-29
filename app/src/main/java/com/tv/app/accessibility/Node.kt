@@ -5,7 +5,7 @@ import com.google.gson.annotations.SerializedName
 
 data class Node(
     val text: String?,
-    val className: String?,
+    @SerializedName("class") val className: String?,
     val rect: NRect,
     val childNode: List<Node>? = null
 ) {

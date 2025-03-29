@@ -15,16 +15,17 @@ import com.tv.app.chat.mvi.bean.systemMsg
 import com.tv.app.chat.mvi.bean.userMsg
 import com.tv.app.func.FuncManager
 import com.tv.app.ui.suspend.ItemViewTouchListener
+import com.tv.app.ui.suspend.SuspendViewModel
 import com.zephyr.extension.mvi.MVIViewModel
 import com.zephyr.extension.widget.toast
 import com.zephyr.global_values.TAG
-import com.zephyr.log.logE
 import com.zephyr.log.logI
 import com.zephyr.net.toPrettyJson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -40,6 +41,20 @@ class ChatViewModel(
 
     init {
         windowListener = this
+
+        observeState {
+            viewModelScope.launch {
+                map { it.messages }.collect { list ->
+                    val last = list.last()
+                    SuspendViewModel.suspendText.value = when (last.role) {
+                        Role.USER -> "正在生成"
+                        Role.MODEL -> last.text.take(4) + "..."
+                        Role.SYSTEM -> "未开始聊天"
+                        Role.FUNC -> "正在生成"
+                    }
+                }
+            }
+        }
     }
 
     override fun onClick() {
@@ -108,8 +123,10 @@ class ChatViewModel(
 
         logI(TAG, "llm:\n$responseText")
         if (funcCalls.isNotEmpty()) {
-            logE(TAG, "about to call ${funcCalls.size} functions")
+            logI(TAG, "tools:\nabout to call ${funcCalls.size} functions")
             handleFunctionCalls(funcCalls)
+        } else {
+            logI(TAG, "tools:\nno function was called")
         }
     }
 

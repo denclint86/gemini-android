@@ -11,15 +11,32 @@ import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.WindowManager
+import androidx.databinding.DataBindingUtil
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.LifecycleRegistry
 import com.tv.app.R
+import com.tv.app.databinding.LayoutSuspendBinding
 
 class SuspendService : Service() {
     private val binder = SuspendServiceBinder()
 
     private lateinit var windowManager: WindowManager
     private var floatRootView: View? = null // 悬浮窗View
+    private lateinit var binding: LayoutSuspendBinding
 
     private var listener: ItemViewTouchListener.OnTouchEventListener? = null
+
+    // 创建一个永远处于RESUMED状态的LifecycleOwner
+    private val alwaysActiveLifecycleOwner = object : LifecycleOwner {
+        private val lifecycleRegistry = LifecycleRegistry(this).apply {
+            // 设置为RESUMED状态，确保LiveData始终更新
+            currentState = Lifecycle.State.RESUMED
+        }
+
+        override val lifecycle: Lifecycle
+            get() = lifecycleRegistry
+    }
 
     override fun onBind(intent: Intent?): IBinder = binder
 
@@ -40,6 +57,11 @@ class SuspendService : Service() {
                     }
                 }
             }
+        }
+
+        // 设置默认文本
+        if (SuspendViewModel.suspendText.value.isNullOrEmpty()) {
+            SuspendViewModel.suspendText.value = "悬浮"
         }
     }
 
@@ -62,7 +84,18 @@ class SuspendService : Service() {
             y = outMetrics.heightPixels / 2 - height / 2
         }
 
-        floatRootView = LayoutInflater.from(this).inflate(R.layout.layout_suspend, null)
+        binding = DataBindingUtil.inflate(
+            LayoutInflater.from(this),
+            R.layout.layout_suspend,
+            null,
+            false
+        )
+
+        // 设置ViewModel和LifecycleOwner
+        binding.viewModel = SuspendViewModel
+        binding.lifecycleOwner = alwaysActiveLifecycleOwner
+
+        floatRootView = binding.root
 
         // 跟手
         floatRootView?.setOnTouchListener(
@@ -100,10 +133,15 @@ class SuspendService : Service() {
     }
 
     inner class SuspendServiceBinder : Binder() {
-        fun getView() = floatRootView
+        fun getViewBinding() = binding
 
         fun setOnTouchEventListener(l: ItemViewTouchListener.OnTouchEventListener?) {
             listener = l
+        }
+
+        // 提供一个方法来更新悬浮窗文本
+        fun updateSuspendText(text: String) {
+            SuspendViewModel.suspendText.postValue(text)
         }
     }
 }

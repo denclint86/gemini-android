@@ -46,7 +46,7 @@ object FuncManager {
 
         // 转换为JSONObject并返回
         return when (result) {
-            is Map<*, *> -> JSONObject(result)
+            is Map<*, *> -> JSONObject(result.toJson())
             is Error -> JSONObject(result.toJson())
             else -> JSONObject()  // 防御性编程，处理意外情况
         }
