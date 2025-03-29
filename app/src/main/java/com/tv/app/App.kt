@@ -7,31 +7,44 @@ import android.content.Intent
 import android.content.ServiceConnection
 import android.os.IBinder
 import com.tv.app.chat.windowListener
+import com.tv.app.func.models.ShellExecutorModel
 import com.tv.app.ui.suspend.SuspendService
 import com.tv.app.ui.suspend.SuspendViewModel
 import com.zephyr.global_values.TAG
 import com.zephyr.log.LogLevel
 import com.zephyr.log.Logger
 import com.zephyr.log.logE
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 class App : Application() {
-    private var binder: SuspendService.SuspendServiceBinder? = null
+    companion object {
+        var binder: SuspendService.SuspendServiceBinder? = null
+            private set
+
+        var instance: App? = null
+            private set
+    }
 
     override fun onCreate() {
         super.onCreate()
         Logger.startLogger(this, LogLevel.VERBOSE)
+        instance = this
 
-        runCatching {
-            Runtime.getRuntime().exec("su")
+        ShellExecutorModel.shellManager.executors.forEach { executor ->
+            GlobalScope.launch {
+                runCatching {
+                    executor.exec("echo test")
+                }
+            }
         }
 
         if (hasOverlayPermission())
             startSuspendService()
     }
 
-    fun startSuspendService() {
+    private fun startSuspendService() {
         val intent = Intent(this, SuspendService::class.java)
-        startService(intent)
         bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
         SuspendViewModel.isShowSuspendWindow.postValue(true)
     }

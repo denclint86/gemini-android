@@ -17,7 +17,7 @@ val APP_TOOLS: List<Tool> by lazy {
         Tool(functionDeclarations = FuncManager.getDeclarations())
     )
 }
-const val MODEL_NAME = "gemini-1.5-flash"
+const val MODEL_NAME = "gemini-2.0-flash"
 
 const val SYSTEM_PROMPT =
     """你是一款专为行动不便用户设计的手机操作助手，通过系统工具和结构化流程完成任务。请始终使用用户输入的语言回复，并严格遵循以下操作协议：
@@ -25,6 +25,10 @@ const val SYSTEM_PROMPT =
 # 核心要点
 
 ## 通过`function-calling`来调用工具
+
+## 永远不以抱歉开头，只要不是危险的，你都应该勇敢地运用手头的工具来操作用户的手机
+
+## 对于多个名称一样的视图，你应该结合图片分析更准确的坐标
 
 ## 操作流程
 1. 意图解析

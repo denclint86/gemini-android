@@ -1,6 +1,8 @@
 package com.tv.app
 
+import android.content.Context
 import android.content.Intent
+import android.media.projection.MediaProjectionManager
 import android.net.Uri
 import android.provider.Settings
 import androidx.activity.enableEdgeToEdge
@@ -18,6 +20,8 @@ import com.tv.app.databinding.ActivityMainBinding
 import com.tv.app.ui.ChatAdapter
 import com.zephyr.extension.ui.PreloadLayoutManager
 import com.zephyr.extension.widget.toast
+import com.zephyr.global_values.TAG
+import com.zephyr.log.logE
 import com.zephyr.vbclass.ViewBindingActivity
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.map
@@ -33,14 +37,7 @@ class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
     override fun ActivityMainBinding.initBinding() {
         enableEdgeToEdge()
         openOverlaySetting()
-
-//        runCatching {
-//            val shell =
-//                "settings put secure enabled_accessibility_services com.tv.bot/.accessibility.MyAccessibilityService"
-//            val result = runBlocking {
-//                ShellExecutorModel.call(mapOf("command" to shell))
-//            }
-//        }
+        setUpScreenCapture()
 
         chatAdapter = ChatAdapter()
         preloadLayoutManager = PreloadLayoutManager(this@MainActivity, RecyclerView.VERTICAL)
@@ -53,7 +50,8 @@ class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
         rv.layoutManager = preloadLayoutManager
         (rv.itemAnimator as? SimpleItemAnimator)?.supportsChangeAnimations = false
 
-        val order = "帮我在play store安装多邻国"
+//        val order = "帮我在play store安装多邻国"
+        val order = "帮我打开在谷歌商店安装多邻国"
         et.setText(order)
 
         btn.setOnClickListener {
@@ -81,7 +79,8 @@ class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
                 when (effect) {
                     is ChatEffect.ChatSent -> lifecycleScope.launch {
                         delay(100)
-                        binding.et.setText("")
+                        if (effect.shouldClear)
+                            binding.et.setText("")
                         binding.rv.smoothScrollToPosition(chatAdapter.itemCount - 1)
                     }
 
@@ -92,13 +91,29 @@ class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
         }
     }
 
+    private fun setUpScreenCapture() {
+        val screenCaptureLauncher =
+            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+                if (result.resultCode == RESULT_OK) {
+                    result.data?.let {
+                        App.binder?.setupScreenCapture(result.resultCode, it)
+                    }
+                    logE(TAG, "已授权屏幕获取")
+                } else {
+                    logE(TAG, "已拒绝屏幕获取")
+                }
+            }
+
+        val mediaProjectionManager =
+            getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
+        screenCaptureLauncher.launch(mediaProjectionManager.createScreenCaptureIntent())
+    }
+
     private fun openOverlaySetting() {
         if (!hasOverlayPermission()) {
             overlayPermissionLauncher =
                 registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-                    if (hasOverlayPermission()) {
-                        (application as? App)?.startSuspendService()
-                    } else {
+                    if (!hasOverlayPermission()) {
                         "悬浮窗权限未开启".toast()
                     }
                 }

@@ -1,9 +1,12 @@
 package com.tv.app.chat
 
+import android.graphics.Bitmap
+import android.view.View
 import androidx.lifecycle.viewModelScope
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.FunctionResponsePart
 import com.google.ai.client.generativeai.type.GenerateContentResponse
+import com.tv.app.App
 import com.tv.app.SYSTEM_PROMPT
 import com.tv.app.chat.mvi.ChatEffect
 import com.tv.app.chat.mvi.ChatIntent
@@ -14,22 +17,25 @@ import com.tv.app.chat.mvi.bean.modelMsg
 import com.tv.app.chat.mvi.bean.systemMsg
 import com.tv.app.chat.mvi.bean.userMsg
 import com.tv.app.func.FuncManager
+import com.tv.app.func.models.VisibleViewsModel
 import com.tv.app.ui.suspend.ItemViewTouchListener
 import com.tv.app.ui.suspend.SuspendViewModel
 import com.zephyr.extension.mvi.MVIViewModel
-import com.zephyr.extension.widget.toast
 import com.zephyr.global_values.TAG
 import com.zephyr.log.logE
 import com.zephyr.log.logI
 import com.zephyr.net.toPrettyJson
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
+
 
 var windowListener: ItemViewTouchListener.OnTouchEventListener? = null
 
@@ -47,11 +53,17 @@ class ChatViewModel(
             viewModelScope.launch {
                 map { it.messages }.collect { list ->
                     val last = list.last()
-                    SuspendViewModel.suspendText.value = when (last.role) {
-                        Role.USER -> "正在生成"
-                        Role.MODEL -> last.text.take(4) + "..."
-                        Role.SYSTEM -> "未开始聊天"
-                        Role.FUNC -> "正在生成"
+                    SuspendViewModel.suspendText.value = when {
+                        last.role == Role.SYSTEM -> "未开始聊天"
+                        last.role == Role.MODEL && last.text.isNotBlank() -> {
+                            App.binder?.setProgressBarVisibility(View.INVISIBLE)
+                            last.text.take(4) + "..."
+                        }
+
+                        else -> {
+                            App.binder?.setProgressBarVisibility(View.VISIBLE)
+                            "正在生成"
+                        }
                     }
                 }
             }
@@ -59,7 +71,6 @@ class ChatViewModel(
     }
 
     override fun onClick() {
-        "已发送".toast()
         sendIntent(ChatIntent.Chat("[application-reminding]:call functions if needed"))
     }
 
@@ -96,7 +107,7 @@ class ChatViewModel(
             sendEffect(ChatEffect.Generating)
             return@launch
         }
-        sendEffect(ChatEffect.ChatSent)
+        sendEffect(ChatEffect.ChatSent(true))
 
         logI(TAG, "user:\n$text")
         val userMessage = userMsg(text, false)
@@ -153,7 +164,7 @@ class ChatViewModel(
             funcCalls.forEach { (name, args) ->
                 val r = FuncManager.executeFunction(name, args)
                 jsons.append("$name: ${r.toPrettyJson()}\n")
-                results[name] = r
+                results[name] = JSONObject(r)
             }
         }
 
@@ -163,17 +174,27 @@ class ChatViewModel(
 
         logI(TAG, "tools:\nhandled ${results.size} functions\n$jsons")
 
+        logE(TAG, "sleep")
+        delay(900)
+
         val responseMsg = modelMsg("", true)
         updateState {
             modifyList { add(responseMsg) }
         }
+
+        sendEffect(ChatEffect.ChatSent(false))
 
         val funcResponse = try {
             chatManager.sendMsg(
                 funcContent {
                     funcCalls.forEach { pair ->
                         val name = pair.first
+                        val bitmap =
+                            if (name == VisibleViewsModel.name) getScreenAsBitmap() else null
+
                         results[name]?.let {
+                            if (bitmap != null)
+                                image(bitmap)
                             part(FunctionResponsePart(name, it))
                         }
                     }
@@ -201,6 +222,10 @@ class ChatViewModel(
         if (newFuncCalls.isNotEmpty()) {
             handleFunctionCalls(newFuncCalls)
         }
+    }
+
+    private fun getScreenAsBitmap(): Bitmap? = runBlocking {
+        App.binder?.captureScreen()
     }
 }
 //package com.tv.app.chat

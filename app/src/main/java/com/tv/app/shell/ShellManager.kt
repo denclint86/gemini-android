@@ -4,7 +4,7 @@ import com.zephyr.global_values.TAG
 import com.zephyr.log.logD
 
 class ShellManager {
-    private val executors = listOf(
+    val executors = listOf<Shelly>(
         RootExecutor(),
         ShizukuExecutor(),
         UserExecutor()

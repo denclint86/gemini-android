@@ -6,7 +6,6 @@ import com.zephyr.global_values.TAG
 import com.zephyr.log.logE
 import com.zephyr.net.toJson
 import com.zephyr.net.toPrettyJson
-import org.json.JSONObject
 import kotlin.reflect.KClass
 
 /**
@@ -32,7 +31,7 @@ object FuncManager {
      *
      * 保证输出一个 json 对象
      */
-    suspend fun executeFunction(functionName: String, args: Map<String, String?>): JSONObject {
+    suspend fun executeFunction(functionName: String, args: Map<String, String?>): String {
         val result =
             _functionMap[functionName]?.call(args) ?: Error(functionName)
 
@@ -44,12 +43,7 @@ object FuncManager {
             }
         )
 
-        // 转换为JSONObject并返回
-        return when (result) {
-            is Map<*, *> -> JSONObject(result.toJson())
-            is Error -> JSONObject(result.toJson())
-            else -> JSONObject()  // 防御性编程，处理意外情况
-        }
+        return result.toJson()
     }
 
     private data class Error(

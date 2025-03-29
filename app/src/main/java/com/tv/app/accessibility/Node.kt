@@ -4,10 +4,9 @@ import android.graphics.Rect
 import com.google.gson.annotations.SerializedName
 
 data class Node(
-    val text: String?,
+    @SerializedName("text") val text: String,
     @SerializedName("class") val className: String?,
     val rect: NRect,
-    val childNode: List<Node>? = null
 ) {
     data class NRect(
         @SerializedName("l") var left: Int?,

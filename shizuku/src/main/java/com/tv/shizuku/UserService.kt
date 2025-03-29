@@ -17,7 +17,6 @@ class UserService : IUserService.Stub() {
         try {
             process = Runtime.getRuntime().exec(command)
 
-            // 读取标准输出
             BufferedReader(InputStreamReader(process.inputStream)).use { reader ->
                 var line: String?
                 while (reader.readLine().also { line = it } != null) {
@@ -25,19 +24,20 @@ class UserService : IUserService.Stub() {
                 }
             }
 
-            // 获取退出码
             val exitCode = process.waitFor()
-
             val execResult = ExecResult()
             execResult.exitCode = exitCode
             execResult.output = output.toString()
             return execResult
+
+        } catch (e: SecurityException) {
+            throw RuntimeException("Permission denied: ${e.message}", e)
         } catch (e: IOException) {
-            throw RuntimeException("Exec failed: ${e.message}", e)
+            throw RuntimeException("IO error during execution: ${e.message}", e)
         } catch (e: InterruptedException) {
-            throw RuntimeException("Exec interrupted: ${e.message}", e)
+            throw RuntimeException("Execution interrupted: ${e.message}", e)
         } finally {
-            process?.destroy()
+            process?.destroyForcibly() // 更强的进程终止方式
         }
     }
 }

@@ -29,8 +29,8 @@ class MyAccessibilityService : AccessibilityService() {
         // 使用 use() 确保资源正确管理
         rootInActiveWindow?.let { rootNodeInfo ->
             try {
-                val nodeList = createNodeList(rootNodeInfo)
-                AccessibilityListManager.update(nodeList)
+                val nodeMap = createNodeMap(rootNodeInfo)
+                AccessibilityListManager.update(nodeMap)
 
 //                val nodeTree = createNodeTree(rootNodeInfo)
 //                AccessibilityTreeManager.updateNodeTree(nodeTree)
@@ -42,8 +42,9 @@ class MyAccessibilityService : AccessibilityService() {
         }
     }
 
-    private fun createNodeList(rootNode: AccessibilityNodeInfo): List<Node> {
-        val nodeList = mutableListOf<Node>()
+    private fun createNodeMap(rootNode: AccessibilityNodeInfo): Map<String, Node> {
+        val nodeMap = mutableMapOf<String, Node>()
+        var count = 0
 
         fun traverseNode(node: AccessibilityNodeInfo) {
             val rect = Rect()
@@ -53,13 +54,13 @@ class MyAccessibilityService : AccessibilityService() {
                 var str = node.text.toString()
                 if (str.length > 20)
                     str = str.take(20) + "..."
-                nodeList.add(
-                    Node(
-                        str,
-                        node.className?.toString(),
-                        rect.toNRect()
-                    )
+
+                nodeMap[count.toString()] = Node(
+                    str,
+                    node.className?.toString(),
+                    rect.toNRect()
                 )
+                count++
             }
 
             // 递归遍历子节点
@@ -72,7 +73,7 @@ class MyAccessibilityService : AccessibilityService() {
         }
 
         traverseNode(rootNode)
-        return nodeList
+        return nodeMap
     }
 
     /**
@@ -86,37 +87,37 @@ class MyAccessibilityService : AccessibilityService() {
                 nodeRect.top >= h)
     }
 
-    @Deprecated("")
-    private fun createNodeTree(rootNode: AccessibilityNodeInfo): List<Node> {
-        val nodeTree = mutableListOf<Node>()
-
-        // 使用递归帮助器构建性能更好的树
-        fun traverseNode(node: AccessibilityNodeInfo): Node? {
-            val rect = Rect()
-            node.getBoundsInScreen(rect)
-
-            // 对于空节点提前返回
-            if (node.text.isNullOrEmpty()) return null
-
-            val childNodes = mutableListOf<Node>()
-            for (i in 0 until node.childCount) {
-                node.getChild(i)?.let { childNode ->
-                    traverseNode(childNode)?.let { childNodes.add(it) }
-                    childNode.recycle()
-                }
-            }
-
-            return Node(
-                node.text?.toString()?.take(20),
-                node.className?.toString(),
-                rect.toNRect(),
-                childNodes
-            )
-        }
-
-        traverseNode(rootNode)?.let { nodeTree.add(it) }
-        return nodeTree
-    }
+//    @Deprecated("")
+//    private fun createNodeTree(rootNode: AccessibilityNodeInfo): List<Node> {
+//        val nodeTree = mutableListOf<Node>()
+//
+//        // 使用递归帮助器构建性能更好的树
+//        fun traverseNode(node: AccessibilityNodeInfo): Node? {
+//            val rect = Rect()
+//            node.getBoundsInScreen(rect)
+//
+//            // 对于空节点提前返回
+//            if (node.text.isNullOrEmpty()) return null
+//
+//            val childNodes = mutableListOf<Node>()
+//            for (i in 0 until node.childCount) {
+//                node.getChild(i)?.let { childNode ->
+//                    traverseNode(childNode)?.let { childNodes.add(it) }
+//                    childNode.recycle()
+//                }
+//            }
+//
+//            return Node(
+//                node.text?.toString()?.take(20),
+//                node.className?.toString(),
+//                rect.toNRect(),
+//                childNodes
+//            )
+//        }
+//
+//        traverseNode(rootNode)?.let { nodeTree.add(it) }
+//        return nodeTree
+//    }
 
     override fun onInterrupt() {
         logD(TAG, "无障碍服务中断")

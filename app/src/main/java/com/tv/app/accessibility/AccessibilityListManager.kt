@@ -4,12 +4,12 @@ package com.tv.app.accessibility
  * 用于管理界面的可见视图
  */
 object AccessibilityListManager {
-    var nodeList: List<Node>? = null
+    var nodeMap: Map<String, Node>? = null
         private set
 
-    private val listeners = mutableListOf<(List<Node>) -> Unit>()
+    private val listeners = mutableListOf<(Map<String, Node>?) -> Unit>()
     val isAvailable: Boolean
-        get() = nodeList?.isNotEmpty() == true
+        get() = nodeMap?.isNotEmpty() == true
 
 //    init {
 //        addOnUpdateListener { list ->
@@ -18,16 +18,16 @@ object AccessibilityListManager {
 //        }
 //    }
 
-    fun update(nodeTree: List<Node>) {
-        nodeList = nodeTree
+    fun update(nodeTree: Map<String, Node>?) {
+        nodeMap = nodeTree
         listeners.forEach { listener -> listener.invoke(nodeTree) }
     }
 
-    fun addOnUpdateListener(listener: (List<Node>) -> Unit) {
+    fun addOnUpdateListener(listener: (Map<String, Node>?) -> Unit) {
         listeners.add(listener)
     }
 
-    fun removeOnUpdateListener(listener: (List<Node>) -> Unit) {
+    fun removeOnUpdateListener(listener: (Map<String, Node>?) -> Unit) {
         listeners.remove(listener)
     }
 

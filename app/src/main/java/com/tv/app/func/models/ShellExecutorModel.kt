@@ -19,7 +19,7 @@ data object ShellExecutorModel : BaseFuncModel() {
     )
     override val requiredParameters: List<String> = listOf("command")
 
-    private val shellManager: ShellManager by lazy { ShellManager() }
+    val shellManager: ShellManager = ShellManager()
 
     override suspend fun call(args: Map<String, Any?>): Map<String, Any?> =
         withContext(Dispatchers.IO) {

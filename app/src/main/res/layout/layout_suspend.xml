@@ -1,24 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
-<layout xmlns:android="http://schemas.android.com/apk/res/android">
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <data>
+
         <variable
             name="viewModel"
             type="com.tv.app.ui.suspend.SuspendViewModel" />
     </data>
 
-    <FrameLayout
-        android:layout_width="60dp"
-        android:layout_height="60dp"
-        android:background="@drawable/circle_background">
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="35dp"
+        android:layout_height="35dp"
+        android:background="@drawable/circle_background"
+        android:clipChildren="false">
+
+        <ProgressBar
+            android:id="@+id/progress_bar"
+            style="?android:attr/progressBarStyle"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:indeterminateTint="#ffffff"
+            android:padding="5dp"
+            android:visibility="invisible" />
 
         <TextView
             android:id="@+id/tv_suspend_text"
-            android:layout_width="60dp"
-            android:layout_height="60dp"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
             android:gravity="center"
             android:text="@{viewModel.suspendText}"
             android:textColor="#FFFFFF"
-            android:textSize="16sp" />
-    </FrameLayout>
+            android:textSize="14sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

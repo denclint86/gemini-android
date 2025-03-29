@@ -9,9 +9,8 @@ import com.zephyr.log.logD
 import com.zephyr.log.logE
 import com.zephyr.log.toLogString
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
-import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
 
 data class ShellResult(
     val exitCode: Int?,
@@ -48,7 +47,7 @@ class RootExecutor : Shelly {
             logD(TAG, "Root 执行: $command -> $output")
             ShellResult(code, output.trim())
         } catch (e: Exception) {
-            logE(TAG, "Root 执行失败: $command\n${e.toLogString()}")
+            logE(TAG, "Root 执行失败: $command -> ${e.toLogString()}")
             ShellResult(null, e.feedback())
         }
     }
@@ -60,61 +59,30 @@ class ShizukuExecutor : Shelly {
         ShizukuManager.init()
     }
 
-    override fun isAvailable(): Boolean {
-        val isRunning = ShizukuManager.isShizukuRunning()
-        val hasPermission = ShizukuManager.hasPermission()
-        return isRunning && hasPermission
-    }
+    override fun isAvailable(): Boolean =
+        ShizukuManager.isRunning() && ShizukuManager.hasPermission()
 
-    override suspend fun exec(command: String): ShellResult = suspendCoroutine { continuation ->
-        if (!isAvailable()) {
-            continuation.resume(ShellResult(null, "Shizuku is unavailable".feedbackStr()))
-            return@suspendCoroutine
-        }
-
-        if (!ShizukuManager.isConnected()) {
-            ShizukuManager.bindService()
-        }
-
+    override suspend fun exec(command: String): ShellResult = withContext(Dispatchers.IO) {
         try {
-            val connectionListener = object : ShizukuManager.ConnectionListener {
-                override fun onServiceConnected() {
-                    ShizukuManager.removeConnectionListener(this)
-                    val pair = ShizukuManager.exec(command)
-                    continuation.resume(
-                        ShellResult(
-                            pair.first,
-                            pair.second ?: "execution failed".feedbackStr()
-                        )
-                    )
-                }
+            if (!isAvailable()) {
+                val feedback = "Shizuku unavailable".feedbackStr()
+                logE(TAG, "Shizuku 执行失败: $command -> $feedback")
+                return@withContext ShellResult(null, feedback)
+            }
 
-                override fun onServiceDisconnected() {
-                    ShizukuManager.removeConnectionListener(this)
-                    continuation.resume(
-                        ShellResult(
-                            null,
-                            "Shizuku service disconnected".feedbackStr()
-                        )
-                    )
+            if (!ShizukuManager.isConnected()) {
+                ShizukuManager.bindService()
+                while (!ShizukuManager.isConnected()) {
+                    delay(100)
                 }
             }
 
-            ShizukuManager.addConnectionListener(connectionListener)
-
-            if (ShizukuManager.isConnected()) {
-                val pair = ShizukuManager.exec(command)
-                ShizukuManager.removeConnectionListener(connectionListener)
-                continuation.resume(
-                    ShellResult(
-                        pair.first,
-                        pair.second ?: "execution failed".feedbackStr()
-                    )
-                )
-            }
-        } catch (e: Exception) {
-            val r = ShellResult(null, e.feedback())
-            continuation.resume(r)
+            val r = ShizukuManager.exec(command)
+            logD(TAG, "Shizuku 执行: $command -> ${r.output}")
+            ShellResult(r.exitCode, r.output)
+        } catch (t: Throwable) {
+            logE(TAG, "Shizuku 执行失败: $command -> ${t.toLogString()}")
+            ShellResult(null, t.feedback())
         }
     }
 
@@ -135,7 +103,7 @@ class UserExecutor : Shelly {
             logD(TAG, "User 执行: $command -> $output")
             ShellResult(code, output.trim())
         } catch (e: Exception) {
-            logE(TAG, "User 执行失败: $command\n${e.toLogString()}")
+            logE(TAG, "User 执行失败: $command -> ${e.toLogString()}")
             ShellResult(null, e.feedback())
         }
     }
