@@ -4,8 +4,6 @@ import android.annotation.SuppressLint
 import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
-import com.zephyr.global_values.TAG
-import com.zephyr.log.logE
 import kotlin.math.abs
 
 class ItemViewTouchListener(
@@ -13,18 +11,17 @@ class ItemViewTouchListener(
     private val windowManager: WindowManager,
     private val listener: OnTouchEventListener? = null // 添加回调接口
 ) : View.OnTouchListener {
+    companion object {
+        private const val DRAG_THRESHOLD = 8 // 拖动阈值，超过视为拖动
+        private const val LONG_PRESS_THRESHOLD = 600L // 长按时间阈值
+    }
+
     private var initialX = 0f // 初始触摸点 X
     private var initialY = 0f // 初始触摸点 Y
     private var lastX = 0 // 上一次移动的 X
     private var lastY = 0 // 上一次移动的 Y
     private var startTime = 0L // 触摸开始时间
     private var isDragging = false // 是否正在拖动
-
-    // 拖动阈值（单位：像素），超过此距离视为拖动
-    private val DRAG_THRESHOLD = 10
-
-    // 长按阈值（单位：毫秒），超过此时间视为长按
-    private val LONG_PRESS_THRESHOLD = 500L
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouch(view: View, event: MotionEvent): Boolean {
@@ -60,7 +57,6 @@ class ItemViewTouchListener(
                     lastX = nowX
                     lastY = nowY
                     listener?.onDrag()
-                    logE(TAG, "拖动中")
                 }
             }
 
@@ -72,10 +68,8 @@ class ItemViewTouchListener(
                 if (!isDragging) {
                     if (duration >= LONG_PRESS_THRESHOLD) {
                         listener?.onLongPress()
-                        logE(TAG, "长按")
                     } else {
                         listener?.onClick()
-                        logE(TAG, "点击")
                     }
                 }
             }

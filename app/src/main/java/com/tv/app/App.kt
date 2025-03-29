@@ -45,11 +45,12 @@ class App : Application() {
     }
 
     private fun startSuspendService() {
-        unbindService(serviceConnection)
+        runCatching {
+            unbindService(serviceConnection)
+        }
         binder = null
         val intent = Intent(this, SuspendService::class.java)
         bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
-        SuspendLiveDataManager.isShowSuspendWindow.postValue(true)
     }
 
     private val serviceConnection = object : ServiceConnection {

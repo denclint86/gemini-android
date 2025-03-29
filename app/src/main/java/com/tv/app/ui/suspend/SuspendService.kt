@@ -57,6 +57,8 @@ class SuspendService : Service() {
     private var lastX: Int = 0
     private var lastY: Int = 0
 
+    private var isShowing = false
+
     private val captureMutex = Mutex()
 
     private fun releaseMediaProjectionParams() {
@@ -128,6 +130,7 @@ class SuspendService : Service() {
 
     private fun initObserve() {
         SuspendLiveDataManager.isShowSuspendWindow.observe(alwaysActiveLifecycleOwner) { isShow ->
+            logE(TAG, "obser $isShow")
             if (isShow) {
                 showWindow()
             } else {
@@ -137,6 +140,7 @@ class SuspendService : Service() {
     }
 
     private fun hideWindow() {
+        if (!isShowing) return
         floatRootView?.windowToken?.let {
             runCatching {
                 val lp = floatRootView?.layoutParams as? WindowManager.LayoutParams
@@ -148,16 +152,18 @@ class SuspendService : Service() {
                 floatRootView = null
                 binding?.unbind()
                 binding = null
+                isShowing = false
             }
         }
     }
 
     @SuppressLint("ClickableViewAccessibility")
     private fun showWindow() {
+        if (isShowing) return
         val layoutParam = createLayoutParam(lastX, lastY)
 
         binding = DataBindingUtil.inflate(
-            LayoutInflater.from(this),
+            LayoutInflater.from(this@SuspendService),
             R.layout.layout_suspend,
             null,
             false
@@ -175,6 +181,7 @@ class SuspendService : Service() {
             )
         )
         windowManager.addView(floatRootView, layoutParam)
+        isShowing = true
     }
 
     private fun setupScreenCapture(resultCode: Int, data: Intent) {

@@ -27,9 +27,6 @@ import com.zephyr.log.logI
 import com.zephyr.net.toPrettyJson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -42,9 +39,11 @@ var windowListener: ItemViewTouchListener.OnTouchEventListener? = null
 class ChatViewModel(
     private val generativeModel: GenerativeModel
 ) : MVIViewModel<ChatIntent, ChatState, ChatEffect>(), ItemViewTouchListener.OnTouchEventListener {
+    companion object {
+        private const val ERROR_UI_MSG = "出错了，请重试"
+    }
+
     private val chatManager: ChatManager by lazy { ChatManager(generativeModel) }
-    private val _uiState: MutableStateFlow<ChatState> = MutableStateFlow(initUiState())
-    val uiState: StateFlow<ChatState> = _uiState.asStateFlow()
 
     init {
         windowListener = this
@@ -123,9 +122,9 @@ class ChatViewModel(
             updateState {
                 modifyList {
                     if (last().role == Role.USER)
-                        add(modelMsg("出错了，请重试"))
+                        add(modelMsg(ERROR_UI_MSG))
                     else
-                        last().text += "出错了，请重试"
+                        last().text = (last().text + "\n$ERROR_UI_MSG").trim()
                 }
             }
         }
@@ -172,10 +171,10 @@ class ChatViewModel(
             modifyList { add(funcMsg(jsons.toString(), false)) }
         }
 
-        logI(TAG, "tools:\nhandled ${results.size} functions\n$jsons")
+        logI(TAG, "tools:\nhandled ${results.size} functions")
 
         logE(TAG, "sleep")
-        delay(900)
+        delay(400)
 
         val responseMsg = modelMsg("", true)
         updateState {
@@ -203,7 +202,7 @@ class ChatViewModel(
         } catch (t: Throwable) {
             t.logE(TAG)
             updateState {
-                modifyMsg(responseMsg.id) { copy(text = "出错了，请重试") }
+                modifyMsg(responseMsg.id) { copy(text = (text + "\n" + ERROR_UI_MSG).trim()) }
             }
             return
         }
