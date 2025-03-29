@@ -22,10 +22,8 @@ import android.view.View
 import android.view.WindowManager
 import androidx.core.app.NotificationCompat
 import androidx.databinding.DataBindingUtil
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.LifecycleRegistry
 import com.tv.app.R
+import com.tv.app.alwaysActiveLifecycleOwner
 import com.tv.app.createLayoutParam
 import com.tv.app.databinding.LayoutSuspendBinding
 import com.tv.app.resizeBitmap
@@ -44,7 +42,7 @@ class SuspendService : Service() {
 
     private lateinit var windowManager: WindowManager
     private var floatRootView: View? = null // 悬浮窗View
-    private lateinit var binding: LayoutSuspendBinding
+    private var binding: LayoutSuspendBinding? = null
 
     private var listener: ItemViewTouchListener.OnTouchEventListener? = null
 
@@ -54,43 +52,25 @@ class SuspendService : Service() {
     private var mediaProjection: MediaProjection? = null
     private var virtualDisplay: VirtualDisplay? = null
     private var imageReader: ImageReader? = null
+
     private lateinit var metrics: DisplayMetrics
+    private var lastX: Int = 0
+    private var lastY: Int = 0
 
     private val captureMutex = Mutex()
+
+    private fun releaseMediaProjectionParams() {
+        virtualDisplay?.release()
+        virtualDisplay = null
+        imageReader?.close()
+        imageReader = null
+    }
 
     private val mediaProjectionCallback = object : MediaProjection.Callback() {
         override fun onStop() {
             logE(TAG, "MediaProjection stopped")
-            virtualDisplay?.release()
-            virtualDisplay = null
-            imageReader?.close()
-            imageReader = null
-            mediaProjection = null
+            releaseMediaProjectionParams()
         }
-    }
-
-    private var listenerImpl = object : ItemViewTouchListener.OnTouchEventListener {
-        override fun onClick() {
-            listener?.onClick()
-        }
-
-        override fun onDrag() {
-            listener?.onDrag()
-        }
-
-        override fun onLongPress() {
-            listener?.onLongPress()
-        }
-    }
-
-    // 创建一个永远处于RESUMED状态的LifecycleOwner
-    private val alwaysActiveLifecycleOwner = object : LifecycleOwner {
-        private val lifecycleRegistry = LifecycleRegistry(this).apply {
-            currentState = Lifecycle.State.RESUMED
-        }
-
-        override val lifecycle: Lifecycle
-            get() = lifecycleRegistry
     }
 
     override fun onBind(intent: Intent?): IBinder = binder
@@ -104,6 +84,19 @@ class SuspendService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         return START_NOT_STICKY
+    }
+
+    override fun onDestroy() {
+        mediaProjection?.let { projection ->
+            projection.unregisterCallback(mediaProjectionCallback)
+            projection.stop()
+        }
+        releaseMediaProjectionParams()
+        mediaProjection = null  // 在最后置空
+        SuspendLiveDataManager.isShowSuspendWindow.removeObservers(alwaysActiveLifecycleOwner)
+        SuspendLiveDataManager.suspendText.removeObservers(alwaysActiveLifecycleOwner)
+        hideWindow()
+        super.onDestroy()
     }
 
     private fun startForegroundService() {
@@ -134,7 +127,7 @@ class SuspendService : Service() {
     }
 
     private fun initObserve() {
-        SuspendViewModel.isShowSuspendWindow.observeForever { isShow ->
+        SuspendLiveDataManager.isShowSuspendWindow.observe(alwaysActiveLifecycleOwner) { isShow ->
             if (isShow) {
                 showWindow()
             } else {
@@ -146,15 +139,22 @@ class SuspendService : Service() {
     private fun hideWindow() {
         floatRootView?.windowToken?.let {
             runCatching {
+                val lp = floatRootView?.layoutParams as? WindowManager.LayoutParams
+                lp?.let {
+                    lastX = lp.x
+                    lastY = lp.y
+                }
                 windowManager.removeView(floatRootView)
                 floatRootView = null
+                binding?.unbind()
+                binding = null
             }
         }
     }
 
     @SuppressLint("ClickableViewAccessibility")
     private fun showWindow() {
-        val layoutParam = metrics.createLayoutParam()
+        val layoutParam = createLayoutParam(lastX, lastY)
 
         binding = DataBindingUtil.inflate(
             LayoutInflater.from(this),
@@ -163,15 +163,15 @@ class SuspendService : Service() {
             false
         )
 
-        binding.viewModel = SuspendViewModel
-        binding.lifecycleOwner = alwaysActiveLifecycleOwner
+        binding?.manager = SuspendLiveDataManager
+        binding?.lifecycleOwner = alwaysActiveLifecycleOwner
 
-        floatRootView = binding.root
+        floatRootView = binding?.root
         floatRootView?.setOnTouchListener(
             ItemViewTouchListener(
                 layoutParam,
                 windowManager,
-                listenerImpl
+                TouchEventListenerImpl()
             )
         )
         windowManager.addView(floatRootView, layoutParam)
@@ -196,25 +196,20 @@ class SuspendService : Service() {
         }
     }
 
-    private suspend fun captureScreen(): Bitmap? {
-        if (virtualDisplay == null || imageReader == null) return null
+    private suspend fun captureScreen(): Bitmap? = withContext(Dispatchers.IO) {
+        if (virtualDisplay == null || imageReader == null) return@withContext null
 
-        return captureMutex.withLock {
+        return@withContext captureMutex.withLock {
             try {
                 withContext(Dispatchers.Main) {
                     hideWindow()
                 }
                 delay(30)
-                val image = withContext(Dispatchers.IO) {
-                    imageReader?.acquireLatestImage()
-                } ?: return@withLock null
 
-                image.use { img ->
-                    img.toBitmap(metrics)?.let {
-                        val resizedBitmap = resizeBitmap(it, 0.5F)
-                        it.recycle()
-                        resizedBitmap
-                    }
+                imageReader?.acquireLatestImage()?.let { img ->
+                    img.toBitmap(metrics)?.let { bitmap ->
+                        resizeBitmap(bitmap, 0.5F).also { bitmap.recycle() }
+                    }.also { img.close() }
                 }
             } catch (e: Exception) {
                 e.logE(TAG)
@@ -227,16 +222,6 @@ class SuspendService : Service() {
         }
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        virtualDisplay?.release()
-        virtualDisplay = null
-        imageReader?.close()
-        mediaProjection?.unregisterCallback(mediaProjectionCallback) // 注销回调
-        mediaProjection?.stop()
-        hideWindow()
-    }
-
     inner class SuspendServiceBinder : Binder() {
         fun getViewBinding() = binding
         fun setupScreenCapture(resultCode: Int, data: Intent) =
@@ -246,12 +231,26 @@ class SuspendService : Service() {
 
         fun setProgressBarVisibility(visibility: Int) {
             runOnMain {
-                binding.progressBar.visibility = visibility
+                binding?.progressBar?.visibility = visibility
             }
         }
 
         fun setOnTouchEventListener(l: ItemViewTouchListener.OnTouchEventListener?) {
             listener = l
+        }
+    }
+
+    inner class TouchEventListenerImpl : ItemViewTouchListener.OnTouchEventListener {
+        override fun onClick() {
+            listener?.onClick()
+        }
+
+        override fun onDrag() {
+            listener?.onDrag()
+        }
+
+        override fun onLongPress() {
+            listener?.onLongPress()
         }
     }
 }

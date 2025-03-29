@@ -6,7 +6,7 @@ import com.tv.app.accessibility.AccessibilityListManager
 data object VisibleViewsModel : BaseFuncModel() {
     override val name: String = "get_screen_views"
     override val description: String =
-        "Uses an Accessibility Service to get the current visible views info of user's Android device and returns it as a JSON string. Possibly returns a img of the screen."
+        "Get the current views info of the user's Screen and returns it as JSON. An image may be attached."
     override val parameters: List<Schema<*>> = listOf(
         Schema.str("default", "Just simply pass in 0.")
     )

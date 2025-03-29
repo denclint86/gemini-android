@@ -6,9 +6,9 @@ import com.zephyr.extension.widget.toast
 import com.zephyr.log.toLogString
 
 data object ToastModel : BaseFuncModel() {
-    override val name: String = "send_android_toast"
+    override val name: String = "send_toast"
     override val description: String =
-        "Displays a toast message on the user's Android device."
+        "Displays a toast message to the user."
     override val parameters: List<Schema<*>> = listOf(
         Schema.str("msg", "the message to display in the toast."),
         Schema.int("duration", "optional duration in seconds (default: 2).")

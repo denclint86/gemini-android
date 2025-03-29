@@ -5,8 +5,8 @@
     <data>
 
         <variable
-            name="viewModel"
-            type="com.tv.app.ui.suspend.SuspendViewModel" />
+            name="manager"
+            type="com.tv.app.ui.suspend.SuspendLiveDataManager" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -29,7 +29,7 @@
             android:layout_width="30dp"
             android:layout_height="30dp"
             android:gravity="center"
-            android:text="@{viewModel.suspendText}"
+            android:text="@{manager.suspendText}"
             android:textColor="#FFFFFF"
             android:textSize="14sp"
             app:layout_constraintBottom_toBottomOf="parent"

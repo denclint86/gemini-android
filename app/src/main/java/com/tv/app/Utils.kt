@@ -9,90 +9,18 @@ import android.provider.Settings
 import android.util.DisplayMetrics
 import android.view.Gravity
 import android.view.WindowManager
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.LifecycleRegistry
 import com.zephyr.global_values.globalContext
-import org.json.JSONObject
-import java.io.File
-import java.io.FileOutputStream
 
-// 测试用
-fun saveBitmapToExternalStorage(
-    context: Context,
-    bitmap: Bitmap,
-    filename: String,
-    format: Bitmap.CompressFormat = Bitmap.CompressFormat.JPEG,
-    quality: Int = 100
-): String? {
-    return try {
-        // 获取应用的外部存储目录（Android/data/包名/files/）
-        val directory = context.getExternalFilesDir(null)
-        if (directory != null && !directory.exists()) {
-            directory.mkdirs()
-        }
-
-        val file = File(directory, filename)
-        val outputStream = FileOutputStream(file)
-
-        // 将bitmap压缩并写入到文件
-        bitmap.compress(format, quality, outputStream)
-
-        // 关闭输出流
-        outputStream.flush()
-        outputStream.close()
-
-        // 返回保存的文件路径
-        file.absolutePath
-    } catch (e: Exception) {
-        e.printStackTrace()
-        null
-    }
-}
-
-// 测试用
-fun saveBitmapToSubdirectory(
-    context: Context,
-    bitmap: Bitmap,
-    subdirectory: String,
-    filename: String,
-    format: Bitmap.CompressFormat = Bitmap.CompressFormat.JPEG,
-    quality: Int = 100
-): String? {
-    return try {
-        // 获取应用的外部存储目录，并添加子目录
-        val parentDir = context.getExternalFilesDir(null)
-        val directory = File(parentDir, subdirectory)
-
-        // 确保目录存在
-        if (!directory.exists()) {
-            directory.mkdirs()
-        }
-
-        val file = File(directory, filename)
-        val outputStream = FileOutputStream(file)
-
-        // 将bitmap压缩并写入到文件
-        bitmap.compress(format, quality, outputStream)
-
-        // 关闭输出流
-        outputStream.flush()
-        outputStream.close()
-
-        // 返回保存的文件路径
-        file.absolutePath
-    } catch (e: Exception) {
-        e.printStackTrace()
-        null
-    }
-}
-
-fun Map<String, JSONObject>.toJSONObject(): JSONObject {
-    val result = JSONObject()
-
-    this.forEach { (key, jsonObj) ->
-        // 直接将JSONObject放入结果中，但确保它不包含内部实现细节
-        result.put(key, JSONObject(jsonObj.toString()))
+val alwaysActiveLifecycleOwner = object : LifecycleOwner {
+    private val lifecycleRegistry = LifecycleRegistry(this).apply {
+        currentState = Lifecycle.State.RESUMED
     }
 
-    return result
+    override val lifecycle: Lifecycle
+        get() = lifecycleRegistry
 }
 
 fun hasOverlayPermission(): Boolean =
@@ -104,7 +32,7 @@ fun resizeBitmap(bitmap: Bitmap, scaleFactor: Float): Bitmap {
     return Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true)
 }
 
-fun DisplayMetrics.createLayoutParam() = WindowManager.LayoutParams().apply {
+fun createLayoutParam(x: Int = 0, y: Int = 0) = WindowManager.LayoutParams().apply {
     type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
     format = PixelFormat.RGBA_8888
     flags =
@@ -112,10 +40,9 @@ fun DisplayMetrics.createLayoutParam() = WindowManager.LayoutParams().apply {
     width = WindowManager.LayoutParams.WRAP_CONTENT
     height = WindowManager.LayoutParams.WRAP_CONTENT
     gravity = Gravity.START or Gravity.TOP
-//    x = widthPixels / 2 - width / 2 // 屏幕居中
-//    y = heightPixels / 2 - height / 2
-    x = 0
-    y = 0
+
+    this.x = x
+    this.y = y
 }
 
 fun Image.toBitmap(metrics: DisplayMetrics): Bitmap? {
@@ -152,3 +79,74 @@ fun getScreenSize(): Pair<Int, Int> {
         Pair(displayMetrics.widthPixels, displayMetrics.heightPixels)
     }
 }
+
+//
+//// 测试用
+//fun saveBitmapToExternalStorage(
+//    context: Context,
+//    bitmap: Bitmap,
+//    filename: String,
+//    format: Bitmap.CompressFormat = Bitmap.CompressFormat.JPEG,
+//    quality: Int = 100
+//): String? {
+//    return try {
+//        // 获取应用的外部存储目录（Android/data/包名/files/）
+//        val directory = context.getExternalFilesDir(null)
+//        if (directory != null && !directory.exists()) {
+//            directory.mkdirs()
+//        }
+//
+//        val file = File(directory, filename)
+//        val outputStream = FileOutputStream(file)
+//
+//        // 将bitmap压缩并写入到文件
+//        bitmap.compress(format, quality, outputStream)
+//
+//        // 关闭输出流
+//        outputStream.flush()
+//        outputStream.close()
+//
+//        // 返回保存的文件路径
+//        file.absolutePath
+//    } catch (e: Exception) {
+//        e.printStackTrace()
+//        null
+//    }
+//}
+//
+//// 测试用
+//fun saveBitmapToSubdirectory(
+//    context: Context,
+//    bitmap: Bitmap,
+//    subdirectory: String,
+//    filename: String,
+//    format: Bitmap.CompressFormat = Bitmap.CompressFormat.JPEG,
+//    quality: Int = 100
+//): String? {
+//    return try {
+//        // 获取应用的外部存储目录，并添加子目录
+//        val parentDir = context.getExternalFilesDir(null)
+//        val directory = File(parentDir, subdirectory)
+//
+//        // 确保目录存在
+//        if (!directory.exists()) {
+//            directory.mkdirs()
+//        }
+//
+//        val file = File(directory, filename)
+//        val outputStream = FileOutputStream(file)
+//
+//        // 将bitmap压缩并写入到文件
+//        bitmap.compress(format, quality, outputStream)
+//
+//        // 关闭输出流
+//        outputStream.flush()
+//        outputStream.close()
+//
+//        // 返回保存的文件路径
+//        file.absolutePath
+//    } catch (e: Exception) {
+//        e.printStackTrace()
+//        null
+//    }
+//}
