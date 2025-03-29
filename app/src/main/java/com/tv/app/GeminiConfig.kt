@@ -1,15 +1,23 @@
 package com.tv.app
 
 import com.google.ai.client.generativeai.type.Tool
+import com.google.ai.client.generativeai.type.generationConfig
 import com.tv.app.func.FuncManager
 
+val GEMINI_CONFIG = generationConfig {
+    temperature = 0.3f       // 较低温度，输出更确定、更聪明
+    maxOutputTokens = 2048   // 允许更长的响应，提升上下文理解和推理能力
+    topP = 0.95f            // 核采样，保持连贯性
+    topK = 40               // 限制 token 选择范围，提升质量
+    candidateCount = 1      // 只返回一个最佳候选
+}
 
 val APP_TOOLS: List<Tool> by lazy {
     listOf(
         Tool(functionDeclarations = FuncManager.getDeclarations())
     )
 }
-const val MODEL_NAME = "gemini-2.0-flash"
+const val MODEL_NAME = "gemini-1.5-flash"
 
 const val SYSTEM_PROMPT =
     """你是一款专为行动不便用户设计的手机操作助手，通过系统工具和结构化流程完成任务。请始终使用用户输入的语言回复，并严格遵循以下操作协议：

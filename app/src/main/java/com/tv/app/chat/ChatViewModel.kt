@@ -19,6 +19,7 @@ import com.tv.app.ui.suspend.SuspendViewModel
 import com.zephyr.extension.mvi.MVIViewModel
 import com.zephyr.extension.widget.toast
 import com.zephyr.global_values.TAG
+import com.zephyr.log.logE
 import com.zephyr.log.logI
 import com.zephyr.net.toPrettyJson
 import kotlinx.coroutines.Dispatchers
@@ -104,7 +105,19 @@ class ChatViewModel(
         val modelMsg = modelMsg("", true)
         updateState { modifyList { add(modelMsg) } }
 
-        processResponse(chatManager.sendMsg(userContent { text(text) }), modelMsg)
+        try {
+            processResponse(chatManager.sendMsg(userContent { text(text) }), modelMsg)
+        } catch (t: Throwable) {
+            t.logE(TAG)
+            updateState {
+                modifyList {
+                    if (last().role == Role.USER)
+                        add(modelMsg("出错了，请重试"))
+                    else
+                        last().text += "出错了，请重试"
+                }
+            }
+        }
     }
 
     /**
@@ -150,20 +163,28 @@ class ChatViewModel(
 
         logI(TAG, "tools:\nhandled ${results.size} functions\n$jsons")
 
-        val funcResponse = chatManager.sendMsg(
-            funcContent {
-                funcCalls.forEach { pair ->
-                    val name = pair.first
-                    results[name]?.let {
-                        part(FunctionResponsePart(name, it))
-                    }
-                }
-            }
-        )
-
         val responseMsg = modelMsg("", true)
         updateState {
             modifyList { add(responseMsg) }
+        }
+
+        val funcResponse = try {
+            chatManager.sendMsg(
+                funcContent {
+                    funcCalls.forEach { pair ->
+                        val name = pair.first
+                        results[name]?.let {
+                            part(FunctionResponsePart(name, it))
+                        }
+                    }
+                }
+            )
+        } catch (t: Throwable) {
+            t.logE(TAG)
+            updateState {
+                modifyMsg(responseMsg.id) { copy(text = "出错了，请重试") }
+            }
+            return
         }
 
         val funcResponseText = funcResponse.text ?: ""

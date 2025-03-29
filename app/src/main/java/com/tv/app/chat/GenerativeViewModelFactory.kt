@@ -5,11 +5,11 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.content
-import com.google.ai.client.generativeai.type.generationConfig
 import com.tv.app.APP_TOOLS
 import com.tv.app.MODEL_NAME
 import com.tv.app.R
 import com.tv.app.SYSTEM_PROMPT
+import com.tv.app.GEMINI_CONFIG
 import com.zephyr.global_values.globalContext
 
 /**
@@ -20,13 +20,6 @@ val GenerativeViewModelFactory = object : ViewModelProvider.Factory {
         modelClass: Class<T>,
         extras: CreationExtras
     ): T {
-        val config = generationConfig {
-            temperature = 0.3f       // 较低温度，输出更确定、更聪明
-            maxOutputTokens = 2048   // 允许更长的响应，提升上下文理解和推理能力
-            topP = 0.95f            // 核采样，保持连贯性
-            topK = 40               // 限制 token 选择范围，提升质量
-            candidateCount = 1      // 只返回一个最佳候选
-        }
 
         return with(modelClass) {
             when {
@@ -36,7 +29,7 @@ val GenerativeViewModelFactory = object : ViewModelProvider.Factory {
                         apiKey = globalContext!!.getString(R.string.api_key),
                         systemInstruction = content { text(SYSTEM_PROMPT) },
                         tools = APP_TOOLS,
-                        generationConfig = config
+                        generationConfig = GEMINI_CONFIG
                     )
                     ChatViewModel(generativeModel)
                 }
