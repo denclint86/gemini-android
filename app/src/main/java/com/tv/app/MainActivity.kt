@@ -15,12 +15,9 @@ import com.tv.app.chat.GenerativeViewModelFactory
 import com.tv.app.chat.mvi.ChatEffect
 import com.tv.app.chat.mvi.ChatIntent
 import com.tv.app.databinding.ActivityMainBinding
-import com.tv.app.suspend.hasOverlayPermission
 import com.tv.app.ui.ChatAdapter
 import com.zephyr.extension.ui.PreloadLayoutManager
 import com.zephyr.extension.widget.toast
-import com.zephyr.global_values.TAG
-import com.zephyr.log.logE
 import com.zephyr.vbclass.ViewBindingActivity
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.map
@@ -74,7 +71,6 @@ class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
         viewModel.observeState {
             lifecycleScope.launch {
                 map { it.messages }.collect { list ->
-                    logE(TAG, "collected")
                     chatAdapter.submitList(list)
                 }
             }

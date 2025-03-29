@@ -5,7 +5,7 @@ import android.content.Intent
 import android.graphics.Rect
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
-import com.tv.app.suspend.getScreenSize
+import com.tv.app.getScreenSize
 import com.zephyr.extension.widget.toast
 import com.zephyr.global_values.TAG
 import com.zephyr.log.logD

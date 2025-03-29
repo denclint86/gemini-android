@@ -7,9 +7,8 @@ import android.content.Intent
 import android.content.ServiceConnection
 import android.os.IBinder
 import com.tv.app.chat.windowListener
-import com.tv.app.suspend.SuspendService
-import com.tv.app.suspend.SuspendViewModel
-import com.tv.app.suspend.hasOverlayPermission
+import com.tv.app.ui.suspend.SuspendService
+import com.tv.app.ui.suspend.SuspendViewModel
 import com.zephyr.global_values.TAG
 import com.zephyr.log.LogLevel
 import com.zephyr.log.Logger
@@ -41,6 +40,7 @@ class App : Application() {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
             binder = service as SuspendService.SuspendServiceBinder
             logE(TAG, "suspend window binder has connected")
+            binder?.setOnTouchEventListener(windowListener)
             binder?.setOnTouchEventListener(windowListener)
         }
 

@@ -3,7 +3,7 @@ package com.tv.app.func.models
 import com.google.ai.client.generativeai.type.Schema
 import com.tv.app.accessibility.AccessibilityListManager
 
-data object ViewTreesModel : BaseFuncModel() {
+data object VisibleViewsModel : BaseFuncModel() {
     override val name: String = "get_screen_views"
     override val description: String =
         "Uses an Accessibility Service to get the current visible views info of user's Android device and returns it as a JSON string."

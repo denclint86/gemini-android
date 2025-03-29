@@ -1,4 +1,4 @@
-package com.tv.app.suspend
+package com.tv.app.ui.suspend
 
 import android.annotation.SuppressLint
 import android.app.Service

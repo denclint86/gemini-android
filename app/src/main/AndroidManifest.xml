@@ -39,7 +39,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Bot">
-        <service android:name=".suspend.SuspendService" />
+        <service android:name=".ui.suspend.SuspendService" />
         <service
             android:name=".accessibility.MyAccessibilityService"
             android:exported="true"

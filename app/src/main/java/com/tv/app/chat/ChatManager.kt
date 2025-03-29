@@ -37,7 +37,7 @@ class ChatManager(
         withContext(chatScope.coroutineContext) {
             logE(TAG, "普通请求被调用")
             mutex.withLock {
-                logE(TAG, "普通请求取得信号量")
+                logE(TAG, "普通请求取得锁")
                 chat.sendMessage(content)
             }
         }
@@ -46,7 +46,7 @@ class ChatManager(
         withContext(chatScope.coroutineContext) {
             logE(TAG, "流式请求被调用")
             mutex.withLock {
-                logE(TAG, "流式请求取得信号量")
+                logE(TAG, "流式请求取得锁")
                 chat.sendMessageStream(content)
             }
         }
@@ -55,73 +55,3 @@ class ChatManager(
         chatScope.cancel()
     }
 }
-
-//
-///**
-// * 保证 chat 并发的绝对禁止
-// */
-//class ChatManager(
-//    private val generativeModel: GenerativeModel
-//) {
-//    private var chat = createNewChat()
-//
-//    private val chatScope = CoroutineScope(SupervisorJob())
-//    private val semaphore = Semaphore(1) // 信号量，控制并发
-//
-//    private var lastFlow: Flow<GenerateContentResponse>? = null // 保存最后一个流
-//    private var isLastFlowActive: Boolean = false // 标记上一个流是否活跃
-//
-//    val isActive: Boolean
-//        get() = isLastFlowActive
-//
-//    private fun createNewChat() = generativeModel.startChat(history = emptyList())
-//
-//    fun resetChat() {
-//        close()
-//        chat = createNewChat()
-//    }
-//
-//    suspend fun sendMsg(content: Content): GenerateContentResponse =
-//        withContext(chatScope.coroutineContext) {
-//            semaphore.acquire() // 等待信号量
-//            try {
-//                chat.sendMessage(content)
-//            } finally {
-//                semaphore.release() // 释放信号量
-//            }
-//        }
-//
-//    suspend fun sendMsgStream(content: Content): Flow<GenerateContentResponse> =
-//        withContext(chatScope.coroutineContext) {
-//            logE(TAG, "可能将被阻塞")
-//            // 检查上一个流是否活跃
-//            while (isLastFlowActive) {
-//                delay(30) // 等待上一个流完成
-//            }
-//
-//            semaphore.acquire() // 等待信号量
-//            logE(TAG, "结束阻塞")
-//            try {
-//                val flow = chat.sendMessageStream(content)
-//                lastFlow = flow
-//                isLastFlowActive = true
-//
-//                flow.onCompletion {
-//                    isLastFlowActive = false
-//                    semaphore.release() // 流结束后释放信号量
-//                }.catch { e ->
-//                    isLastFlowActive = false
-//                    semaphore.release()
-//                    throw e
-//                }
-//            } catch (e: Exception) {
-//                isLastFlowActive = false
-//                semaphore.release()
-//                throw e
-//            }
-//        }
-//
-//    fun close() {
-//        chatScope.cancel()
-//    }
-//}

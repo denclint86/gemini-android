@@ -1,4 +1,4 @@
-package com.tv.app.suspend
+package com.tv.app
 
 import android.content.Context
 import android.os.Build

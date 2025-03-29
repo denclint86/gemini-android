@@ -21,7 +21,11 @@ val GenerativeViewModelFactory = object : ViewModelProvider.Factory {
         extras: CreationExtras
     ): T {
         val config = generationConfig {
-            temperature = 0.7f
+            temperature = 0.3f       // 较低温度，输出更确定、更聪明
+            maxOutputTokens = 2048   // 允许更长的响应，提升上下文理解和推理能力
+            topP = 0.95f            // 核采样，保持连贯性
+            topK = 40               // 限制 token 选择范围，提升质量
+            candidateCount = 1      // 只返回一个最佳候选
         }
 
         return with(modelClass) {
