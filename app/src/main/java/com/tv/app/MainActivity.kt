@@ -17,6 +17,8 @@ import com.tv.app.chat.GenerativeViewModelFactory
 import com.tv.app.chat.mvi.ChatEffect
 import com.tv.app.chat.mvi.ChatIntent
 import com.tv.app.databinding.ActivityMainBinding
+import com.tv.app.func.FuncManager
+import com.tv.app.func.models.ScrollModel
 import com.tv.app.ui.ChatAdapter
 import com.zephyr.extension.ui.PreloadLayoutManager
 import com.zephyr.extension.widget.toast
@@ -50,8 +52,21 @@ class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
         rv.layoutManager = preloadLayoutManager
         (rv.itemAnimator as? SimpleItemAnimator)?.supportsChangeAnimations = false
 
-        val order = "帮我在谷歌商店安装王者荣耀"
+        val order = "测试滚动函数，进行一个上滑操作，不用预先获取视图"
         et.setText(order)
+
+        lifecycleScope.launch {
+            delay(10000)
+            FuncManager.executeFunction(
+                ScrollModel.name, mapOf(
+                    "startX" to "600",
+                    "startY" to "2000",
+                    "endX" to "600",
+                    "endY" to "500",
+                    "duration" to "800",
+                )
+            )
+        }
 
         btn.setOnClickListener {
             val text = et.text.toString()
@@ -80,7 +95,7 @@ class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
                         delay(100)
                         if (effect.shouldClear)
                             binding.et.setText("")
-                        binding.rv.smoothScrollToPosition(chatAdapter.itemCount - 1)
+//                        binding.rv.smoothScrollToPosition(chatAdapter.itemCount - 1)
                     }
 
                     is ChatEffect.Generating -> "请等待当前回答结束".toast()

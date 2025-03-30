@@ -4,8 +4,8 @@ import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.GestureDescription
 import android.graphics.Path
 import android.os.Bundle
-import android.os.Handler
 import android.view.accessibility.AccessibilityNodeInfo
+import com.zephyr.global_values.TAG
 import com.zephyr.log.logE
 
 const val CLS_VIEW_GROUP = "android.view.ViewGroup"
@@ -83,27 +83,25 @@ fun AccessibilityService.back() =
  * @param startTime 执行函数后多久后启动模拟手势
  * @param duration 模拟手势滑动的执行时间
  * @param callback 手势滑动结果回调
- * @param handler 指定模拟手势在指定的 [Handler] 上执行
  */
 fun AccessibilityService.scroll(
     startX: Float,
     startY: Float,
     endX: Float,
     endY: Float,
-    startTime: Long = 500L,
+    startTime: Long = 0L,
     duration: Long = 500L,
-    callback: AccessibilityService.GestureResultCallback? = null,
-    handler: Handler? = null
-) {
+    callback: AccessibilityService.GestureResultCallback? = null
+): Boolean {
     val path = Path()
     path.moveTo(startX, startY)
     path.lineTo(endX, endY)
-    logE("path", "startX${startX},startY$startY,endX$endX,endY$endY")
+    logE(TAG, "startX:${startX}, startY:$startY, endX:$endX, endY:$endY")
     val stroke = GestureDescription.StrokeDescription(path, startTime, duration)
     val gesture = GestureDescription.Builder()
         .addStroke(stroke)
         .build()
-    dispatchGesture(gesture, callback, handler)
+    return dispatchGesture(gesture, callback, null)
 }
 
 /**

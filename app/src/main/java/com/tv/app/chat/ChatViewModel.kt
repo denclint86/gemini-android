@@ -174,6 +174,7 @@ class ChatViewModel(
         }
 
         logI(TAG, "tools:\nhandled ${results.size} functions")
+        logI(TAG, "tools:\n$jsons")
 
         logE(TAG, "sleep")
         delay(400)

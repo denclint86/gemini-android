@@ -15,14 +15,14 @@ data object ToastModel : BaseFuncModel() {
     )
     override val requiredParameters: List<String> = listOf("msg")
     override suspend fun call(args: Map<String, Any?>): Map<String, Any?> {
-        val msg = args["msg"] as? String ?: return defaultMap("error", "incorrect function calling")
-        val duration = args["duration"].toString().toIntOrNull() ?: 2
+        val msg = args.readAsString("msg") ?: return errorFuncCallMap()
+        val duration = args.readAsString("duration")?.toIntOrNull() ?: 2
 
         try {
             runOnMain {
                 toast(msg, true, duration)
             }
-            return defaultMap("ok")
+            return okMap()
         } catch (t: Throwable) {
             return defaultMap("error", t.toLogString())
         }

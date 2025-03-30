@@ -10,6 +10,10 @@ import com.zephyr.extension.widget.setMargins
 import com.zephyr.vbclass.ui.ViewBindingListAdapter
 
 class ChatAdapter : ViewBindingListAdapter<ItemChatBinding, ChatMessage>(Callback()) {
+    companion object {
+        private const val HIDE_ENABLED = false
+    }
+
 
     override fun ItemChatBinding.onBindViewHolder(data: ChatMessage?, position: Int) {
         if (data == null) return
@@ -31,7 +35,7 @@ class ChatAdapter : ViewBindingListAdapter<ItemChatBinding, ChatMessage>(Callbac
         cv.setCardBackgroundColor(Color.parseColor(color))
 
         tv.text =
-            if (data.text.length > 200 && (data.role == Role.SYSTEM || data.role == Role.FUNC))
+            if (HIDE_ENABLED && data.text.length > 200 && (data.role == Role.SYSTEM || data.role == Role.FUNC))
                 data.text.take(200) + "......"
             else
                 data.text

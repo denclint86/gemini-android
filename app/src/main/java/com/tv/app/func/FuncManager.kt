@@ -2,10 +2,7 @@ package com.tv.app.func
 
 import com.google.gson.annotations.SerializedName
 import com.tv.app.func.models.BaseFuncModel
-import com.zephyr.global_values.TAG
-import com.zephyr.log.logE
 import com.zephyr.net.toJson
-import com.zephyr.net.toPrettyJson
 import kotlin.reflect.KClass
 
 /**
@@ -34,15 +31,6 @@ object FuncManager {
     suspend fun executeFunction(functionName: String, args: Map<String, String?>): String {
         val result =
             _functionMap[functionName]?.call(args) ?: Error(functionName)
-
-        logE(
-            TAG, "$functionName 执行结果:\n" + when (result) {
-                is Map<*, *> -> result.toPrettyJson()
-                is Error -> result.toPrettyJson()
-                else -> result.toString()
-            }
-        )
-
         return result.toJson()
     }
 

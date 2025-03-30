@@ -25,7 +25,8 @@
                 android:layout_height="wrap_content"
                 android:gravity="start|top"
                 android:padding="5dp"
-                android:textColor="#000000" />
+                android:textColor="#000000"
+                android:textIsSelectable="true" />
 
         </com.google.android.material.card.MaterialCardView>
 

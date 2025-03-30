@@ -23,9 +23,9 @@ data object ShellExecutorModel : BaseFuncModel() {
 
     override suspend fun call(args: Map<String, Any?>): Map<String, Any?> =
         withContext(Dispatchers.IO) {
-            val command = args["command"] as? String
-                ?: return@withContext defaultMap("error", "command parameter is required")
-            val timeout = args["timeout"]?.toString()?.toLongOrNull()
+            val command = args.readAsString("command")
+                ?: return@withContext errorFuncCallMap()
+            val timeout = args.readAsString("timeout")?.toLongOrNull()
 
             try {
                 // 使用 ShellManager 执行命令，并根据超时参数处理

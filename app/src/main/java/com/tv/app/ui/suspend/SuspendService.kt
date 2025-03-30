@@ -79,9 +79,13 @@ class SuspendService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        startForegroundService() // 在服务创建时启动前台服务
-        initMetrics()
-        initObserve()
+        try {
+            startForegroundService() // 在服务创建时启动前台服务
+            initMetrics()
+            initObserve()
+        } catch (e: Exception) {
+            e.logE(TAG)
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {

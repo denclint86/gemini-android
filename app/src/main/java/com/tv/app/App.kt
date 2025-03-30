@@ -35,6 +35,7 @@ class App : Application() {
         ShellExecutorModel.shellManager.executors.forEach { executor ->
             ProcessLifecycleOwner.get().lifecycleScope.launch {
                 runCatching {
+                    // 尝试获取 root 和 shizuku 权限
                     executor.exec("echo test")
                 }
             }
