@@ -25,7 +25,7 @@ const val CLS_IMAGE_BUTTON = "android.widget.ImageButton"
  * 模拟点击无障碍结点
  *
  * @return 若点击成功，返回 true ，否则返回 false
- * */
+ */
 fun AccessibilityNodeInfo.click() =
     performAction(AccessibilityNodeInfo.ACTION_CLICK)
 
@@ -33,7 +33,7 @@ fun AccessibilityNodeInfo.click() =
  * 模拟长按无障碍结点
  *
  * @return 若长按成功，返回 true ，否则返回 false
- * */
+ */
 fun AccessibilityNodeInfo.longClick() =
     performAction(AccessibilityNodeInfo.ACTION_LONG_CLICK)
 
@@ -41,7 +41,7 @@ fun AccessibilityNodeInfo.longClick() =
  * 调用无障碍节点对应 [android.view.View] 的 setText 函数
  *
  * @return 若设置成功，返回 true ，否则返回 false
- * */
+ */
 fun AccessibilityNodeInfo.text(text: String): Boolean {
     val arguments = Bundle()
     arguments.putCharSequence(
@@ -55,7 +55,7 @@ fun AccessibilityNodeInfo.text(text: String): Boolean {
  * 控制一个可以滑动的控件向上（或向左）滑动
  *
  * @return 若滑动成功，返回 true ，否则返回 false
- * */
+ */
 fun AccessibilityNodeInfo.scrollForward() =
     performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD)
 
@@ -63,13 +63,13 @@ fun AccessibilityNodeInfo.scrollForward() =
  * 控制一个可以滑动的控件向下（或向右）滑动
  *
  * @return 若滑动成功，返回 true ，否则返回 false
- * */
+ */
 fun AccessibilityNodeInfo.scrollBackward() =
     performAction(AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD)
 
 /**
  * 利用无障碍服务模拟返回按钮
- * */
+ */
 fun AccessibilityService.back() =
     performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK)
 
@@ -84,7 +84,7 @@ fun AccessibilityService.back() =
  * @param duration 模拟手势滑动的执行时间
  * @param callback 手势滑动结果回调
  * @param handler 指定模拟手势在指定的 [Handler] 上执行
- * */
+ */
 fun AccessibilityService.scroll(
     startX: Float,
     startY: Float,
@@ -114,7 +114,7 @@ fun AccessibilityService.scroll(
  * 如果需要寻找多个相同特征的结点，请使用 [findNodes] 函数
  *
  * @param match 指定的特征
- * */
+ */
 fun AccessibilityNodeInfo.findNodeOrNull(match: AccessibilityNodeInfo.() -> Boolean): AccessibilityNodeInfo? {
     // 若当前结点符合要求，则返回当前结点
     if (match()) return this
@@ -139,7 +139,7 @@ fun AccessibilityNodeInfo.findNodeOrNull(match: AccessibilityNodeInfo.() -> Bool
  * @param match 指定的特征
  *
  * @return 返回找到的所有结点，若没有，则返回一个空列表
- * */
+ */
 fun AccessibilityNodeInfo.findNodes(
     match: AccessibilityNodeInfo.() -> Boolean
 ): List<AccessibilityNodeInfo> =
@@ -165,7 +165,7 @@ private fun AccessibilityNodeInfo.findNodesInternal(
  * 注意只会返回找到的第一个结点
  *
  * @param match 指定的特征
- * */
+ */
 fun AccessibilityNodeInfo.findSuperNodeOrNull(match: AccessibilityNodeInfo.() -> Boolean): AccessibilityNodeInfo? {
     val sup = parent ?: return null
     return if (sup.match()) sup

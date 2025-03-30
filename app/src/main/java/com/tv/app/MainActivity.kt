@@ -50,7 +50,7 @@ class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
         rv.layoutManager = preloadLayoutManager
         (rv.itemAnimator as? SimpleItemAnimator)?.supportsChangeAnimations = false
 
-        val order = "帮我打开在谷歌商店安装多邻国"
+        val order = "帮我在谷歌商店安装王者荣耀"
         et.setText(order)
 
         btn.setOnClickListener {
@@ -95,7 +95,7 @@ class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
                 if (result.resultCode == RESULT_OK) {
                     result.data?.let {
-                        App.binder?.setupScreenCapture(result.resultCode, it)
+                        App.binder.get()?.setupScreenCapture(result.resultCode, it)
                     }
                     logE(TAG, "已授权屏幕获取")
                 } else {

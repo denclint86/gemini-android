@@ -10,8 +10,16 @@ import com.zephyr.extension.widget.toast
 import com.zephyr.global_values.TAG
 import com.zephyr.log.logD
 import com.zephyr.log.logE
+import java.lang.ref.WeakReference
 
 class MyAccessibilityService : AccessibilityService() {
+    companion object {
+        const val STRING_MAX_SIZE = 30
+
+        var instance: WeakReference<MyAccessibilityService> = WeakReference(null)
+            private set
+    }
+
     private var w = 0
     private var h = 0
 
@@ -31,9 +39,6 @@ class MyAccessibilityService : AccessibilityService() {
             try {
                 val nodeMap = createNodeMap(rootNodeInfo)
                 AccessibilityListManager.update(nodeMap)
-
-//                val nodeTree = createNodeTree(rootNodeInfo)
-//                AccessibilityTreeManager.updateNodeTree(nodeTree)
             } catch (e: Exception) {
                 e.logE(TAG)
             } finally {
@@ -52,8 +57,8 @@ class MyAccessibilityService : AccessibilityService() {
 
             if (!node.text.isNullOrEmpty() && !isViewFullyInvisible(rect)) {
                 var str = node.text.toString()
-                if (str.length > 20)
-                    str = str.take(20) + "..."
+                if (str.length > STRING_MAX_SIZE)
+                    str = str.take(STRING_MAX_SIZE) + "..."
 
                 nodeMap[count.toString()] = Node(
                     str,
@@ -81,52 +86,27 @@ class MyAccessibilityService : AccessibilityService() {
      */
     private fun isViewFullyInvisible(nodeRect: Rect): Boolean {
         // 判断矩形是否完全在屏幕外
-        return (nodeRect.right <= 0 ||
-                nodeRect.left >= w ||
-                nodeRect.bottom <= 0 ||
-                nodeRect.top >= h)
-    }
-
-//    @Deprecated("")
-//    private fun createNodeTree(rootNode: AccessibilityNodeInfo): List<Node> {
-//        val nodeTree = mutableListOf<Node>()
-//
-//        // 使用递归帮助器构建性能更好的树
-//        fun traverseNode(node: AccessibilityNodeInfo): Node? {
-//            val rect = Rect()
-//            node.getBoundsInScreen(rect)
-//
-//            // 对于空节点提前返回
-//            if (node.text.isNullOrEmpty()) return null
-//
-//            val childNodes = mutableListOf<Node>()
-//            for (i in 0 until node.childCount) {
-//                node.getChild(i)?.let { childNode ->
-//                    traverseNode(childNode)?.let { childNodes.add(it) }
-//                    childNode.recycle()
-//                }
-//            }
-//
-//            return Node(
-//                node.text?.toString()?.take(20),
-//                node.className?.toString(),
-//                rect.toNRect(),
-//                childNodes
-//            )
-//        }
-//
-//        traverseNode(rootNode)?.let { nodeTree.add(it) }
-//        return nodeTree
-//    }
-
-    override fun onInterrupt() {
-        logD(TAG, "无障碍服务中断")
-        "无障碍服务中断".toast()
+        return (nodeRect.right < 0 ||
+                nodeRect.left > w ||
+                nodeRect.bottom < 0 ||
+                nodeRect.top > h)
     }
 
     override fun onServiceConnected() {
         logD(TAG, "无障碍服务已连接")
         "无障碍服务已连接".toast()
+        instance = WeakReference(this)
+    }
+
+    override fun onUnbind(intent: Intent?): Boolean {
+        logD(TAG, "无障碍服务已解绑")
+        "无障碍服务已解绑".toast()
+        return super.onUnbind(intent)
+    }
+
+    override fun onInterrupt() {
+        logD(TAG, "无障碍服务中断")
+        "无障碍服务中断".toast()
     }
 
     override fun onDestroy() {
@@ -134,11 +114,5 @@ class MyAccessibilityService : AccessibilityService() {
         "无障碍服务已销毁".toast()
         AccessibilityListManager.clearListeners()
         super.onDestroy()
-    }
-
-    override fun onUnbind(intent: Intent?): Boolean {
-        logD(TAG, "无障碍服务已解绑")
-        "无障碍服务已解绑".toast()
-        return super.onUnbind(intent)
     }
 }

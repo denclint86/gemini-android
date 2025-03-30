@@ -7,7 +7,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 
 data object ShellExecutorModel : BaseFuncModel() {
-    override val name: String = "run_android_shell"
+    override val name: String = "run_shell_command"
     override val description: String =
         "Executes a shell command on a Android device with root privileges if available, otherwise runs as shizuku or user. return a json with code and output or error message."
     override val parameters: List<Schema<*>> = listOf(

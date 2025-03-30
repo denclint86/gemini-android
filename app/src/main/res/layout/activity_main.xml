@@ -8,13 +8,14 @@
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:padding="5dp">
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rv"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            app:layout_constraintHeight_percent="0.9"
+            app:layout_constraintBottom_toTopOf="@id/btn"
             app:layout_constraintTop_toTopOf="parent" />
 
         <EditText
@@ -23,20 +24,19 @@
             android:layout_height="0dp"
             android:hint="@string/hint"
             android:inputType="text"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintHeight_percent="0.1"
+            app:layout_constraintBottom_toBottomOf="@id/btn"
+            app:layout_constraintEnd_toStartOf="@id/btn"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintWidth_percent="0.8" />
+            app:layout_constraintTop_toTopOf="@id/btn" />
 
         <Button
             android:id="@+id/btn"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="7dp"
             android:text="@string/send"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHeight_percent="0.1"
-            app:layout_constraintWidth_percent="0.2" />
+            app:layout_constraintEnd_toEndOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

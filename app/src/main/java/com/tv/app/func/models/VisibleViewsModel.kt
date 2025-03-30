@@ -4,9 +4,9 @@ import com.google.ai.client.generativeai.type.Schema
 import com.tv.app.accessibility.AccessibilityListManager
 
 data object VisibleViewsModel : BaseFuncModel() {
-    override val name: String = "get_screen_views"
+    override val name: String = "get_screen_content"
     override val description: String =
-        "Get the current views info of the user's Screen and returns it as JSON. An image may be attached."
+        "Get the content of the screen as JSON with android rect. A screenshot may be attached."
     override val parameters: List<Schema<*>> = listOf(
         Schema.str("default", "Just simply pass in 0.")
     )

@@ -41,6 +41,8 @@ class ChatViewModel(
 ) : MVIViewModel<ChatIntent, ChatState, ChatEffect>(), ItemViewTouchListener.OnTouchEventListener {
     companion object {
         private const val ERROR_UI_MSG = "出错了，请重试"
+
+        private const val CHAT_TAG = "ChatTag" // 用于过滤日志
     }
 
     private val chatManager: ChatManager by lazy { ChatManager(generativeModel) }
@@ -55,12 +57,12 @@ class ChatViewModel(
                     SuspendLiveDataManager.suspendText.value = when {
                         last.role == Role.SYSTEM -> "未开始聊天"
                         last.role == Role.MODEL && last.text.isNotBlank() -> {
-                            App.binder?.setProgressBarVisibility(View.INVISIBLE)
+                            App.binder.get()?.setProgressBarVisibility(View.INVISIBLE)
                             last.text.take(4) + "..."
                         }
 
                         else -> {
-                            App.binder?.setProgressBarVisibility(View.VISIBLE)
+                            App.binder.get()?.setProgressBarVisibility(View.VISIBLE)
                             "正在生成"
                         }
                     }
@@ -162,7 +164,7 @@ class ChatViewModel(
         withContext(Dispatchers.IO) {
             funcCalls.forEach { (name, args) ->
                 val r = FuncManager.executeFunction(name, args)
-                jsons.append("$name: ${r.toPrettyJson()}\n")
+                jsons.append("$name($args): ${r.toPrettyJson()}\n")
                 results[name] = JSONObject(r)
             }
         }
@@ -224,6 +226,6 @@ class ChatViewModel(
     }
 
     private fun getScreenAsBitmap(): Bitmap? = runBlocking {
-        App.binder?.captureScreen()
+        App.binder.get()?.captureScreen()
     }
 }

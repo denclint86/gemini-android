@@ -29,12 +29,12 @@ PhoneBot利用Google的Gemini模型的能力，结合Android无障碍服务API�
 
 函数调用是本项目的核心，允许LLM执行预定义的操作：
 
-- **函数管理器**：统一管理所有可用功能函数
-- **基础函数模型**：定义函数调用的标准接口和规范
+- **函数管理器**：`FuncManager`统一管理所有可用功能函数
+- **基础函数模型**：`BaseFuncModel`定义函数调用的标准接口和规范
 - **功能实现**：
-  - 屏幕视图获取（get_screen_views）
-  - Shell命令执行（run_android_shell）
-  - Toast消息显示（send_android_toast）
+  - 屏幕视图获取（`VisibleViewsModel`）
+  - Shell命令执行（`ShellExecutorModel`）
+  - Toast消息显示（`ToastModel`）
 
 ### 无障碍服务实现
 
@@ -44,13 +44,21 @@ PhoneBot利用Google的Gemini模型的能力，结合Android无障碍服务API�
 - 提供界面元素的结构化描述
 - 支持基于无障碍服务的界面操作
 
+## Shizuku集成
+
+项目整合了Shizuku服务，提供了在非Root环境下执行特权命令的能力：
+
+- 支持通过ADB或Root方式启动Shizuku服务
+- 实现了Shizuku权限请求和管理逻辑
+- 利用Shizuku执行高权限Shell命令
+
 ## 开发自定义功能
 
 要添加新的函数调用功能，需要遵循以下步骤：
 
-1. 创建新的函数模型类，继承BaseFuncModel
+1. 创建新的函数模型类，继承`BaseFuncModel`
 2. 实现必要的抽象方法和属性
-3. 使用`data object`定义实现类，自动注册到FuncManager
+3. 使用`data object`定义实现类，自动注册到`FuncManager`
 4. 确保函数返回统一格式的Map类型，推荐使用`defaultMap`方法创建标准格式
 
 ## 项目依赖
@@ -67,12 +75,19 @@ PhoneBot利用Google的Gemini模型的能力，结合Android无障碍服务API�
   - log - 日志工具
   - extension - Kotlin扩展
 
+## 系统要求
+
+- Android 8.0 (API 26) 或更高版本
+- 安装Shizuku应用（用于执行特权命令）
+- Google Play Service（用于Gemini API访问）
+
 ## 当前状态与计划
 
 - ✅ 基础无障碍服务框架
 - ✅ 函数调用管理系统
 - ✅ 核心功能：屏幕分析、Shell执行、Toast显示
 - ✅ 基于Gemini的对话界面
+- ✅ Shizuku服务集成
 - 🔄 改进UI交互体验
 - 🔄 增强无障碍服务的操作能力
 - 🔄 添加更多实用的设备控制功能

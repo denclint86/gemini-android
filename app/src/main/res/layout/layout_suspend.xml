@@ -10,10 +10,9 @@
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:layout_width="35dp"
-        android:layout_height="35dp"
-        android:background="@drawable/circle_background"
-        android:clipChildren="false">
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:background="@drawable/circle_background">
 
         <ProgressBar
             android:id="@+id/progress_bar"
@@ -21,7 +20,6 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:indeterminateTint="#ffffff"
-            android:padding="5dp"
             android:visibility="invisible" />
 
         <TextView
@@ -31,7 +29,7 @@
             android:gravity="center"
             android:text="@{manager.suspendText}"
             android:textColor="#FFFFFF"
-            android:textSize="14sp"
+            android:textSize="10sp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
