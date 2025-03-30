@@ -33,20 +33,20 @@ class MyAccessibilityService : AccessibilityService() {
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         // 对于不相关的事件，提前返回
         when (event?.eventType) {
-            AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED -> {
-
-                // 使用 use() 确保资源正确管理
-                rootInActiveWindow?.let { rootNodeInfo ->
-                    try {
-                        val nodeMap = createNodeMap(rootNodeInfo)
-                        AccessibilityListManager.update(nodeMap)
-                    } catch (e: Exception) {
-                        e.logE(TAG)
-                    } finally {
-                        rootNodeInfo.recycle()
-                    }
-                }
-            }
+//            AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED -> {
+//
+//                // 使用 use() 确保资源正确管理
+//                rootInActiveWindow?.let { rootNodeInfo ->
+//                    try {
+//                        val nodeMap = createNodeMap(rootNodeInfo)
+//                        AccessibilityListManager.update(nodeMap)
+//                    } catch (e: Exception) {
+//                        e.logE(TAG)
+//                    } finally {
+//                        rootNodeInfo.recycle()
+//                    }
+//                }
+//            }
 
             AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> {
                 event.packageName?.toString()?.let { pkg ->
@@ -57,6 +57,18 @@ class MyAccessibilityService : AccessibilityService() {
             else -> return
         }
     }
+
+    fun getViewMap() =
+        rootInActiveWindow?.run {
+            try {
+                createNodeMap(this)
+            } catch (e: Exception) {
+                e.logE(TAG)
+                null
+            } finally {
+                recycle()
+            }
+        }
 
     private fun createNodeMap(rootNode: AccessibilityNodeInfo): Map<String, Node> {
         val nodeMap = mutableMapOf<String, Node>()
