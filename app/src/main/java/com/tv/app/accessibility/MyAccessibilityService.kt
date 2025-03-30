@@ -35,17 +35,29 @@ class MyAccessibilityService : AccessibilityService() {
         if (event?.eventType != AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED) return
 
         // 使用 use() 确保资源正确管理
-        rootInActiveWindow?.let { rootNodeInfo ->
+//        rootInActiveWindow?.let { rootNodeInfo ->
+//            try {
+//                val nodeMap = createNodeMap(rootNodeInfo)
+//                AccessibilityListManager.update(nodeMap)
+//            } catch (e: Exception) {
+//                e.logE(TAG)
+//            } finally {
+//                rootNodeInfo.recycle()
+//            }
+//        }
+    }
+
+    fun getViewMap() =
+        rootInActiveWindow?.run {
             try {
-                val nodeMap = createNodeMap(rootNodeInfo)
-                AccessibilityListManager.update(nodeMap)
+                createNodeMap(this)
             } catch (e: Exception) {
                 e.logE(TAG)
+                null
             } finally {
-                rootNodeInfo.recycle()
+                recycle()
             }
         }
-    }
 
     private fun createNodeMap(rootNode: AccessibilityNodeInfo): Map<String, Node> {
         val nodeMap = mutableMapOf<String, Node>()
@@ -55,7 +67,7 @@ class MyAccessibilityService : AccessibilityService() {
             val rect = Rect()
             node.getBoundsInScreen(rect)
 
-            if (!node.text.isNullOrEmpty() && !isViewFullyInvisible(rect)) {
+            if (!node.text.isNullOrEmpty()) {
                 var str = node.text.toString()
                 if (str.length > STRING_MAX_SIZE)
                     str = str.take(STRING_MAX_SIZE) + "..."
@@ -81,17 +93,6 @@ class MyAccessibilityService : AccessibilityService() {
         return nodeMap
     }
 
-    /**
-     * 判定一个 view 是否完全不可见，如果是，那么应该过滤
-     */
-    private fun isViewFullyInvisible(nodeRect: Rect): Boolean {
-        // 判断矩形是否完全在屏幕外
-        return (nodeRect.right < 0 ||
-                nodeRect.left > w ||
-                nodeRect.bottom < 0 ||
-                nodeRect.top > h)
-    }
-
     override fun onServiceConnected() {
         logD(TAG, "无障碍服务已连接")
         "无障碍服务已连接".toast()
@@ -112,7 +113,7 @@ class MyAccessibilityService : AccessibilityService() {
     override fun onDestroy() {
         logD(TAG, "无障碍服务已销毁")
         "无障碍服务已销毁".toast()
-        AccessibilityListManager.clearListeners()
+//        AccessibilityListManager.clearListeners()
         super.onDestroy()
     }
 }

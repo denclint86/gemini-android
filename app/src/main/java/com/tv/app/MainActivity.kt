@@ -18,16 +18,18 @@ import com.tv.app.chat.mvi.ChatEffect
 import com.tv.app.chat.mvi.ChatIntent
 import com.tv.app.databinding.ActivityMainBinding
 import com.tv.app.func.FuncManager
-import com.tv.app.func.models.ScrollModel
+import com.tv.app.func.models.VisibleViewsModel
 import com.tv.app.ui.ChatAdapter
 import com.zephyr.extension.ui.PreloadLayoutManager
 import com.zephyr.extension.widget.toast
 import com.zephyr.global_values.TAG
 import com.zephyr.log.logE
 import com.zephyr.vbclass.ViewBindingActivity
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import org.json.JSONObject
 
 class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
     private lateinit var viewModel: ChatViewModel
@@ -35,6 +37,27 @@ class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
     private lateinit var preloadLayoutManager: PreloadLayoutManager
 
     private lateinit var overlayPermissionLauncher: ActivityResultLauncher<Intent>
+
+    private fun testFunc() {
+        GlobalScope.launch {
+            delay(10000)
+            val r = FuncManager.executeFunction(
+//                ScrollModel.name, mapOf(
+//                    "startX" to "600",
+//                    "startY" to "2000",
+//                    "endX" to "600",
+//                    "endY" to "500",
+//                    "duration" to "800",
+//                )
+//                ClickModel.name, mapOf(
+//                    "x" to "600",
+//                    "y" to "2000"
+//                )
+                VisibleViewsModel.name, mapOf()
+            )
+            logE(TAG, JSONObject(r).toString(4))
+        }
+    }
 
     override fun ActivityMainBinding.initBinding() {
         enableEdgeToEdge()
@@ -48,25 +71,14 @@ class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
             GenerativeViewModelFactory
         )[ChatViewModel::class.java]
 
+//        testFunc()
+
         rv.adapter = chatAdapter
         rv.layoutManager = preloadLayoutManager
         (rv.itemAnimator as? SimpleItemAnimator)?.supportsChangeAnimations = false
 
-        val order = "测试滚动函数，进行一个上滑操作，不用预先获取视图"
+        val order = "在谷歌商店安装“微软必应搜索”"
         et.setText(order)
-
-        lifecycleScope.launch {
-            delay(10000)
-            FuncManager.executeFunction(
-                ScrollModel.name, mapOf(
-                    "startX" to "600",
-                    "startY" to "2000",
-                    "endX" to "600",
-                    "endY" to "500",
-                    "duration" to "800",
-                )
-            )
-        }
 
         btn.setOnClickListener {
             val text = et.text.toString()
@@ -95,7 +107,7 @@ class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
                         delay(100)
                         if (effect.shouldClear)
                             binding.et.setText("")
-//                        binding.rv.smoothScrollToPosition(chatAdapter.itemCount - 1)
+                        binding.rv.smoothScrollToPosition(chatAdapter.itemCount - 1)
                     }
 
                     is ChatEffect.Generating -> "请等待当前回答结束".toast()

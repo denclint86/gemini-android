@@ -1,7 +1,7 @@
 package com.tv.app.func.models
 
 import com.google.ai.client.generativeai.type.Schema
-import com.tv.app.accessibility.AccessibilityListManager
+import com.tv.app.accessibility.MyAccessibilityService
 
 
 data object VisibleViewsModel : BaseFuncModel() {
@@ -13,6 +13,7 @@ data object VisibleViewsModel : BaseFuncModel() {
     )
     override val requiredParameters: List<String> = listOf("default")
     override suspend fun call(args: Map<String, Any?>): Map<String, Any?> {
-        return AccessibilityListManager.nodeMap ?: accessibilityErrorMap()
+        val service = MyAccessibilityService.instance.get() ?: return accessibilityErrorMap()
+        return service.getViewMap() ?: accessibilityErrorMap()
     }
 }

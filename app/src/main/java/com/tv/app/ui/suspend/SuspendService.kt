@@ -134,7 +134,6 @@ class SuspendService : Service() {
 
     private fun initObserve() {
         SuspendLiveDataManager.isShowSuspendWindow.observe(alwaysActiveLifecycleOwner) { isShow ->
-            logE(TAG, "obser $isShow")
             if (isShow) {
                 showWindow()
             } else {

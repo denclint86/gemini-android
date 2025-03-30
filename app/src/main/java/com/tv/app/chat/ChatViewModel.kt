@@ -177,7 +177,7 @@ class ChatViewModel(
         logI(TAG, "tools:\n$jsons")
 
         logE(TAG, "sleep")
-        delay(400)
+        delay(1000)
 
         val responseMsg = modelMsg("", true)
         updateState {
