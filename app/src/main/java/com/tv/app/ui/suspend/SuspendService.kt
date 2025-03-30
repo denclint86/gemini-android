@@ -187,7 +187,7 @@ class SuspendService : Service() {
         isShowing = true
     }
 
-    private fun setupScreenCapture(resultCode: Int, data: Intent) {
+    private fun setupScreenCapture(resultCode: Int, data: Intent) = try {
         mediaProjection?.stop() // 清理旧实例
         mediaProjection = mediaProjectionManager?.getMediaProjection(resultCode, data)
         mediaProjection?.let {
@@ -204,6 +204,9 @@ class SuspendService : Service() {
                 imageReader?.surface, null, null
             )
         }
+    } catch (e: Exception) {
+        releaseMediaProjectionParams()
+        e.logE(TAG)
     }
 
     private suspend fun captureScreen(): Bitmap? = withContext(Dispatchers.IO) {
@@ -238,6 +241,9 @@ class SuspendService : Service() {
             this@SuspendService.setupScreenCapture(resultCode, data)
 
         suspend fun captureScreen(): Bitmap? = this@SuspendService.captureScreen()
+
+        fun isScreenCaptureEnabled() =
+            (virtualDisplay == null || imageReader == null)
 
         fun setProgressBarVisibility(visibility: Int) {
             runOnMain {

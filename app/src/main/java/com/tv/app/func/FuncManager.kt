@@ -2,6 +2,8 @@ package com.tv.app.func
 
 import com.google.gson.annotations.SerializedName
 import com.tv.app.func.models.BaseFuncModel
+import com.zephyr.global_values.TAG
+import com.zephyr.log.logE
 import com.zephyr.net.toJson
 import kotlin.reflect.KClass
 
@@ -19,6 +21,7 @@ object FuncManager {
         list.forEach { model ->
             _functionMap[model.name] = model
         }
+        logE(TAG, "已注册函数: ${functionMap.keys}")
     }
 
     fun getDeclarations() = _functionMap.values.map { it.getFuncDeclaration() }

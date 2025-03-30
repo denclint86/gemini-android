@@ -118,6 +118,7 @@ class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
     }
 
     private fun setUpScreenCapture() {
+        if (App.binder.get()?.isScreenCaptureEnabled() == true) return
         val screenCaptureLauncher =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
                 if (result.resultCode == RESULT_OK) {
