@@ -32,18 +32,29 @@ class MyAccessibilityService : AccessibilityService() {
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         // 对于不相关的事件，提前返回
-        if (event?.eventType != AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED) return
+        when (event?.eventType) {
+            AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED -> {
 
-        // 使用 use() 确保资源正确管理
-        rootInActiveWindow?.let { rootNodeInfo ->
-            try {
-                val nodeMap = createNodeMap(rootNodeInfo)
-                AccessibilityListManager.update(nodeMap)
-            } catch (e: Exception) {
-                e.logE(TAG)
-            } finally {
-                rootNodeInfo.recycle()
+                // 使用 use() 确保资源正确管理
+                rootInActiveWindow?.let { rootNodeInfo ->
+                    try {
+                        val nodeMap = createNodeMap(rootNodeInfo)
+                        AccessibilityListManager.update(nodeMap)
+                    } catch (e: Exception) {
+                        e.logE(TAG)
+                    } finally {
+                        rootNodeInfo.recycle()
+                    }
+                }
             }
+
+            AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> {
+                event.packageName?.toString()?.let { pkg ->
+                    ForegroundAppManager.update(pkg, this)
+                }
+            }
+
+            else -> return
         }
     }
 
