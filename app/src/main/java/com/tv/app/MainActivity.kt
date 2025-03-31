@@ -36,26 +36,12 @@ class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
 
     private lateinit var overlayPermissionLauncher: ActivityResultLauncher<Intent>
 
-    private fun testFunc() {
-        GlobalScope.launch {
-            delay(5000)
-            val r = FuncManager.executeFunction(
-//                ScrollModel.name, mapOf(
-//                    "startX" to "600",
-//                    "startY" to "2000",
-//                    "endX" to "600",
-//                    "endY" to "500",
-//                    "duration" to "800",
-//                )
-//                ClickModel.name, mapOf(
-//                    "x" to "600",
-//                    "y" to "2000"
-//                )
-//                SetTextModel.name, mapOf("text" to "你 a 😄")
-                VisibleViewsModel.name, mapOf()
-            )
-            logE(TAG, r)
-        }
+    private fun testFunc() = GlobalScope.launch {
+        delay(5000)
+        val r = FuncManager.executeFunction(
+            VisibleViewsModel.name, mapOf()
+        )
+        logE(TAG, r)
     }
 
     override fun ActivityMainBinding.initBinding() {
@@ -67,13 +53,14 @@ class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
         preloadLayoutManager = PreloadLayoutManager(this@MainActivity, RecyclerView.VERTICAL)
         viewModel = ViewModelProvider(this@MainActivity)[ChatViewModel::class.java]
 
-        testFunc()
+//        testFunc()
 
         rv.adapter = chatAdapter
         rv.layoutManager = preloadLayoutManager
         (rv.itemAnimator as? SimpleItemAnimator)?.supportsChangeAnimations = false
 
-        val order = "在谷歌商店安装“duolingo”"
+//        val order = "在谷歌商店安装“duolingo”"
+        val order = "你好吗"
         et.setText(order)
 
         btn.setOnClickListener {

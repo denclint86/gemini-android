@@ -53,7 +53,6 @@ class MyAccessibilityService : AccessibilityService() {
     fun getViewMap(): Map<String, Node>? {
         return rootInActiveWindow?.run {
             try {
-                nodeTracker.updateNodeMapping()
                 createNodeMap(this)
             } catch (e: Exception) {
                 e.logE(TAG)
@@ -78,6 +77,8 @@ class MyAccessibilityService : AccessibilityService() {
                 nodeMap[hash] = Node(
                     str,
                     node.className?.toString(),
+                    if (node.isEditable) true else null,
+                    if (node.isAccessibilityFocused) true else null,
                     rect.toNRect()
                 )
             }
@@ -85,11 +86,16 @@ class MyAccessibilityService : AccessibilityService() {
         return nodeMap
     }
 
-    fun getNodeByHash(hash: String): AccessibilityNodeInfo? {
+    suspend fun getNodeByHash(hash: String): AccessibilityNodeInfo? {
         return nodeTracker.findNodeByHash(hash)
     }
 
-    fun traverseNode(node: AccessibilityNodeInfo, action: (AccessibilityNodeInfo) -> Unit) {
+    fun traverseNode(
+        node: AccessibilityNodeInfo?,
+        shouldRecycle: Boolean = true,
+        action: (AccessibilityNodeInfo) -> Unit
+    ) {
+        if (node == null) return
         try {
             action(node)
         } catch (t: Throwable) {
@@ -98,8 +104,9 @@ class MyAccessibilityService : AccessibilityService() {
 
         for (i in 0 until node.childCount) {
             node.getChild(i)?.let { childNode ->
-                traverseNode(childNode, action)
-                childNode.recycle()
+                traverseNode(childNode, shouldRecycle, action)
+                if (shouldRecycle)
+                    childNode.recycle()
             }
         }
     }

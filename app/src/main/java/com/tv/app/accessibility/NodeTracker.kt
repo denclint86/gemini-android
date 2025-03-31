@@ -1,39 +1,42 @@
 package com.tv.app.accessibility
 
 import android.view.accessibility.AccessibilityNodeInfo
+import com.zephyr.global_values.TAG
+import com.zephyr.log.logE
+import kotlinx.coroutines.suspendCancellableCoroutine
 import java.util.zip.CRC32
+import kotlin.coroutines.resume
 
 class NodeTracker(var service: MyAccessibilityService) {
-    private val nodeHashMap = mutableMapOf<AccessibilityNodeInfo, String>()
-    private val hashToNodeMap = mutableMapOf<String, AccessibilityNodeInfo>()
 
-    fun updateNodeMapping() {
-        nodeHashMap.clear()
-        hashToNodeMap.clear()
-        service.traverseNode(service.rootInActiveWindow) { node ->
-            val hash = generateNodeHash(node)
-            hashToNodeMap[hash] = node
+    suspend fun findNodeByHash(hash: String): AccessibilityNodeInfo? {
+        val root = service.rootInActiveWindow ?: return null
+        try {
+            return suspendCancellableCoroutine { continuation ->
+                service.traverseNode(root) { node ->
+                    val currentHash = generateNodeHash(node)
+                    if (currentHash == hash) {
+                        if (!continuation.isCompleted)
+                            continuation.resume(AccessibilityNodeInfo.obtain(node))
+                        logE(TAG, "node 找到并返回, text: ${node.text.take(20)}")
+                    }
+                }
+
+                if (!continuation.isCompleted) // 上面的递归时同步的，所以可以
+                    continuation.resume(null)
+            }
+        } catch (t: Throwable) {
+            return null
+        } finally {
+            root.recycle()
         }
-    }
-
-    fun findNodeByHash(hash: String): AccessibilityNodeInfo? {
-        return hashToNodeMap[hash]
-    }
-
-    fun getNodeHashMap(): Map<String, AccessibilityNodeInfo> {
-        return hashToNodeMap.toMap()
     }
 
     fun generateNodeHash(node: AccessibilityNodeInfo): String {
-        if (node in nodeHashMap) {
-            return nodeHashMap[node]!!
-        }
         val parent = node.getParent()
         val parentHash = parent?.let { generateNodeHash(it) } ?: ""
         val properties = generateProperties(node, parentHash)
-        val hash = computeHash(properties)
-        nodeHashMap[node] = hash
-        return hash
+        return computeHash(properties)
     }
 
     private fun generateProperties(node: AccessibilityNodeInfo, parentHash: String?): String {
@@ -48,6 +51,25 @@ class NodeTracker(var service: MyAccessibilityService) {
     private fun computeHash(properties: String): String {
         val crc32 = CRC32()
         crc32.update(properties.toByteArray())
-        return crc32.value.toString(16).padStart(8, '0') // 8位十六进制
+        return crc32.value.toString(16).padStart(8, '0') // 8-digit hex
+    }
+
+    private fun traverseAndFindNode(
+        node: AccessibilityNodeInfo,
+        targetHash: String
+    ): AccessibilityNodeInfo? {
+        val currentHash = generateNodeHash(node)
+        if (currentHash == targetHash) {
+            return node
+        }
+
+        for (i in 0 until node.childCount) {
+            val child = node.getChild(i) ?: continue
+            val result = traverseAndFindNode(child, targetHash)
+            if (result != null) {
+                return result
+            }
+        }
+        return null
     }
 }

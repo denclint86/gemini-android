@@ -29,7 +29,7 @@ object FuncManager {
     /**
      * 统一函数调用入口
      *
-     * 保证输出一个 json 对象
+     * 保证输出一个 json 字串
      */
     suspend fun executeFunction(functionName: String, args: Map<String, String?>): String {
         val result =

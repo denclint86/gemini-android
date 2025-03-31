@@ -41,6 +41,10 @@ sealed class BaseFuncModel {
     )
 
     fun getFuncInstance() = ::call
+    
+    protected fun Throwable.toSimpleLog(): String {
+        return "message: ${message}\ncause: $cause"
+    }
 
     protected fun <T> Map<T, Any?>.readAsString(key: T): String? = (get(key) as? String)
 }

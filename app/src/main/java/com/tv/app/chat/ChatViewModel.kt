@@ -68,7 +68,7 @@ class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>(),
     }
 
     override fun onClick() {
-        sendIntent(ChatIntent.Chat("[application-reminding]:call functions if needed"))
+//        sendIntent(ChatIntent.Chat("[application-reminding]:call functions if needed"))
     }
 
     override fun onDrag() {
@@ -129,7 +129,7 @@ class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>(),
             updateState {
                 modifyMsg(modelMsg.id) {
                     copy(
-                        text = (text + "\n" + ERROR_UI_MSG).trim(),
+                        text = (this.text + "\n" + ERROR_UI_MSG).trim(),
                         isPending = false
                     )
                 }
