@@ -2,7 +2,6 @@ package com.tv.app.func.models
 
 import com.google.ai.client.generativeai.type.Schema
 import com.tv.app.getScreenSize
-import com.zephyr.log.toLogString
 
 data object ScreenMetricsModel : BaseFuncModel() {
     override val name: String = "get_screen_metrics"
@@ -22,7 +21,7 @@ data object ScreenMetricsModel : BaseFuncModel() {
                 "height" to h
             )
         } catch (t: Throwable) {
-            return defaultMap("error", t.toLogString())
+            return defaultMap("error", t.toSimpleLog())
         }
     }
 }

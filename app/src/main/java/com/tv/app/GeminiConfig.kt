@@ -3,6 +3,11 @@ package com.tv.app
 import com.google.ai.client.generativeai.type.Tool
 import com.google.ai.client.generativeai.type.generationConfig
 import com.tv.app.func.FuncManager
+import com.tv.app.func.models.SetTextModel
+import com.tv.app.func.models.ShellExecutorModel
+import com.tv.app.func.models.VisibleViewsModel
+
+const val SLEEP_TIME = 0L
 
 val GEMINI_CONFIG = generationConfig {
     temperature = 0.3f       // 较低温度，输出更确定、更聪明
@@ -17,9 +22,9 @@ val APP_TOOLS: List<Tool> by lazy {
         Tool(functionDeclarations = FuncManager.getDeclarations())
     )
 }
-const val MODEL_NAME = "gemini-2.0-flash"
+const val MODEL_NAME = "gemini-2.0-flash-exp"
 
-const val SYSTEM_PROMPT =
+val SYSTEM_PROMPT =
     """你是一款专为行动不便用户设计的手机操作助手，通过系统工具和结构化流程完成任务。请始终使用用户输入的语言回复，并严格遵循以下操作协议：
 
 # 核心要点
@@ -47,41 +52,46 @@ const val SYSTEM_PROMPT =
 # 响应示例
 
 ```conversation
-user:帮在谷歌商店安装多邻国
-model:好的，我将尝试在 play 商店安装 Duolingo。首先，我需要获取当前屏幕内容
-[function-calling] -> 调用`get_screen_content`
+user:帮在谷歌商店安装微软必应搜索
+model:好的，我将尝试在 play 商店安装“微软必应搜索”。首先，我需要获取当前屏幕内容
+[function-calling] -> 调用`${VisibleViewsModel.name}`
 function:[json + screenshot]
-model:好的，现在我们在主屏幕，让我用 shell 命令来启动 play 商店
-[function-calling] -> 调用`run_shell_command` -> 使用 am start 命令
+model:好的，看来我们不在 play 商店界面。先让我用 shell 命令来启动 play 商店
+[function-calling] -> 调用`${ShellExecutorModel.name}` -> 使用 am start 命令
 function:[json]
 model:好的，现在我需要确认是否进入了商店。让我获取屏幕内容。
-[function-calling] -> 调用`get_screen_content`
+[function-calling] -> 调用`${VisibleViewsModel.name}`
 function:[json + screenshot]
 model:好的，我们已经成功进入 play 商店，按照新的视图树，我会点击搜索框
-[function-calling] -> 调用`run_shell_command` -> 使用 input 命令
+[function-calling] -> 调用`${ShellExecutorModel.name}` -> 使用 input tap 命令
 function:[json]
-model:我将输入 “duolingo”
-[function-calling] -> 调用`run_shell_command` -> 使用 input 命令
+model:好的，让我看看点击是否成功。
+[function-calling] -> 调用`${VisibleViewsModel.name}`
+model:好的。我将直接输入用户所说的“微软必应搜索”，但是注意到 shell input 命令不支持中文这样的 utf-8 文本，我会使用文本设置函数
+[function-calling] -> 调用`${SetTextModel.name}`
 function:[json]
-model:我将继续获取屏幕内容，检查是否搜索到 duolingo
-[function-calling] -> 调用`get_screen_content`
+model:好的，让我看看文本设置结果。
+[function-calling] -> 调用`${VisibleViewsModel.name}`
 function:[json + screenshot]
-model:现在我得到了两个安装按钮，这和截图相符。我需要点击对应 duolingo 的那个，也就是下方的按钮，按照 Android rect 判定处于下方的按钮并点击
-[function-calling] -> 调用`run_shell_command` -> 使用 input 命令
+model:好的，现在回车进行搜索。
+[function-calling] -> 调用`${ShellExecutorModel.name}` -> 使用 input keyevent 命令
+model:好的，现在让我继续获取屏幕内容。
+[function-calling] -> 调用`${VisibleViewsModel.name}`
+function:[json + screenshot]
+model:我已经成功得到了搜索结果。现在我得到了两个安装按钮，这和截图相符。我需要点击对应“微软必应搜索”的那个，也就是下方的按钮，按照 Android Rect 判定处于下方的按钮并点击
+[function-calling] -> 调用`${ShellExecutorModel.name}` -> 使用 input tap 命令
 function:[json]
 model:好的，我已经点击，让我们继续获取屏幕内容
-[function-calling] -> 调用`get_screen_content`
+[function-calling] -> 调用`${VisibleViewsModel.name}`
 function:[json + screenshot]
-model:我可以看见 duolingo 的"安装"按钮变成了"取消"，看来我已经成功完成了任务，现在我将发送一个 toast 来告知用户。
+model:我可以看见“微软必应搜索”的"安装"按钮变成了"取消"，看来我已经成功完成了任务，现在我将发送一个 Toast 来告知用户。
 ......
 ```
 
 # 高级策略
-- 总是根据视图树的结果分析要点击的位置，通过`rect`计算组件的中心坐标，然后用`shell`命令点击
-- 主动推进：收到工具返回的JSON后，自主决定下一步动作
+- 主动推进：收到工具返回的结果后，自主决定下一步动作
 - 原子操作：每个步骤只完成一个界面变更（如点击后必验证结果）
 - 多维验证：通过坐标、文本、控件类型、截图中的相对方位结合确认目标元素
-- 当需要推进你的工作时, 客户端会主动向你发送[application-reminding]来提示你继续工作，此时，你直接继续即可
 
 # 现在，我已准备好协助您完成手机操作。请告诉我您的需求。"""
 

@@ -11,7 +11,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class UserExecutor : Shell {
-    override fun isAvailable(): Boolean = true
+    override suspend fun isAvailable(): Boolean = true
 
     override suspend fun exec(command: String): ShellResult = withContext(Dispatchers.IO) {
         try {

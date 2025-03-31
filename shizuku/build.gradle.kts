@@ -41,5 +41,7 @@ dependencies {
     implementation(libs.zephyr.log)
     implementation(libs.zephyr.extension)
 
+    implementation(libs.androidx.lifecycle.livedata.core.ktx)
+
     implementation(libs.shizuku.api)
 }

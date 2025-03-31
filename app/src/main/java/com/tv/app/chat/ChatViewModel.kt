@@ -3,11 +3,12 @@ package com.tv.app.chat
 import android.graphics.Bitmap
 import android.view.View
 import androidx.lifecycle.viewModelScope
-import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.FunctionResponsePart
 import com.google.ai.client.generativeai.type.GenerateContentResponse
 import com.tv.app.App
+import com.tv.app.SLEEP_TIME
 import com.tv.app.SYSTEM_PROMPT
+import com.tv.app.addReturnChars
 import com.tv.app.chat.mvi.ChatEffect
 import com.tv.app.chat.mvi.ChatIntent
 import com.tv.app.chat.mvi.ChatState
@@ -23,7 +24,6 @@ import com.tv.app.ui.suspend.SuspendLiveDataManager
 import com.zephyr.extension.mvi.MVIViewModel
 import com.zephyr.global_values.TAG
 import com.zephyr.log.logE
-import com.zephyr.log.logI
 import com.zephyr.net.toPrettyJson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -36,16 +36,12 @@ import org.json.JSONObject
 
 var windowListener: ItemViewTouchListener.OnTouchEventListener? = null
 
-class ChatViewModel(
-    private val generativeModel: GenerativeModel
-) : MVIViewModel<ChatIntent, ChatState, ChatEffect>(), ItemViewTouchListener.OnTouchEventListener {
+class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>(),
+    ItemViewTouchListener.OnTouchEventListener {
     companion object {
         private const val ERROR_UI_MSG = "出错了，请重试"
-
         private const val CHAT_TAG = "ChatTag" // 用于过滤日志
     }
-
-    private val chatManager: ChatManager by lazy { ChatManager(generativeModel) }
 
     init {
         windowListener = this
@@ -99,18 +95,27 @@ class ChatViewModel(
         )
     )
 
+    /**
+     * 对话日志
+     */
+    private fun logC(string: String, cut: Boolean = true) =
+        logE(
+            CHAT_TAG,
+            if (cut) string.addReturnChars(40) else string
+        )
+
     private fun resetChat() {
-        chatManager.resetChat()
+        ChatManager.resetChat()
     }
 
     private fun chat(text: String) = viewModelScope.launch(Dispatchers.IO) {
-        if (chatManager.isActive()) {
+        if (ChatManager.isActive()) {
             sendEffect(ChatEffect.Generating)
             return@launch
         }
         sendEffect(ChatEffect.ChatSent(true))
 
-        logI(TAG, "user:\n$text")
+        logC("user:\n$text")
         val userMessage = userMsg(text, false)
         updateState { modifyList { add(userMessage) } }
 
@@ -118,15 +123,15 @@ class ChatViewModel(
         updateState { modifyList { add(modelMsg) } }
 
         try {
-            processResponse(chatManager.sendMsg(userContent { text(text) }), modelMsg)
+            processResponse(ChatManager.sendMsg(userContent { text(text) }), modelMsg)
         } catch (t: Throwable) {
             t.logE(TAG)
             updateState {
-                modifyList {
-                    if (last().role == Role.USER)
-                        add(modelMsg(ERROR_UI_MSG))
-                    else
-                        last().text = (last().text + "\n$ERROR_UI_MSG").trim()
+                modifyMsg(modelMsg.id) {
+                    copy(
+                        text = (text + "\n" + ERROR_UI_MSG).trim(),
+                        isPending = false
+                    )
                 }
             }
         }
@@ -146,12 +151,12 @@ class ChatViewModel(
             modifyMsg(modelMsg.id) { copy(text = responseText, isPending = false) }
         }
 
-        logI(TAG, "llm:\n$responseText")
+        logC("llm:\n$responseText")
         if (funcCalls.isNotEmpty()) {
-            logI(TAG, "tools:\nabout to call ${funcCalls.size} functions")
+            logC("tools:\nabout to call ${funcCalls.size} functions")
             handleFunctionCalls(funcCalls)
         } else {
-            logI(TAG, "tools:\nno function was called")
+            logC("tools:\nno function was called")
         }
     }
 
@@ -173,11 +178,11 @@ class ChatViewModel(
             modifyList { add(funcMsg(jsons.toString(), false)) }
         }
 
-        logI(TAG, "tools:\nhandled ${results.size} functions")
-        logI(TAG, "tools:\n$jsons")
+        logC("tools:\nhandled ${results.size} functions")
+        logC("tools:\n$jsons", false)
 
         logE(TAG, "sleep")
-        delay(1000)
+        delay(SLEEP_TIME)
 
         val responseMsg = modelMsg("", true)
         updateState {
@@ -187,7 +192,7 @@ class ChatViewModel(
         sendEffect(ChatEffect.ChatSent(false))
 
         val funcResponse = try {
-            chatManager.sendMsg(
+            ChatManager.sendMsg(
                 funcContent {
                     funcCalls.forEach { pair ->
                         val name = pair.first
@@ -205,7 +210,12 @@ class ChatViewModel(
         } catch (t: Throwable) {
             t.logE(TAG)
             updateState {
-                modifyMsg(responseMsg.id) { copy(text = (text + "\n" + ERROR_UI_MSG).trim()) }
+                modifyMsg(responseMsg.id) {
+                    copy(
+                        text = (text + "\n" + ERROR_UI_MSG).trim(),
+                        isPending = false
+                    )
+                }
             }
             return
         }
@@ -218,7 +228,7 @@ class ChatViewModel(
         }
 
         if (funcResponseText.isNotEmpty()) {
-            logI(TAG, "llm:\n$funcResponseText")
+            logC("llm:\n$funcResponseText")
         }
 
         if (newFuncCalls.isNotEmpty()) {

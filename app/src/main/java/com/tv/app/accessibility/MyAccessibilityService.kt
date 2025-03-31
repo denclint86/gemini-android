@@ -22,6 +22,7 @@ class MyAccessibilityService : AccessibilityService() {
 
     private var w = 0
     private var h = 0
+    private lateinit var nodeTracker: NodeTracker
 
     init {
         getScreenSize().apply {
@@ -30,24 +31,15 @@ class MyAccessibilityService : AccessibilityService() {
         }
     }
 
-    override fun onAccessibilityEvent(event: AccessibilityEvent?) {
-        // 对于不相关的事件，提前返回
-        when (event?.eventType) {
-//            AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED -> {
-//
-//                // 使用 use() 确保资源正确管理
-//                rootInActiveWindow?.let { rootNodeInfo ->
-//                    try {
-//                        val nodeMap = createNodeMap(rootNodeInfo)
-//                        AccessibilityListManager.update(nodeMap)
-//                    } catch (e: Exception) {
-//                        e.logE(TAG)
-//                    } finally {
-//                        rootNodeInfo.recycle()
-//                    }
-//                }
-//            }
+    override fun onServiceConnected() {
+        logD(TAG, "无障碍服务已连接")
+        "无障碍服务已连接".toast()
+        instance = WeakReference(this)
+        nodeTracker = NodeTracker(this)
+    }
 
+    override fun onAccessibilityEvent(event: AccessibilityEvent?) {
+        when (event?.eventType) {
             AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> {
                 event.packageName?.toString()?.let { pkg ->
                     ForegroundAppManager.update(pkg, this)
@@ -58,9 +50,10 @@ class MyAccessibilityService : AccessibilityService() {
         }
     }
 
-    fun getViewMap() =
-        rootInActiveWindow?.run {
+    fun getViewMap(): Map<String, Node>? {
+        return rootInActiveWindow?.run {
             try {
+                nodeTracker.updateNodeMapping()
                 createNodeMap(this)
             } catch (e: Exception) {
                 e.logE(TAG)
@@ -69,45 +62,46 @@ class MyAccessibilityService : AccessibilityService() {
                 recycle()
             }
         }
+    }
 
     private fun createNodeMap(rootNode: AccessibilityNodeInfo): Map<String, Node> {
         val nodeMap = mutableMapOf<String, Node>()
-        var count = 0
-
-        fun traverseNode(node: AccessibilityNodeInfo) {
+        traverseNode(rootNode) { node ->
             val rect = Rect()
             node.getBoundsInScreen(rect)
 
             if (!node.text.isNullOrEmpty()) {
+                val hash = nodeTracker.generateNodeHash(node)
                 var str = node.text.toString()
                 if (str.length > STRING_MAX_SIZE)
                     str = str.take(STRING_MAX_SIZE) + "..."
-
-                nodeMap[count.toString()] = Node(
+                nodeMap[hash] = Node(
                     str,
                     node.className?.toString(),
                     rect.toNRect()
                 )
-                count++
-            }
-
-            // 递归遍历子节点
-            for (i in 0 until node.childCount) {
-                node.getChild(i)?.let { childNode ->
-                    traverseNode(childNode)
-                    childNode.recycle()
-                }
             }
         }
-
-        traverseNode(rootNode)
         return nodeMap
     }
 
-    override fun onServiceConnected() {
-        logD(TAG, "无障碍服务已连接")
-        "无障碍服务已连接".toast()
-        instance = WeakReference(this)
+    fun getNodeByHash(hash: String): AccessibilityNodeInfo? {
+        return nodeTracker.findNodeByHash(hash)
+    }
+
+    fun traverseNode(node: AccessibilityNodeInfo, action: (AccessibilityNodeInfo) -> Unit) {
+        try {
+            action(node)
+        } catch (t: Throwable) {
+            t.logE(TAG)
+        }
+
+        for (i in 0 until node.childCount) {
+            node.getChild(i)?.let { childNode ->
+                traverseNode(childNode, action)
+                childNode.recycle()
+            }
+        }
     }
 
     override fun onUnbind(intent: Intent?): Boolean {
@@ -124,7 +118,6 @@ class MyAccessibilityService : AccessibilityService() {
     override fun onDestroy() {
         logD(TAG, "无障碍服务已销毁")
         "无障碍服务已销毁".toast()
-//        AccessibilityListManager.clearListeners()
         super.onDestroy()
     }
 }

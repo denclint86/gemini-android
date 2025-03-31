@@ -13,7 +13,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.SimpleItemAnimator
 import com.tv.app.chat.ChatViewModel
-import com.tv.app.chat.GenerativeViewModelFactory
 import com.tv.app.chat.mvi.ChatEffect
 import com.tv.app.chat.mvi.ChatIntent
 import com.tv.app.databinding.ActivityMainBinding
@@ -29,7 +28,6 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import org.json.JSONObject
 
 class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
     private lateinit var viewModel: ChatViewModel
@@ -40,7 +38,7 @@ class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
 
     private fun testFunc() {
         GlobalScope.launch {
-            delay(10000)
+            delay(5000)
             val r = FuncManager.executeFunction(
 //                ScrollModel.name, mapOf(
 //                    "startX" to "600",
@@ -53,9 +51,10 @@ class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
 //                    "x" to "600",
 //                    "y" to "2000"
 //                )
+//                SetTextModel.name, mapOf("text" to "你 a 😄")
                 VisibleViewsModel.name, mapOf()
             )
-            logE(TAG, JSONObject(r).toString(4))
+            logE(TAG, r)
         }
     }
 
@@ -66,18 +65,15 @@ class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
 
         chatAdapter = ChatAdapter()
         preloadLayoutManager = PreloadLayoutManager(this@MainActivity, RecyclerView.VERTICAL)
-        viewModel = ViewModelProvider(
-            this@MainActivity,
-            GenerativeViewModelFactory
-        )[ChatViewModel::class.java]
+        viewModel = ViewModelProvider(this@MainActivity)[ChatViewModel::class.java]
 
-//        testFunc()
+        testFunc()
 
         rv.adapter = chatAdapter
         rv.layoutManager = preloadLayoutManager
         (rv.itemAnimator as? SimpleItemAnimator)?.supportsChangeAnimations = false
 
-        val order = "在谷歌商店安装“微软必应搜索”"
+        val order = "在谷歌商店安装“duolingo”"
         et.setText(order)
 
         btn.setOnClickListener {

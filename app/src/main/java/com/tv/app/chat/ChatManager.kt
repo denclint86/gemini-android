@@ -4,6 +4,7 @@ package com.tv.app.chat
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.Content
 import com.google.ai.client.generativeai.type.GenerateContentResponse
+import com.tv.app.ApiProvider
 import com.zephyr.global_values.TAG
 import com.zephyr.log.logE
 import kotlinx.coroutines.CoroutineScope
@@ -15,20 +16,31 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
-class ChatManager(
-    private val generativeModel: GenerativeModel
-) {
-    private var chat = createNewChat()
+/**
+ * 依赖 api provider 实现循环切换 apikey
+ */
+object ChatManager {
+    private var history = mutableListOf<Content>()
+
+    private var chat = newChat()
     private val chatScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-    private val mutex = Mutex() // 使用 Mutex 替代 Semaphore
+    private val mutex = Mutex()
 
-    fun getHistory() = chat.history
+    private val generativeModel: GenerativeModel
+        get() = ApiProvider.createModel()
 
-    private fun createNewChat() = generativeModel.startChat(history = emptyList())
+    private fun newChat(history: MutableList<Content> = mutableListOf()) =
+        generativeModel.startChat(history = history)
+
+    private fun switchApikey() {
+        history = chat.history
+        chat = generativeModel.startChat(history)
+    }
 
     fun resetChat() {
         close()
-        chat = createNewChat()
+        chat = newChat()
+        history.clear()
     }
 
     fun isActive(): Boolean = mutex.isLocked
@@ -38,6 +50,7 @@ class ChatManager(
             logE(TAG, "普通请求被调用")
             mutex.withLock {
                 logE(TAG, "普通请求取得锁")
+                switchApikey()
                 chat.sendMessage(content)
             }
         }
@@ -47,11 +60,13 @@ class ChatManager(
             logE(TAG, "流式请求被调用")
             mutex.withLock {
                 logE(TAG, "流式请求取得锁")
+                switchApikey()
                 chat.sendMessageStream(content)
             }
         }
 
     private fun close() {
         chatScope.cancel()
+        history.clear()
     }
 }

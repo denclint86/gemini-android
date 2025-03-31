@@ -1,7 +1,7 @@
 package com.tv.shizuku
 
 
-fun String.feedbackStr() = "[logcat]: $this"
+fun String.feedback() = "[logcat]: $this"
 
 fun Throwable.feedback(): String {
     return "[logcat]: message: ${message}\ncause: $cause"

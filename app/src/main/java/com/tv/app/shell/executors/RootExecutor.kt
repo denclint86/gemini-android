@@ -9,12 +9,25 @@ import com.zephyr.log.logE
 import com.zephyr.log.toLogString
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.util.concurrent.TimeUnit
 
 class RootExecutor : Shell {
-    override fun isAvailable(): Boolean {
+    companion object {
+        const val TEST_TIMEOUT = 5000L
+    }
+
+    override suspend fun isAvailable(): Boolean {
         return try {
-            val process = Runtime.getRuntime().exec("su -c echo test")
-            process.waitFor() == 0
+            val process = withContext(Dispatchers.IO) {
+                Runtime.getRuntime().exec("su -c echo test")
+            }
+            val output = withContext(Dispatchers.IO) {
+                process.inputStream.bufferedReader().use { it.readText() }
+            }
+            val exitCode = withContext(Dispatchers.IO) {
+                process.waitFor(TEST_TIMEOUT, TimeUnit.MILLISECONDS) // Add timeout
+            }
+            exitCode && process.exitValue() == 0 && output.trim() == "test"
         } catch (e: Exception) {
             logE(TAG, "Root 不可用:\n${e.toLogString()}")
             false

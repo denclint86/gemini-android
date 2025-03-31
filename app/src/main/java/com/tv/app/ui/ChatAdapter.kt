@@ -11,7 +11,7 @@ import com.zephyr.vbclass.ui.ViewBindingListAdapter
 
 class ChatAdapter : ViewBindingListAdapter<ItemChatBinding, ChatMessage>(Callback()) {
     companion object {
-        private const val HIDE_ENABLED = false
+        private const val HIDE_ENABLED = true
     }
 
 
