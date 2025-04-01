@@ -1,5 +1,9 @@
 package com.tv.app.accessibility
 
+import com.zephyr.global_values.TAG
+import com.zephyr.log.logE
+import com.zephyr.net.toPrettyJson
+
 /**
  * 用于管理界面的可见视图
  */
@@ -12,12 +16,12 @@ object AccessibilityListManager {
     val isAvailable: Boolean
         get() = nodeMap?.isNotEmpty() == true
 
-//    init {
-//        addOnUpdateListener { list ->
-//            val json = list.toPrettyJson()
-//            logE(TAG, "\n\n$json\n\n")
-//        }
-//    }
+    init {
+        addOnUpdateListener { list ->
+            val json = list.toPrettyJson()
+            logE(TAG, "\n\n$json\n\n")
+        }
+    }
 
     fun update(nodeMap: Map<String, Node>?) {
         if (nodeMap == this.nodeMap) return

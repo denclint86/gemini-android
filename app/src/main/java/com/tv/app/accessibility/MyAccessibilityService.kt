@@ -18,6 +18,15 @@ class MyAccessibilityService : AccessibilityService() {
 
         var instance: WeakReference<MyAccessibilityService> = WeakReference(null)
             private set
+
+        val SAVE_LIST = setOf(
+            "button",
+            "textview",
+            "edittext",
+            "imageview",
+            "checkbox",
+            "webview",
+        )
     }
 
     private var w = 0
@@ -40,6 +49,9 @@ class MyAccessibilityService : AccessibilityService() {
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         when (event?.eventType) {
+//            AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED ->
+            //                AccessibilityListManager.update(getViewMap())
+
             AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> {
                 event.packageName?.toString()?.let { pkg ->
                     ForegroundAppManager.update(pkg, this)
@@ -69,11 +81,15 @@ class MyAccessibilityService : AccessibilityService() {
             val rect = Rect()
             node.getBoundsInScreen(rect)
 
-            if (!node.text.isNullOrEmpty()) {
+            if (node.className.contains(SAVE_LIST)) {
                 val hash = nodeTracker.generateNodeHash(node)
-                var str = node.text.toString()
-                if (str.length > STRING_MAX_SIZE)
-                    str = str.take(STRING_MAX_SIZE) + "..."
+                var str = node.text?.toString()
+
+                str?.let {
+                    if (it.length > STRING_MAX_SIZE)
+                        str = it.take(STRING_MAX_SIZE) + "..."
+                }
+
                 nodeMap[hash] = Node(
                     str,
                     node.className?.toString(),
@@ -108,6 +124,14 @@ class MyAccessibilityService : AccessibilityService() {
                 if (shouldRecycle)
                     childNode.recycle()
             }
+        }
+    }
+
+    private fun CharSequence?.contains(set: Set<String>): Boolean {
+        if (this == null) return false
+
+        return set.any { value ->
+            this.contains(value, ignoreCase = true)
         }
     }
 

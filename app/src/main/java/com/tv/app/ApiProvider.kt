@@ -1,26 +1,38 @@
 package com.tv.app
 
+import androidx.datastore.preferences.core.intPreferencesKey
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.content
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import com.zephyr.datastore.getPreference
+import com.zephyr.datastore.putPreference
 import com.zephyr.global_values.TAG
 import com.zephyr.global_values.globalContext
 import com.zephyr.log.logE
+import kotlinx.coroutines.runBlocking
 import java.io.InputStream
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicInteger
 
 object ApiProvider {
+    private val indexPref = intPreferencesKey("pref_index")
+
     private val apiKeys: List<String> by lazy { loadApiKeys().toList() }
-    private val currentIndex = AtomicInteger(0)
+    private var currentIndex: AtomicInteger
     private val switchTimestamps = ConcurrentLinkedQueue<Long>()
+
+    init {
+        runBlocking {
+            currentIndex = AtomicInteger(getPreference(indexPref, 0))
+        }
+    }
 
     /**
      * 请求一次换一个，以避免被谷歌限速
      * 使用 AtomicInteger 无锁操作，适合低并发场景
      */
-    private fun getNextKey(): String {
+    private suspend fun getNextKey(): String {
         if (apiKeys.isEmpty()) {
             throw IllegalStateException("没有设置 key")
         }
@@ -30,12 +42,13 @@ object ApiProvider {
         return apiKeys[index].also {
             val currentTime = System.currentTimeMillis()
             switchTimestamps.add(currentTime)
+            putPreference(indexPref, index)
             logE(TAG, "api-key switched to index: $index (${it.takeLast(5)})")
             logE(TAG, "api-key request rate: ${getSwitchRatePerMinute()}")
         }
     }
 
-    fun createModel() =
+    suspend fun createModel() =
         GenerativeModel(
             modelName = MODEL_NAME,
             apiKey = getNextKey(),
