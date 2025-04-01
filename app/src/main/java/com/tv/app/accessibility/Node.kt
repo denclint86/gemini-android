@@ -4,7 +4,7 @@ import android.graphics.Rect
 import com.google.gson.annotations.SerializedName
 
 data class Node(
-    @SerializedName("text") val text: String,
+    @SerializedName("text") val text: String?,
     @SerializedName("class") val className: String?,
     @SerializedName("is_editable") val isEditable: Boolean?,
     @SerializedName("is_accessibility_focused") val isAccessibilityFocused: Boolean?,

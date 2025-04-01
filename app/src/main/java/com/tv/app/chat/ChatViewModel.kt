@@ -85,7 +85,10 @@ class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>(),
     override fun handleIntent(intent: ChatIntent) {
         when (intent) {
             is ChatIntent.Chat -> chat(intent.text)
-            ChatIntent.ResetChat -> resetChat()
+            ChatIntent.ResetChat ->
+                viewModelScope.launch {
+                    resetChat()
+                }
         }
     }
 
@@ -104,7 +107,7 @@ class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>(),
             if (cut) string.addReturnChars(40) else string
         )
 
-    private fun resetChat() {
+    private suspend fun resetChat() {
         ChatManager.resetChat()
     }
 
@@ -129,7 +132,7 @@ class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>(),
             updateState {
                 modifyMsg(modelMsg.id) {
                     copy(
-                        text = (this.text + "\n" + ERROR_UI_MSG).trim(),
+                        text = (this.text + "\n" + ERROR_UI_MSG + "\n" + t.message).trim(),
                         isPending = false
                     )
                 }
@@ -212,7 +215,7 @@ class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>(),
             updateState {
                 modifyMsg(responseMsg.id) {
                     copy(
-                        text = (text + "\n" + ERROR_UI_MSG).trim(),
+                        text = (text + "\n" + ERROR_UI_MSG + "\n" + t.message).trim(),
                         isPending = false
                     )
                 }

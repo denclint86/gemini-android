@@ -60,7 +60,7 @@ class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
         (rv.itemAnimator as? SimpleItemAnimator)?.supportsChangeAnimations = false
 
 //        val order = "在谷歌商店安装“duolingo”"
-        val order = "你好吗"
+        val order = "在spotify播放the weeknd的after hours"
         et.setText(order)
 
         btn.setOnClickListener {

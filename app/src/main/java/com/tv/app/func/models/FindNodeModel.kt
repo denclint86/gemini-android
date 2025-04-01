@@ -29,7 +29,10 @@ data object FindNodeModel : BaseFuncModel() {
                     "'${Action.SET_TEXT.v}', '${Action.FOCUS.v}', " +
                     "'${Action.CLEAR_FOCUS.v}'. Note: focus means the focus of android accessibility service."
         ),
-        Schema.str("text", "Optional. Text to set, only available for 'set text' action"),
+        Schema.str(
+            "text",
+            "Optional. Text to set, only available for 'set text' action and the node's isEditable is true"
+        ),
     )
     override val requiredParameters: List<String> = listOf("hash", "action")
 

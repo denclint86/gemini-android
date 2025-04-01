@@ -1,7 +1,6 @@
 package com.tv.app.chat
 
 
-import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.Content
 import com.google.ai.client.generativeai.type.GenerateContentResponse
 import com.tv.app.ApiProvider
@@ -12,6 +11,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -22,22 +22,21 @@ import kotlinx.coroutines.withContext
 object ChatManager {
     private var history = mutableListOf<Content>()
 
-    private var chat = newChat()
+    private var chat = runBlocking { newChat() }
     private val chatScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val mutex = Mutex()
 
-    private val generativeModel: GenerativeModel
-        get() = ApiProvider.createModel()
+    private suspend fun newModel() = ApiProvider.createModel()
 
-    private fun newChat(history: MutableList<Content> = mutableListOf()) =
-        generativeModel.startChat(history = history)
+    private suspend fun newChat(history: MutableList<Content> = mutableListOf()) =
+        newModel().startChat(history = history)
 
-    private fun switchApikey() {
+    private suspend fun switchApikey() {
         history = chat.history
-        chat = generativeModel.startChat(history)
+        chat = newModel().startChat(history)
     }
 
-    fun resetChat() {
+    suspend fun resetChat() {
         close()
         chat = newChat()
         history.clear()
