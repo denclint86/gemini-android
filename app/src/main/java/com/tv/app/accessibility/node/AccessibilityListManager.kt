@@ -1,4 +1,4 @@
-package com.tv.app.accessibility
+package com.tv.app.accessibility.node
 
 import com.zephyr.global_values.TAG
 import com.zephyr.log.logE
@@ -24,8 +24,8 @@ object AccessibilityListManager {
     }
 
     fun update(nodeMap: Map<String, Node>?) {
-        if (nodeMap == this.nodeMap) return
-        this.nodeMap = nodeMap
+        if (nodeMap == AccessibilityListManager.nodeMap) return
+        AccessibilityListManager.nodeMap = nodeMap
         listeners.forEach { listener -> listener.invoke(nodeMap) }
     }
 

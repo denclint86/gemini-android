@@ -1,6 +1,7 @@
-package com.tv.app.accessibility
+package com.tv.app.accessibility.node
 
 import android.view.accessibility.AccessibilityNodeInfo
+import com.tv.app.accessibility.MyAccessibilityService
 import com.zephyr.global_values.TAG
 import com.zephyr.log.logE
 import kotlinx.coroutines.suspendCancellableCoroutine

@@ -3,7 +3,7 @@ package com.tv.app.chat
 
 import com.google.ai.client.generativeai.type.Content
 import com.google.ai.client.generativeai.type.GenerateContentResponse
-import com.tv.app.ApiProvider
+import com.tv.app.ApiModelProvider
 import com.zephyr.global_values.TAG
 import com.zephyr.log.logE
 import kotlinx.coroutines.CoroutineScope
@@ -26,7 +26,7 @@ object ChatManager {
     private val chatScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val mutex = Mutex()
 
-    private suspend fun newModel() = ApiProvider.createModel()
+    private suspend fun newModel() = ApiModelProvider.createModel()
 
     private suspend fun newChat(history: MutableList<Content> = mutableListOf()) =
         newModel().startChat(history = history)

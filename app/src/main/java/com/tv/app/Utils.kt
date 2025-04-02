@@ -1,10 +1,8 @@
 package com.tv.app
 
-import android.app.AppOpsManager
-import android.app.usage.UsageStatsManager
-import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.PixelFormat
@@ -13,16 +11,16 @@ import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import android.util.DisplayMetrics
-import android.util.Log
 import android.view.Gravity
 import android.view.WindowManager
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
-import com.zephyr.extension.widget.toast
-import com.zephyr.global_values.TAG
+import com.tv.app.func.models.ShellExecutorModel
 import com.zephyr.global_values.globalContext
 import com.zephyr.log.logE
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 val alwaysActiveLifecycleOwner = object : LifecycleOwner {
     private val lifecycleRegistry = LifecycleRegistry(this).apply {
@@ -140,135 +138,114 @@ fun getScreenSize(): Pair<Int, Int> {
 }
 
 /**
- * 获取手机所有应用列表，需要在主线程外调用
- * 调用前先检查权限
+ * 获取手机所有已安装应用列表，需要在主线程外调用
  *
- * @param context 一般是Fragment或者Activity的context
- * @return 返回Map<应用包名，应用名(一般是Manifest的label)>
+ * @return Set<Array<String>>，如果获取失败返回空 Set （这样字少一点）
  */
-fun getAllInstalledApps(
-    context: Context,
-    isPermission: Boolean
-): Map<String, String>? {
-    if (isPermission) {
-        val packageManager = context.packageManager //获取已安装应用列表
-        val apps =
-            packageManager.getInstalledApplications(PackageManager.GET_META_DATA) //每个ApplicationInfo对象代表一个应用
+// 权限问题
+//fun getAllInstalledApps(): Set<Array<String>> {
+//    return try {
+//        val packageManager = globalContext!!.packageManager
+//        val apps = packageManager.getInstalledApplications(PackageManager.GET_META_DATA)
+//        val appMap = mutableSetOf<Array<String>>()
+//
+//        for (app in apps) {
+//            val appName = packageManager.getApplicationLabel(app).toString()
+//            val packageName = app.packageName
+//            appMap.add(arrayOf(appName, packageName))
+//        }
+//        appMap
+//    } catch (e: Exception) {
+//        logE("getAllInstalledApps", e.toString())
+//        setOf()
+//    }
+//}
 
-        val appMap = mutableMapOf<String, String>()
 
-        for (app in apps) {
-            val appName = packageManager.getApplicationLabel(app).toString()
-            val packageName = app.packageName
-            appMap[packageName] = appName
+enum class AppType(val v: String) {
+    ALL("all"),        // 所有应用
+    SYSTEM("system"),     // 系统应用
+    USER("user")        // 用户安装的应用
+}
+
+// 获取应用列表的函数
+suspend fun getAllInstalledApps(appType: AppType): Set<Array<String>> {
+    return withContext(Dispatchers.IO) {
+        val packageManager = globalContext?.packageManager ?: return@withContext setOf()
+        val appSet = mutableSetOf<Array<String>>()
+
+        // 使用 ShellExecutorModel 执行 pm list packages 命令
+        val command = "pm list packages"
+        val result = ShellExecutorModel.call(
+            mapOf(
+                "command" to command,
+                "timeout" to 5000L
+            )
+        )
+
+        val output = result["output"] as? String
+
+        if (output.isNullOrEmpty()) {
+            logE("getAllInstalledApps", "Shell command failed: $result")
+            return@withContext setOf()
         }
 
-        return appMap
-    } else {
-        "未获取到权限".toast(true)
-        return null
+        // 解析 shell 输出，提取包名
+        val packageNames = output.lines()
+            .filter { it.startsWith("package:") }
+            .map { it.removePrefix("package:") }
+
+        // 通过 PackageManager 获取应用信息并筛选
+        for (packageName in packageNames) {
+            try {
+                val appInfo = packageManager.getApplicationInfo(packageName, 0)
+                val appName = packageManager.getApplicationLabel(appInfo).toString()
+
+                // 根据 appType 筛选
+                val isSystemApp = (appInfo.flags and ApplicationInfo.FLAG_SYSTEM) != 0
+                when (appType) {
+                    AppType.ALL -> appSet.add(arrayOf(appName, packageName))
+                    AppType.SYSTEM -> if (isSystemApp) appSet.add(arrayOf(appName, packageName))
+                    AppType.USER -> if (!isSystemApp) appSet.add(arrayOf(appName, packageName))
+                }
+            } catch (e: PackageManager.NameNotFoundException) {
+                logE("getAllInstalledApps", "App not found: $packageName")
+            }
+        }
+        appSet
     }
 }
 
 /**
- * 获取前台应用信息，返回 Pair<包名, 应用名>
- * 如果失败，返回 null
- * 需要权限PACKAGE_USAGE_STATS
- * @param context 一般是Fragment或者Activity的context
- * @return 返回Pair<应用包名，应用名(一般是Manifest的label)>
- */
-private fun getForegroundAppInfo(
-    context: Context,
-    isPermission: Boolean
-): Pair<String, String>? {
-    if (isPermission) {
-        //获取前台应用的包名
-        val packageName = getForegroundPackageName(context) ?: return null
-
-        //通过包名获取应用名称
-        val packageManager = context.packageManager
-        return try {
-            //try-catch是捕获找不到packageName的异常
-            val applicationInfo = packageManager.getApplicationInfo(packageName, 0)
-            val appName = packageManager.getApplicationLabel(applicationInfo).toString()
-            Pair(packageName, appName)
-        } catch (e: PackageManager.NameNotFoundException) {
-            e.logE(context.TAG)
-            // 如果应用不存在（如系统进程），返回包名 + "未知"
-            Pair(packageName, "未知")
-        }
-    } else {
-        logE(context.TAG, "未获取权限PACKAGE_USAGE_STATS")
-        "未获取权限".toast()
-        return null
-    }
-}
-
-/**
- * 获取前台应用的包名（内部方法）
+ * 跳转到无障碍服务设置页面
  *
- */
-private fun getForegroundPackageName(context: Context): String? {
-    val usageStatsManager =
-        context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
-    val currentTime = System.currentTimeMillis()
-    val stats = usageStatsManager.queryUsageStats(
-        UsageStatsManager.INTERVAL_DAILY,
-        currentTime - 1000 * 60, // 查询最近 60 秒
-        currentTime
-    )
-
-    var foregroundPackage: String? = null
-    var lastTimeUsed = 0L
-
-    stats?.forEach { usageStats ->
-        if (usageStats.lastTimeUsed > lastTimeUsed) {
-            lastTimeUsed = usageStats.lastTimeUsed
-            foregroundPackage = usageStats.packageName
-        }
-    }
-    return foregroundPackage
-}
-
-/**
- * 检查权限的开启（用于获取前台应用）
- */
-fun checkUsageStatsPermission(context: Context): Boolean {
-    val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
-    val mode = appOps.checkOpNoThrow(
-        AppOpsManager.OPSTR_GET_USAGE_STATS,
-        android.os.Process.myUid(),
-        context.packageName
-    )
-    return mode == AppOpsManager.MODE_ALLOWED
-}
-
-/**
- * 跳转到无障碍服务页
- */
-fun gotoAccessibilitySettings(context: Context) = gotoSystemSettings(
-    context,
-    Settings.ACTION_ACCESSIBILITY_SETTINGS
-)
-
-/**
- * 跳转到“使用情况访问权限”页
- * 这是获取前台应用需要的权限
- */
-fun gotoUsageStatsSettings(context: Context) = gotoSystemSettings(
-    context,
-    Settings.ACTION_USAGE_ACCESS_SETTINGS
-)
-
-/**
- * 跳转到系统设置页
  * @param context Context
- * @param settingsAction 要跳转的设置页Action，例如：
- *                      - Settings.ACTION_USAGE_ACCESS_SETTINGS（使用情况访问权限）
- *                      - Settings.ACTION_APPLICATION_DETAILS_SETTINGS（应用详情页）
- *                      - Settings.ACTION_ACCESSIBILITY_SETTINGS（无障碍设置）
- * @param packageName 可选参数，用于需要传递包名的设置页（如应用详情页）
- * @return Boolean 是否成功跳转
+ * @return 是否成功跳转
+ */
+fun gotoAccessibilitySettings(context: Context): Boolean {
+    return gotoSystemSettings(context, Settings.ACTION_ACCESSIBILITY_SETTINGS)
+}
+
+/**
+ * 跳转到“使用情况访问权限”设置页面（可选保留，用于其他功能）
+ *
+ * @param context Context
+ * @return 是否成功跳转
+ */
+fun gotoUsageStatsSettings(context: Context): Boolean {
+    return gotoSystemSettings(context, Settings.ACTION_USAGE_ACCESS_SETTINGS)
+}
+
+/**
+ * 跳转到指定系统设置页面
+ *
+ * @param context Context
+ * @param settingsAction 设置页面的 Action，例如：
+ *   - Settings.ACTION_ACCESSIBILITY_SETTINGS（无障碍设置）
+ *   - Settings.ACTION_USAGE_ACCESS_SETTINGS（使用情况访问权限）
+ *   - Settings.ACTION_APPLICATION_DETAILS_SETTINGS（应用详情）
+ * @param packageName 可选，用于需要包名的设置页面（如应用详情）
+ * @return 是否成功跳转
  */
 fun gotoSystemSettings(
     context: Context,
@@ -277,45 +254,33 @@ fun gotoSystemSettings(
 ): Boolean {
     return try {
         val intent = Intent(settingsAction).apply {
-            // 处理需要包名的场景（如应用详情页）
             if (packageName != null) {
                 data = Uri.fromParts("package", packageName, null)
             }
-            // 添加Flag确保能正常跳转
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-
-            // 针对部分国产ROM的特殊处理
+            // 小米设备特殊处理
             if (Build.MANUFACTURER.equals("xiaomi", ignoreCase = true)) {
-                // 小米手机可能需要特殊处理
                 putExtra("package_name", packageName ?: context.packageName)
             }
         }
 
-        // 检查是否有Activity能处理这个Intent
         if (intent.resolveActivity(context.packageManager) != null) {
             context.startActivity(intent)
             true
         } else {
-            // 没有对应的Activity，尝试跳转到通用设置页
             fallbackToGeneralSettings(context)
         }
-    } catch (e: ActivityNotFoundException) {
-        // 捕获Activity不存在的异常
-        Log.e("gotoSystemSettings", "Settings activity not found: ${e.message}")
-        fallbackToGeneralSettings(context)
-    } catch (e: SecurityException) {
-        // 捕获权限异常（某些ROM可能限制）
-        Log.e("gotoSystemSettings", "Security exception: ${e.message}")
-        fallbackToGeneralSettings(context)
     } catch (e: Exception) {
-        // 捕获其他所有异常
-        Log.e("gotoSystemSettings", "Unexpected error: ${e.message}")
-        false
+        logE("gotoSystemSettings", e.toString())
+        fallbackToGeneralSettings(context)
     }
 }
 
 /**
- * 备用方案：跳转到通用设置页
+ * 备用方案：跳转到通用设置页面
+ *
+ * @param context Context
+ * @return 是否成功跳转
  */
 private fun fallbackToGeneralSettings(context: Context): Boolean {
     return try {
@@ -325,7 +290,7 @@ private fun fallbackToGeneralSettings(context: Context): Boolean {
         context.startActivity(intent)
         true
     } catch (e: Exception) {
-        e.logE(context.TAG)
+        logE("fallbackToGeneralSettings", e.toString())
         false
     }
 }

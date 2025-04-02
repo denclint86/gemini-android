@@ -7,7 +7,7 @@ import com.tv.app.accessibility.MyAccessibilityService
 data object VisibleViewsModel : BaseFuncModel() {
     override val name: String = "get_screen_content"
     override val description: String =
-        "Get the content of the screen as JSON with android rect. A screenshot may be attached."
+        "Get the content of the screen as JSON with android rect and a screenshot image. Note: the image is not guaranteed to be included."
     override val parameters: List<Schema<*>> = listOf(
         Schema.str("default", "Just simply pass in 0.")
     )

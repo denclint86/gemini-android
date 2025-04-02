@@ -26,12 +26,13 @@ val APP_TOOLS: List<Tool> by lazy {
 val MODEL_NAME = Model.GEMINI_2_0_FLASH_EXP.value
 
 enum class Model(val value: String) {
-    GEMINI_2_5_PRO_EXP("gemini-2.5-pro-exp-03-25"),
+    GEMINI_2_5_PRO_EXP("gemini-2.5-pro-exp-03-25"), // 不支持函数
     GEMINI_2_0_FLASH_THINKING_EXP("gemini-2.0-flash-thinking-exp-01-21"), // 不支持函数
     GEMINI_2_0_FLASH_EXP("gemini-2.0-flash-exp"),
     GEMINI_2_0_FLASH("gemini-2.0-flash"),
 }
 
+// val SYSTEM_PROMPT = ""
 val SYSTEM_PROMPT =
     """你是一款专为行动不便用户设计的手机操作助手，通过系统工具和结构化流程完成任务。请始终使用用户输入的语言回复，并严格遵循以下操作协议：
 

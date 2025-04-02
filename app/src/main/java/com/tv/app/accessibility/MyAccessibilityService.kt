@@ -5,6 +5,10 @@ import android.content.Intent
 import android.graphics.Rect
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
+import com.tv.app.accessibility.foreground.ForegroundAppManager
+import com.tv.app.accessibility.node.Node
+import com.tv.app.accessibility.node.NodeTracker
+import com.tv.app.accessibility.node.toNRect
 import com.tv.app.getScreenSize
 import com.zephyr.extension.widget.toast
 import com.zephyr.global_values.TAG
@@ -54,7 +58,7 @@ class MyAccessibilityService : AccessibilityService() {
 
             AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> {
                 event.packageName?.toString()?.let { pkg ->
-                    ForegroundAppManager.update(pkg, this)
+                    ForegroundAppManager.update(pkg)
                 }
             }
 

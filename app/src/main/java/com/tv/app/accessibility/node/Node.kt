@@ -1,4 +1,4 @@
-package com.tv.app.accessibility
+package com.tv.app.accessibility.node
 
 import android.graphics.Rect
 import com.google.gson.annotations.SerializedName

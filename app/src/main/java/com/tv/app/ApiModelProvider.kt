@@ -15,7 +15,7 @@ import java.io.InputStream
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicInteger
 
-object ApiProvider {
+object ApiModelProvider {
     private val indexPref = intPreferencesKey("pref_index")
 
     private val apiKeys: List<String> by lazy { loadApiKeys().toList() }
