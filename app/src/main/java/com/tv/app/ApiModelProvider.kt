@@ -54,7 +54,11 @@ object ApiModelProvider {
             apiKey = getNextKey(),
             systemInstruction = content { text(SYSTEM_PROMPT) },
             tools = APP_TOOLS,
-            generationConfig = GEMINI_CONFIG
+            generationConfig = GEMINI_CONFIG,
+//            safetySettings = null,
+//            requestOptions = RequestOptions(),
+            frequencyPenalty = 0.3F,
+//            presencePenalty =
         )
 
     fun getCount(): Int = apiKeys.size

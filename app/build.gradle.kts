@@ -23,7 +23,8 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -41,11 +42,12 @@ android {
 
 dependencies {
     implementation(project(":shizuku"))
+    implementation(project(":genai"))
     implementation(libs.shizuku.provider)
 
     implementation(libs.androidx.datastore)
 
-    implementation(libs.generativeai)
+//    implementation(libs.generativeai)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.runtime)
 

@@ -17,8 +17,9 @@ PhoneBot利用Google的Gemini模型的能力，结合Android无障碍服务API�
 - 获取当前屏幕视图元素信息
 - 查找和操作特定界面节点
 - 获取屏幕尺寸和指标信息
-- 支持滚动操作
+- 支持滚动和点击操作
 - 追踪前台应用变化
+- 获取应用列表和前台应用信息
 - 自动循环切换`api-key`以避免请求限制
 
 ## 技术实现
@@ -49,11 +50,13 @@ PhoneBot利用Google的Gemini模型的能力，结合Android无障碍服务API�
 - **基础函数模型**：`BaseFuncModel`定义函数调用的标准接口和规范
 - **功能实现**：
   - 屏幕视图获取（`VisibleViewsModel`）
-  - `Shell`命令执行（`Shell`ExecutorModel`）
+  - `Shell`命令执行（`ShellExecutorModel`）
   - Toast消息显示（`ToastModel`）
   - 屏幕节点查找（`FindNodeModel`）
   - 屏幕尺寸获取（`ScreenMetricsModel`）
   - 界面滚动操作（`ScrollModel`）
+  - 获取应用列表（`GetAppListModel`）
+  - 获取前台应用信息（`GetForegroundAppInfoModel`）
 
 ### 无障碍服务实现
 
@@ -63,7 +66,7 @@ PhoneBot利用Google的Gemini模型的能力，结合Android无障碍服务API�
 - 提供界面元素的结构化描述
 - 支持基于无障碍服务的界面操作
 - 通过`AccessibilityServiceHelper`提供统一的操作接口
-- 使用`NodeTracker`追踪和管理界面节点
+- 使用`AccessibilityNodeInfo`进行节点查找和操作
 - 通过`ForegroundAppManager`监控前台应用变化
 
 ## `Shell`执行系统
@@ -71,7 +74,7 @@ PhoneBot利用Google的Gemini模型的能力，结合Android无障碍服务API�
 项目实现了一个灵活的`Shell`命令执行系统：
 
 - 支持三种执行方式：普通用户权限、Root权限和`Shizuku`权限
-- 使用策略模式实现不同执行器：`UserExecutor`、`RootExecutor`和`Shizuku`Executor`
+- 使用策略模式实现不同执行器：`UserExecutor`、`RootExecutor`和`ShizukuExecutor`
 - 通过`ShellManager`提供统一的`Shell`命令执行入口
 - 返回标准化的`ShellResult`结果
 
@@ -126,8 +129,10 @@ PhoneBot利用Google的Gemini模型的能力，结合Android无障碍服务API�
 - ✅ 优化界面节点查找算法
 - ✅ 改进UI交互体验
 - ✅ 增强无障碍服务的元素操作能力
-- 🔄 添加手势控制和模拟点击功能
-- ✅ 支持更复杂的多轮对话场景
+- ✅ 基本的点击操作功能
+- 🔄 完善手势控制（如复杂的多指操作和自定义手势）
+- ✅ 支持基本的多轮对话场景
 - 🔄 添加本地模型集成选项
 - 🔄 改进对话历史管理
 - 🔄 支持自定义LLM换源
+- 🔄 支持更全面的应用内Action调用
