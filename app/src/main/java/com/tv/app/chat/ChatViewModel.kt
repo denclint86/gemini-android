@@ -166,11 +166,12 @@ class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>(),
     /**
      * 调用本地函数，统一将结果发送给大模型
      */
-    private suspend fun handleFunctionCalls(funcCalls: List<Pair<String, Map<String, String?>>>) {
+    private suspend fun handleFunctionCalls(funcCalls: List<Pair<String, Map<String, String?>?>>) {
         val jsons = StringBuilder()
         val results = mutableMapOf<String, JSONObject>()
         withContext(Dispatchers.IO) {
             funcCalls.forEach { (name, args) ->
+                if (args == null) return@forEach
                 val r = FuncManager.executeFunction(name, args)
                 jsons.append("$name($args): ${r.toPrettyJson()}\n")
                 results[name] = JSONObject(r)

@@ -57,7 +57,7 @@ object ApiModelProvider {
             generationConfig = GEMINI_CONFIG,
 //            safetySettings = null,
 //            requestOptions = RequestOptions(),
-            frequencyPenalty = 0.3F,
+            frequencyPenalty = 0.5F,
 //            presencePenalty =
         )
 

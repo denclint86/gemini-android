@@ -36,4 +36,3 @@ dependencyResolutionManagement {
 rootProject.name = "phone-bot"
 include(":app")
 include(":shizuku")
-include(":genai")

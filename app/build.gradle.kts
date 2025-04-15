@@ -42,7 +42,12 @@ android {
 
 dependencies {
     implementation(project(":shizuku"))
-    implementation(project(":genai"))
+//    implementation(project(":generativeai"))
+
+    implementation("com.github.denclint86:generative-ai-android-main:v1.0")
+//    implementation(files("libs/common.aar")) // 先添加被依赖项
+//    implementation(files("libs/genai.aar")) // 再添加主模块
+
     implementation(libs.shizuku.provider)
 
     implementation(libs.androidx.datastore)
