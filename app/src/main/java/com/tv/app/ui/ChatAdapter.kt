@@ -5,8 +5,6 @@ import androidx.recyclerview.widget.DiffUtil
 import com.tv.app.chat.Role
 import com.tv.app.chat.mvi.bean.ChatMessage
 import com.tv.app.databinding.ItemChatBinding
-import com.zephyr.extension.screen.getStatusBarHeight
-import com.zephyr.extension.widget.setMargins
 import com.zephyr.vbclass.ui.ViewBindingListAdapter
 
 class ChatAdapter : ViewBindingListAdapter<ItemChatBinding, ChatMessage>(Callback()) {
@@ -17,13 +15,6 @@ class ChatAdapter : ViewBindingListAdapter<ItemChatBinding, ChatMessage>(Callbac
 
     override fun ItemChatBinding.onBindViewHolder(data: ChatMessage?, position: Int) {
         if (data == null) return
-
-        val marginTop = if (position == 0)
-            root.context.getStatusBarHeight()
-        else
-            0
-
-        root.setMargins(top = marginTop)
 
         val color = when (data.role) {
             Role.USER -> "#E7FBE6"

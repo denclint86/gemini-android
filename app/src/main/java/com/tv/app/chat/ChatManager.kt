@@ -23,7 +23,7 @@ object ChatManager {
     private var history = mutableListOf<Content>()
 
     private var chat = runBlocking { newChat() }
-    private val chatScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private var chatScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val mutex = Mutex()
 
     private suspend fun newModel() = ApiModelProvider.createModel()
@@ -39,7 +39,7 @@ object ChatManager {
     suspend fun resetChat() {
         close()
         chat = newChat()
-        history.clear()
+        open()
     }
 
     fun isActive(): Boolean = mutex.isLocked
@@ -63,6 +63,12 @@ object ChatManager {
                 chat.sendMessageStream(content)
             }
         }
+
+    private fun open() {
+        chatScope =
+            CoroutineScope(SupervisorJob() + Dispatchers.Default)
+        history.clear()
+    }
 
     private fun close() {
         chatScope.cancel()

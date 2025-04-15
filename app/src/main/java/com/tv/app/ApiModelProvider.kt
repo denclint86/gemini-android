@@ -1,12 +1,11 @@
 package com.tv.app
 
-import androidx.datastore.preferences.core.intPreferencesKey
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.content
+import com.google.ai.client.generativeai.type.generationConfig
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import com.zephyr.datastore.getPreference
-import com.zephyr.datastore.putPreference
+import com.tv.app.settings.SettingsRepository
 import com.zephyr.global_values.TAG
 import com.zephyr.global_values.globalContext
 import com.zephyr.log.logE
@@ -16,15 +15,13 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicInteger
 
 object ApiModelProvider {
-    private val indexPref = intPreferencesKey("pref_index")
-
     private val apiKeys: List<String> by lazy { loadApiKeys().toList() }
     private var currentIndex: AtomicInteger
     private val switchTimestamps = ConcurrentLinkedQueue<Long>()
 
     init {
         runBlocking {
-            currentIndex = AtomicInteger(getPreference(indexPref, 0))
+            currentIndex = AtomicInteger(SettingsRepository.getIndex())
         }
     }
 
@@ -42,24 +39,36 @@ object ApiModelProvider {
         return apiKeys[index].also {
             val currentTime = System.currentTimeMillis()
             switchTimestamps.add(currentTime)
-            putPreference(indexPref, index)
+            SettingsRepository.setIndex(index)
             logE(TAG, "api-key switched to index: $index (${it.takeLast(5)})")
             logE(TAG, "api-key request rate: ${getSwitchRatePerMinute()}")
         }
     }
 
-    suspend fun createModel() =
+    suspend fun createModel() = SettingsRepository.run {
         GenerativeModel(
-            modelName = MODEL_NAME,
+            modelName = getModelName(),
             apiKey = getNextKey(),
-            systemInstruction = content { text(SYSTEM_PROMPT) },
-            tools = APP_TOOLS,
-            generationConfig = GEMINI_CONFIG,
+            systemInstruction = content {
+                runBlocking {
+                    text(getSystemPrompt())
+                }
+            },
+            tools = getTools(),
+            generationConfig = generationConfig {
+                runBlocking {
+                    temperature = getTemperature()      // 较低温度，输出更确定
+                    maxOutputTokens = getMaxOutputTokens()   // 允许更长的响应，提升上下文理解和推理能力
+                    topP = getTopP()            // 核采样，保持连贯性
+                    topK = getTopK()        // 限制 token 选择范围，提升质量
+                    candidateCount = getCandidateCount()      // 只返回一个最佳候选
+                    frequencyPenalty = getFrequencyPenalty() // 频率惩罚
+                }
+            },
 //            safetySettings = null,
 //            requestOptions = RequestOptions(),
-            frequencyPenalty = 0.5F,
-//            presencePenalty =
         )
+    }
 
     fun getCount(): Int = apiKeys.size
 

@@ -32,12 +32,12 @@ class App : Application() {
         Logger.startLogger(this, LogLevel.VERBOSE)
         instance = WeakReference(this)
 
-        ProcessLifecycleOwner.get().lifecycleScope.launch {
-            ShellExecutorModel.shellManager.exec("pm grant com.tv.bot android.permission.WRITE_SECURE_SETTINGS")
-            ShellExecutorModel.shellManager.exec("settings put secure enabled_accessibility_services com.tv.bot/com.tv.app.accessibility.MyAccessibilityService")
+//        ProcessLifecycleOwner.get().lifecycleScope.launch {
+//            ShellExecutorModel.shellManager.exec("pm grant com.tv.bot android.permission.WRITE_SECURE_SETTINGS")
+//            ShellExecutorModel.shellManager.exec("settings put secure enabled_accessibility_services com.tv.bot/com.tv.app.accessibility.MyAccessibilityService")
 //            ShellExecutorModel.shellManager.exec("settings put secure accessibility_enabled 1")
 //            ShellExecutorModel.shellManager.exec("settings get secure enabled_accessibility_services")
-        }
+//        }
 
 //        ShellExecutorModel.shellManager.executors.forEach { executor ->
 //            ProcessLifecycleOwner.get().lifecycleScope.launch {
@@ -48,8 +48,8 @@ class App : Application() {
 //            }
 //        }
 
-        if (hasOverlayPermission())
-            startSuspendService()
+//        if (hasOverlayPermission())
+//            startSuspendService()
     }
 
     private fun startSuspendService() {

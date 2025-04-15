@@ -5,6 +5,8 @@ import android.content.Intent
 import android.media.projection.MediaProjectionManager
 import android.net.Uri
 import android.provider.Settings
+import android.view.Menu
+import android.view.MenuItem
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -18,6 +20,7 @@ import com.tv.app.chat.mvi.ChatIntent
 import com.tv.app.databinding.ActivityMainBinding
 import com.tv.app.func.FuncManager
 import com.tv.app.func.models.VisibleViewsModel
+import com.tv.app.settings.SettingsActivity
 import com.tv.app.ui.ChatAdapter
 import com.zephyr.extension.ui.PreloadLayoutManager
 import com.zephyr.extension.widget.toast
@@ -46,12 +49,15 @@ class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
 
     override fun ActivityMainBinding.initBinding() {
         enableEdgeToEdge()
-        openOverlaySetting()
-        setUpScreenCapture()
+//        openOverlaySetting()
+//        setUpScreenCapture()
 
         chatAdapter = ChatAdapter()
         preloadLayoutManager = PreloadLayoutManager(this@MainActivity, RecyclerView.VERTICAL)
         viewModel = ViewModelProvider(this@MainActivity)[ChatViewModel::class.java]
+
+        setSupportActionBar(toolBar)
+        setInserts()
 
 //        testFunc()
 
@@ -59,9 +65,6 @@ class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
         rv.layoutManager = preloadLayoutManager
         (rv.itemAnimator as? SimpleItemAnimator)?.supportsChangeAnimations = false
 
-//        val order = "在谷歌商店安装“duolingo”"
-        val order = "尝试获取前台应用和应用列表"
-        et.setText(order)
 
         btn.setOnClickListener {
             val text = et.text.toString()
@@ -72,6 +75,41 @@ class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
         }
 
         registerMVI()
+    }
+
+    private fun setInserts() = binding.run {
+        et.setViewInsets { insets ->
+            leftMargin = insets.left // 使用顶部插入值，避免贴到状态栏
+            bottomMargin = insets.bottom // 使用底部插入值，避免贴到导航栏
+        }
+        btn.setViewInsets { insets ->
+            rightMargin = insets.right
+            bottomMargin = insets.bottom
+        }
+        toolBar.setViewInsets { insets ->
+            topMargin = insets.top
+        }
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.menu, menu);
+        return super.onCreateOptionsMenu(menu)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.settings -> {
+                val i = Intent(this, SettingsActivity::class.java)
+                startActivity(i)
+            }
+
+            R.id.reset ->
+                viewModel.sendIntent(ChatIntent.ResetChat)
+
+            else ->
+                ">_<".toast()
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     private fun registerMVI() {

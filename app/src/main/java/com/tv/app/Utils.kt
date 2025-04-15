@@ -12,10 +12,17 @@ import android.os.Build
 import android.provider.Settings
 import android.util.DisplayMetrics
 import android.view.Gravity
+import android.view.View
+import android.view.ViewGroup
 import android.view.WindowManager
+import androidx.core.graphics.Insets
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updateLayoutParams
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.tv.app.func.models.ShellExecutorModel
 import com.zephyr.global_values.globalContext
 import com.zephyr.log.logE
@@ -29,6 +36,37 @@ val alwaysActiveLifecycleOwner = object : LifecycleOwner {
 
     override val lifecycle: Lifecycle
         get() = lifecycleRegistry
+}
+
+fun Context.showInputDialog(
+    title: String = "",
+    msg: String = "",
+    onDismiss: ((Boolean) -> Unit) = {},
+) {
+    MaterialAlertDialogBuilder(this)
+        .setTitle(title)
+        .setMessage(msg)
+        .setCancelable(true)
+        .setPositiveButton("确认") { _, _ ->
+            onDismiss(true)
+        }
+        .setNegativeButton("取消") { _, _ ->
+            onDismiss(false)
+        }
+        .setOnCancelListener {
+            onDismiss(false)
+        }.create().show()
+}
+
+
+fun View.setViewInsets(block: ViewGroup.MarginLayoutParams.(Insets) -> Unit) {
+    ViewCompat.setOnApplyWindowInsetsListener(this) { view, windowInsets ->
+        val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
+        view.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+            block(insets) // 将 insets 传递给 block
+        }
+        WindowInsetsCompat.CONSUMED
+    }
 }
 
 fun String.addReturnChars(maxLength: Int): String {

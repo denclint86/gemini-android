@@ -6,8 +6,6 @@ import androidx.lifecycle.viewModelScope
 import com.google.ai.client.generativeai.type.FunctionResponsePart
 import com.google.ai.client.generativeai.type.GenerateContentResponse
 import com.tv.app.App
-import com.tv.app.SLEEP_TIME
-import com.tv.app.SYSTEM_PROMPT
 import com.tv.app.addReturnChars
 import com.tv.app.chat.mvi.ChatEffect
 import com.tv.app.chat.mvi.ChatIntent
@@ -19,9 +17,11 @@ import com.tv.app.chat.mvi.bean.systemMsg
 import com.tv.app.chat.mvi.bean.userMsg
 import com.tv.app.func.FuncManager
 import com.tv.app.func.models.VisibleViewsModel
+import com.tv.app.settings.SettingsRepository
 import com.tv.app.ui.suspend.ItemViewTouchListener
 import com.tv.app.ui.suspend.SuspendLiveDataManager
 import com.zephyr.extension.mvi.MVIViewModel
+import com.zephyr.extension.thread.runOnMain
 import com.zephyr.global_values.TAG
 import com.zephyr.log.logE
 import com.zephyr.net.toPrettyJson
@@ -88,24 +88,28 @@ class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>(),
             ChatIntent.ResetChat ->
                 viewModelScope.launch {
                     resetChat()
+                    updateState { initUiState() }
                 }
         }
     }
 
-    override fun initUiState(): ChatState = ChatState(
-        listOf(
-            systemMsg(SYSTEM_PROMPT)
+    override fun initUiState(): ChatState = runBlocking {
+        ChatState(
+            listOf(
+                systemMsg(SettingsRepository.getSystemPrompt())
+            )
         )
-    )
+    }
 
     /**
      * 对话日志
      */
-    private fun logC(string: String, cut: Boolean = true) =
+    private fun logC(string: String, cut: Boolean = true) = runOnMain {
         logE(
             CHAT_TAG,
             if (cut) string.addReturnChars(40) else string
         )
+    }
 
     private suspend fun resetChat() {
         ChatManager.resetChat()
@@ -186,7 +190,7 @@ class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>(),
         logC("tools:\n$jsons", false)
 
         logE(TAG, "sleep")
-        delay(SLEEP_TIME)
+        delay(SettingsRepository.getSleepTime())
 
         val responseMsg = modelMsg("", true)
         updateState {
