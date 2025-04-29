@@ -2,7 +2,6 @@ package com.tv.app
 
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.content
-import com.google.ai.client.generativeai.type.generationConfig
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.tv.app.settings.SettingsRepository
@@ -55,16 +54,7 @@ object ApiModelProvider {
                 }
             },
             tools = getTools(),
-            generationConfig = generationConfig {
-                runBlocking {
-                    temperature = getTemperature()      // 较低温度，输出更确定
-                    maxOutputTokens = getMaxOutputTokens()   // 允许更长的响应，提升上下文理解和推理能力
-                    topP = getTopP()            // 核采样，保持连贯性
-                    topK = getTopK()        // 限制 token 选择范围，提升质量
-                    candidateCount = getCandidateCount()      // 只返回一个最佳候选
-                    frequencyPenalty = getFrequencyPenalty() // 频率惩罚
-                }
-            },
+            generationConfig = getGenerationConfig(),
 //            safetySettings = null,
 //            requestOptions = RequestOptions(),
         )
