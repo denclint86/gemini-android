@@ -7,7 +7,19 @@ import com.zephyr.vbclass.ui.ViewBindingListAdapter
 abstract class Setting<T : Any> {
     abstract val name: String
     abstract val preview: T
+
     abstract fun onValidate(v: Any): Boolean
+
+    fun clone(
+        newName: String? = null,
+        newValue: T? = null
+    ): Setting<T> {
+        return object : Setting<T>() {
+            override val name: String = newName ?: this@Setting.name
+            override val preview: T = newValue ?: this@Setting.preview
+            override fun onValidate(v: Any): Boolean = this@Setting.onValidate(v)
+        }
+    }
 
     override fun equals(other: Any?): Boolean {
         if (other is Setting<*>)

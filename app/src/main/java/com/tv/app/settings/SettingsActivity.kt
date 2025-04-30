@@ -3,7 +3,6 @@ package com.tv.app.settings
 import androidx.activity.enableEdgeToEdge
 import androidx.recyclerview.widget.RecyclerView
 import com.tv.app.databinding.ActivitySettingsBinding
-import com.tv.app.ui.Setting
 import com.tv.app.ui.SettingsAdapter
 import com.zephyr.extension.ui.PreloadLayoutManager
 import com.zephyr.extension.widget.addLineDecoration
@@ -30,38 +29,9 @@ class SettingsActivity : ViewBindingActivity<ActivitySettingsBinding>() {
         rv.layoutManager = preloadLayoutManager
         rv.addLineDecoration(this@SettingsActivity, RecyclerView.VERTICAL)
 
-        settingsAdapter.submitList(listOf(
-            object : Setting<String>() {
-                override val name: String
-                    get() = "prompt"
-                override val preview: String
-                    get() = "xxx"
-
-                override fun onValidate(v: Any): Boolean {
-                    return v is String && v.isNotBlank()
-                }
-            },
-            object : Setting<Float>() {
-                override val name: String
-                    get() = "temp"
-                override val preview: Float
-                    get() = 1.0f
-
-                override fun onValidate(v: Any): Boolean {
-                    return v is Float && v in 0.0f..2.0f
-                }
-            },
-            object : Setting<String>() {
-                override val name: String
-                    get() = "tools"
-                override val preview: String
-                    get() = "nope"
-
-                override fun onValidate(v: Any): Boolean {
-                    return v is String && v.isNotBlank()
-                }
-            }
-        ))
+        settingsAdapter.submitList(
+            listOf()
+        )
     }
 
     private fun setInserts() = binding.run {
