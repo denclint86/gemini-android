@@ -42,7 +42,8 @@ object ChatManager {
         open()
     }
 
-    fun isActive(): Boolean = mutex.isLocked
+    val isActive: Boolean
+        get() = mutex.isLocked
 
     suspend fun sendMsg(content: Content): GenerateContentResponse =
         withContext(chatScope.coroutineContext) {

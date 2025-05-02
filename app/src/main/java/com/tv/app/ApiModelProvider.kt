@@ -1,10 +1,8 @@
 package com.tv.app
 
-import com.google.ai.client.generativeai.GenerativeModel
-import com.google.ai.client.generativeai.type.content
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import com.tv.app.settings.SettingsRepository
+import com.tv.app.settings.v2.SettingsRepository2
 import com.zephyr.global_values.TAG
 import com.zephyr.global_values.globalContext
 import com.zephyr.log.logE
@@ -20,7 +18,9 @@ object ApiModelProvider {
 
     init {
         runBlocking {
-            currentIndex = AtomicInteger(SettingsRepository.getIndex())
+            currentIndex = AtomicInteger(
+                SettingsRepository2.indexSetting.value ?: 0
+            )
         }
     }
 
@@ -38,27 +38,29 @@ object ApiModelProvider {
         return apiKeys[index].also {
             val currentTime = System.currentTimeMillis()
             switchTimestamps.add(currentTime)
-            SettingsRepository.setIndex(index)
+            SettingsRepository2.indexSetting.value = index
             logE(TAG, "api-key switched to index: $index (${it.takeLast(5)})")
             logE(TAG, "api-key request rate: ${getSwitchRatePerMinute()}")
         }
     }
 
-    suspend fun createModel() = SettingsRepository.run {
-        GenerativeModel(
-            modelName = getModelName(),
-            apiKey = getNextKey(),
-            systemInstruction = content {
-                runBlocking {
-                    text(getSystemPrompt())
-                }
-            },
-            tools = getTools(),
-            generationConfig = getGenerationConfig(),
-//            safetySettings = null,
-//            requestOptions = RequestOptions(),
-        )
-    }
+    suspend fun createModel() = SettingsRepository2.createGenerativeModel(getNextKey())
+//
+//    suspend fun createModel1() = SettingsRepository.run {
+//        GenerativeModel(
+//            modelName = getModelName(),
+//            apiKey = getNextKey(),
+//            systemInstruction = content {
+//                runBlocking {
+//                    text(getSystemPrompt())
+//                }
+//            },
+//            tools = getTools(),
+//            generationConfig = getGenerationConfig(),
+////            safetySettings = null,
+////            requestOptions = RequestOptions(),
+//        )
+//    }
 
     fun getCount(): Int = apiKeys.size
 

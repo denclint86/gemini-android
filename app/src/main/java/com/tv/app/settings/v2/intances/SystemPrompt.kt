@@ -12,7 +12,7 @@ class SystemPrompt : Setting2<String>() {
             enabled = true
         )
     override val kind: Kind
-        get() = Kind.USE_ACTIVITY
+        get() = Kind.ACTIVITY
 
 
     override fun onValidate(bean: Bean<String>): Result {

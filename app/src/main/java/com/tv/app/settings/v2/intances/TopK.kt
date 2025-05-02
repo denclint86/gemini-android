@@ -12,7 +12,7 @@ class TopK : Setting2<Int>() {
             enabled = true
         )
     override val kind: Kind
-        get() = Kind.USE_DIALOG
+        get() = Kind.DIALOG_EDIT
 
 
     override fun onValidate(bean: Bean<Int>): Result {

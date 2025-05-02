@@ -12,7 +12,7 @@ class SleepTime : Setting2<Long>() {
             enabled = true
         )
     override val kind: Kind
-        get() = Kind.USE_DIALOG
+        get() = Kind.DIALOG_EDIT
 
 
     override fun onValidate(bean: Bean<Long>): Result {

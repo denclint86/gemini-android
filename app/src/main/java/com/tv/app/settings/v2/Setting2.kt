@@ -89,8 +89,9 @@ abstract class Setting2<T : Any> {
 
     enum class Kind {
         READ_ONLY,
-        USE_DIALOG,
-        USE_ACTIVITY
+        DIALOG_EDIT,
+        DIALOG_SELECT,
+        ACTIVITY
     }
 
     class Builder<T : Any>(defaultBean: Bean<T>) {

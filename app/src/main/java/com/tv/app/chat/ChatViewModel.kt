@@ -17,7 +17,8 @@ import com.tv.app.chat.mvi.bean.systemMsg
 import com.tv.app.chat.mvi.bean.userMsg
 import com.tv.app.func.FuncManager
 import com.tv.app.func.models.VisibleViewsModel
-import com.tv.app.settings.SettingsRepository
+import com.tv.app.settings.v2.Default
+import com.tv.app.settings.v2.SettingsRepository2
 import com.tv.app.ui.suspend.ItemViewTouchListener
 import com.tv.app.ui.suspend.SuspendLiveDataManager
 import com.zephyr.extension.mvi.MVIViewModel
@@ -96,7 +97,7 @@ class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>(),
     override fun initUiState(): ChatState = runBlocking {
         ChatState(
             listOf(
-                systemMsg(SettingsRepository.getSystemPrompt())
+                systemMsg(SettingsRepository2.systemPromptSetting.value ?: Default.SYSTEM_PROMPT)
             )
         )
     }
@@ -116,7 +117,7 @@ class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>(),
     }
 
     private fun chat(text: String) = viewModelScope.launch(Dispatchers.IO) {
-        if (ChatManager.isActive()) {
+        if (ChatManager.isActive) {
             sendEffect(ChatEffect.Generating)
             return@launch
         }
@@ -190,7 +191,7 @@ class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>(),
         logC("tools:\n$jsons", false)
 
         logE(TAG, "sleep")
-        delay(SettingsRepository.getSleepTime())
+        delay(SettingsRepository2.sleepTimeSetting.value ?: Default.SLEEP_TIME)
 
         val responseMsg = modelMsg("", true)
         updateState {

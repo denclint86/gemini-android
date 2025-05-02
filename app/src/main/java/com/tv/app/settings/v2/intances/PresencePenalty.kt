@@ -12,7 +12,7 @@ class PresencePenalty : Setting2<Float>() {
             enabled = false
         )
     override val kind: Kind
-        get() = Kind.USE_DIALOG
+        get() = Kind.DIALOG_EDIT
 
 
     override fun onValidate(bean: Bean<Float>): Result {

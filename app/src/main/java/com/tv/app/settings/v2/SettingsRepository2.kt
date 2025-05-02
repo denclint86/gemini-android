@@ -49,8 +49,8 @@ object SettingsRepository2 {
         }
     }
 
-    fun createGenerativeModel(key: String) {
-        GenerativeModel(
+    fun createGenerativeModel(key: String): GenerativeModel {
+        return GenerativeModel(
             modelName = modelNameSetting.value ?: Default.MODEL_NAME,
             apiKey = key,
             systemInstruction = content {

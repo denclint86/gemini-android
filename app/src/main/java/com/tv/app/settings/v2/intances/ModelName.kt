@@ -13,7 +13,7 @@ class ModelName : Setting2<String>() {
             enabled = true
         )
     override val kind: Kind
-        get() = Kind.USE_DIALOG
+        get() = Kind.DIALOG_SELECT
 
 
     override fun onValidate(bean: Bean<String>): Result {
