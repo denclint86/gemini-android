@@ -6,7 +6,6 @@ import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.google.ai.client.generativeai.type.Tool
 import com.google.ai.client.generativeai.type.generationConfig
-import com.tv.app.func.FuncManager
 import com.zephyr.datastore.getPreference
 import com.zephyr.datastore.putPreference
 import kotlinx.coroutines.runBlocking
@@ -76,7 +75,7 @@ object SettingsRepository {
 
     private object GeminiConfig {
         const val REPLY_SLEEP_TIME = 0L
-        val MODEL_NAME = Model.GEMINI_2_5_FLASH_PREVIEW_04_17.value
+        val MODEL_NAME = Model.GEMINI_2_5_FLASH_PREVIEW_04_17.string
         const val SYSTEM_PROMPT: String = PROMPT
         const val TEMPERATURE = 1.2f
         const val MAX_OUTPUT_TOKENS = 2048

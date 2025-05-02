@@ -1,6 +1,6 @@
 package com.tv.app.settings
 
-enum class Model(val value: String) {
+enum class Model(val string: String) {
     GEMINI_2_5_FLASH_PREVIEW_04_17("gemini-2.5-flash-preview-04-17"), // 支持函数调用，实验性，性价比高
     GEMINI_2_5_PRO_PREVIEW("gemini-2.5-pro-preview-03-25"), // 支持函数调用，实验性，高级推理
     GEMINI_2_5_PRO_EXP("gemini-2.5-pro-exp-03-25"), // 支持函数调用，实验性，高级推理

@@ -4,6 +4,12 @@ import androidx.recyclerview.widget.DiffUtil
 import com.tv.app.databinding.LayoutSettingItemBinding
 import com.zephyr.vbclass.ui.ViewBindingListAdapter
 
+interface IValidate<T : Any> {
+    fun onValidate(v: Any): Boolean
+
+    fun clone(): IValidate<T>
+}
+
 abstract class Setting<T : Any> {
     abstract val name: String
     abstract val preview: T
