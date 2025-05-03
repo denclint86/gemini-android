@@ -1,4 +1,4 @@
-package com.tv.app.chat
+package com.tv.app.model
 
 
 import com.google.ai.client.generativeai.Chat
@@ -17,65 +17,64 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
+
 /**
  * 依赖 api provider 实现循环切换 apikey
  */
-object ChatManager {
+object ChatManager : ChatManagerImpl()
+
+
+open class ChatManagerImpl : IChatManager {
     private var history = mutableListOf<Content>()
 
     private var chat = runBlocking { newChat() }
     private var chatScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val mutex = Mutex()
 
-    private var updateCallback: ((List<Content>) -> Unit)? = null
 
-    fun setUpdateCallback(c: ((List<Content>) -> Unit)?) {
-        updateCallback = c
-    }
+    override val isActive: Boolean
+        get() = mutex.isLocked
 
-    private suspend fun newModel(newKey: Boolean = true) = ApiModelProvider.createModel(newKey)
-
-    private suspend fun newChat(history: MutableList<Content> = mutableListOf()): Chat =
-        newModel().startChat(history = history)
-
-    suspend fun switchApikey() {
+    override suspend fun switchApiKey() {
         history = chat.history
         chat = newModel().startChat(history)
     }
 
-    suspend fun recreateModel() {
+    override suspend fun recreateModel() {
         history = chat.history
         chat = newModel(false).startChat(history)
     }
 
-    suspend fun resetChat() {
+    override suspend fun resetChat() {
         close()
         chat = newChat()
         open()
     }
 
-    val isActive: Boolean
-        get() = mutex.isLocked
-
-    suspend fun sendMsg(content: Content): GenerateContentResponse =
+    override suspend fun sendMsg(content: Content): GenerateContentResponse =
         withContext(chatScope.coroutineContext) {
             logE(TAG, "普通请求被调用")
             mutex.withLock {
                 logE(TAG, "普通请求取得锁")
-                switchApikey()
+                switchApiKey()
                 chat.sendMessage(content)
             }
         }
 
-    suspend fun sendMsgStream(content: Content): Flow<GenerateContentResponse> =
+    override suspend fun sendMsgStream(content: Content): Flow<GenerateContentResponse> =
         withContext(chatScope.coroutineContext) {
             logE(TAG, "流式请求被调用")
             mutex.withLock {
                 logE(TAG, "流式请求取得锁")
-                switchApikey()
+                switchApiKey()
                 chat.sendMessageStream(content)
             }
         }
+
+    private suspend fun newModel(newKey: Boolean = true) = ApiModelProvider.createModel(newKey)
+
+    private suspend fun newChat(history: MutableList<Content> = mutableListOf()): Chat =
+        newModel().startChat(history = history)
 
     private fun open() {
         chatScope =

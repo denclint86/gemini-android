@@ -23,11 +23,11 @@ import android.view.WindowManager
 import androidx.core.app.NotificationCompat
 import androidx.databinding.DataBindingUtil
 import com.tv.app.R
-import com.tv.app.alwaysActiveLifecycleOwner
-import com.tv.app.createLayoutParam
+import com.tv.app.utils.alwaysActiveLifecycleOwner
+import com.tv.app.utils.createLayoutParam
 import com.tv.app.databinding.LayoutSuspendBinding
-import com.tv.app.resizeBitmap
-import com.tv.app.toBitmap
+import com.tv.app.utils.resizeBitmap
+import com.tv.app.utils.toBitmap
 import com.zephyr.extension.thread.runOnMain
 import com.zephyr.global_values.TAG
 import com.zephyr.log.logE

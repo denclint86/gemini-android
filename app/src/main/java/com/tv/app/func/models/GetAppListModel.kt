@@ -1,8 +1,8 @@
 package com.tv.app.func.models
 
 import com.google.ai.client.generativeai.type.Schema
-import com.tv.app.AppType
-import com.tv.app.getAllInstalledApps
+import com.tv.app.utils.AppType
+import com.tv.app.utils.getAllInstalledApps
 import com.tv.shizuku.feedback
 
 data object GetAppListModel : BaseFuncModel() {

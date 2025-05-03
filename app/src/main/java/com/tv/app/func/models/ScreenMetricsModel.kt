@@ -1,7 +1,7 @@
 package com.tv.app.func.models
 
 import com.google.ai.client.generativeai.type.Schema
-import com.tv.app.getScreenSize
+import com.tv.app.utils.getScreenSize
 
 data object ScreenMetricsModel : BaseFuncModel() {
     override val name: String = "get_screen_metrics"

@@ -5,7 +5,7 @@ import com.google.ai.client.generativeai.type.Tool
 object Default {
     const val INDEX = 0
     const val SLEEP_TIME = 0L
-    const val STREAM = false
+    const val STREAM = true
 
     val MODEL_NAME = Model.GEMINI_2_0_FLASH.string
     const val SYSTEM_PROMPT: String = PROMPT

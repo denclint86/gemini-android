@@ -9,7 +9,7 @@ import com.tv.app.accessibility.foreground.ForegroundAppManager
 import com.tv.app.accessibility.node.Node
 import com.tv.app.accessibility.node.NodeTracker
 import com.tv.app.accessibility.node.toNRect
-import com.tv.app.getScreenSize
+import com.tv.app.utils.getScreenSize
 import com.zephyr.extension.widget.toast
 import com.zephyr.global_values.TAG
 import com.zephyr.log.logD

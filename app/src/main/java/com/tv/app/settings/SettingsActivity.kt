@@ -5,10 +5,10 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
-import com.tv.app.chat.ChatManager
+import com.tv.app.model.ChatManager
 import com.tv.app.databinding.ActivitySettingsBinding
-import com.tv.app.setBackAffair
-import com.tv.app.setViewInsets
+import com.tv.app.utils.setBackAffair
+import com.tv.app.utils.setViewInsets
 import com.tv.app.ui.SettingsAdapter
 import com.zephyr.extension.ui.PreloadLayoutManager
 import com.zephyr.extension.widget.addLineDecoration

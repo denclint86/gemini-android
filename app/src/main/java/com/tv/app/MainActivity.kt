@@ -23,6 +23,12 @@ import com.tv.app.databinding.ActivityMainBinding
 import com.tv.app.keyborad.KeyboardObserver
 import com.tv.app.settings.SettingsActivity
 import com.tv.app.ui.ChatAdapter
+import com.tv.app.utils.collectFlow
+import com.tv.app.utils.findViewAtPoint
+import com.tv.app.utils.hasOverlayPermission
+import com.tv.app.utils.observe
+import com.tv.app.utils.parentIs
+import com.tv.app.utils.setViewInsets
 import com.zephyr.extension.ui.PreloadLayoutManager
 import com.zephyr.extension.widget.toast
 import com.zephyr.global_values.TAG
@@ -30,7 +36,6 @@ import com.zephyr.log.logE
 import com.zephyr.scaling_layout.State
 import com.zephyr.vbclass.ViewBindingActivity
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
@@ -134,16 +139,12 @@ class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
     }
 
     private fun registerMVI() {
-        viewModel.observeState {
-            lifecycleScope.launch {
-                map { it.messages }.collect { list ->
-                    chatAdapter.submitList(list)
-                }
-            }
+        viewModel.observe(lifecycleScope, { it.messages }) {
+            chatAdapter.submitList(it)
         }
 
         lifecycleScope.launch {
-            viewModel.uiEffectFlow.collect { effect ->
+            viewModel.collectFlow { effect ->
                 when (effect) {
                     is ChatEffect.ChatSent -> lifecycleScope.launch {
                         delay(100)

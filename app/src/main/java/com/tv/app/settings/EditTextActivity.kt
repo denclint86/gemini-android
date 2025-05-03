@@ -7,9 +7,9 @@ import android.view.MenuItem
 import androidx.activity.enableEdgeToEdge
 import com.tv.app.R
 import com.tv.app.databinding.ActivityEditTextBinding
-import com.tv.app.setBackAffair
-import com.tv.app.setViewInsets
-import com.tv.app.withLifecycleScope
+import com.tv.app.utils.setBackAffair
+import com.tv.app.utils.setViewInsets
+import com.tv.app.utils.withLifecycleScope
 import com.zephyr.extension.widget.toast
 import com.zephyr.vbclass.ViewBindingActivity
 import kotlinx.coroutines.Dispatchers
