@@ -2,30 +2,43 @@
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <data>
-
-    </data>
+    <data></data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="?android:attr/selectableItemBackground">
+        android:background="?attr/colorSurface">
 
-        <TextView
+        <com.google.android.material.textview.MaterialTextView
             android:id="@+id/title"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="10dp"
             android:layout_marginTop="16dp"
             android:ellipsize="marquee"
-            android:text="XXXXXXXXXXXXX"
-            android:textColor="#000000"
+            android:maxLines="1"
+            android:textColor="?attr/colorOnSurface"
             android:textSize="18sp"
+            android:textStyle="bold"
+            android:theme="@style/ai"
             app:layout_constraintBottom_toTopOf="@id/preview"
+            app:layout_constraintEnd_toStartOf="@id/sw"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_goneMarginBottom="16dp" />
 
-        <TextView
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/sw"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="10dp"
+            android:visibility="invisible"
+            app:layout_constraintBottom_toBottomOf="@id/title"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/title"
+            app:layout_constraintTop_toTopOf="@id/title" />
+
+        <com.google.android.material.textview.MaterialTextView
             android:id="@+id/preview"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -33,8 +46,8 @@
             android:layout_marginTop="8dp"
             android:layout_marginBottom="16dp"
             android:ellipsize="marquee"
-            android:text="XXXXXXXXXXXXXXXXXXXXXXXXXX"
-            android:textColor="#666666"
+            android:maxLines="2"
+            android:textColor="?attr/colorOnSurfaceVariant"
             android:textSize="14sp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="@id/title"

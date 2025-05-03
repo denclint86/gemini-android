@@ -1,4 +1,4 @@
-package com.tv.app.settings.v2
+package com.tv.app.settings
 
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.google.gson.annotations.SerializedName
@@ -8,10 +8,18 @@ import com.zephyr.net.toJson
 import com.zephyr.net.toJsonClass
 import kotlinx.coroutines.runBlocking
 
-abstract class Setting2<T : Any> {
+
+abstract class Setting<T : Any> {
+    companion object {
+        const val NAME_KEY = "setting_key"
+        const val RESULT_NAME_KEY = "setting_result_key"
+    }
+
     abstract val name: String
     abstract val default: Bean<T>
     abstract val kind: Kind // 给 view 层做适配用的, 并没有实质性的限制
+
+    abstract val canSetEnabled: Boolean
 
     private val key = stringPreferencesKey("setting_${name}")
 
@@ -25,7 +33,7 @@ abstract class Setting2<T : Any> {
     }
 
     var value: T?
-        get() = if (preview.enabled) preview.value else null
+        get() = if (preview.isEnabled) preview.value else null
         set(newValue) {
             if (newValue == null) return
             runBlocking {
@@ -36,7 +44,7 @@ abstract class Setting2<T : Any> {
         }
 
     var isEnabled: Boolean
-        get() = preview.enabled
+        get() = preview.isEnabled
         set(newEnabled) {
             runBlocking {
                 set {
@@ -45,6 +53,13 @@ abstract class Setting2<T : Any> {
             }
         }
 
+    suspend fun set(str: String, isEnabled: Boolean = preview.isEnabled): Result {
+        val t = parseAsT(str)
+            ?: return Result(false, "parse as t failed")
+        val bean = Bean(t, isEnabled)
+        return set(bean)
+    }
+
     suspend fun set(block: Builder<T>.() -> Unit): Result {
         val builder = Builder(preview)
         builder.block()
@@ -52,10 +67,11 @@ abstract class Setting2<T : Any> {
         return set(bean)
     }
 
-    suspend fun set(bean: Bean<T>): Result {
-        // 完全不能修改也不可行
-//        if (kind == Kind.READ_ONLY) throw IllegalStateException("尝试修改不允许修改的配置")
-
+    open suspend fun set(bean: Bean<T>): Result {
+        if (!canSetEnabled && preview.isEnabled != bean.isEnabled) return Result(
+            false,
+            "this attr can't edit 'isEnabled'"
+        )
         val validateResult = onValidate(bean)
 
         if (validateResult.isSuccess) {
@@ -63,6 +79,10 @@ abstract class Setting2<T : Any> {
         }
 
         return validateResult
+            .also {
+                if (it.isSuccess)
+                    preview = bean
+            }
     }
 
     suspend fun get(): Bean<T> {
@@ -75,6 +95,23 @@ abstract class Setting2<T : Any> {
         }.also { preview = it }
     }
 
+    private fun parseAsT(str: String): T? {
+        return try {
+            @Suppress("UNCHECKED_CAST")
+            when (value) {
+                is String -> str as T
+                is Int -> str.toInt() as T
+                is Boolean -> str.toBoolean() as T
+                is Float -> str.toFloat() as T
+                is Double -> str.toDouble() as T
+                is Long -> str.toLong() as T
+                else -> null
+            }
+        } catch (e: Exception) {
+            null
+        }
+    }
+
     abstract fun onValidate(bean: Bean<T>): Result
 
     data class Result(
@@ -84,13 +121,14 @@ abstract class Setting2<T : Any> {
 
     data class Bean<out T : Any>(
         @SerializedName("value") val value: T,
-        @SerializedName("enabled") val enabled: Boolean = true
+        @SerializedName("is_enabled") val isEnabled: Boolean = true
     )
 
     enum class Kind {
         READ_ONLY,
         DIALOG_EDIT,
         DIALOG_SELECT,
+        DIRECT,
         ACTIVITY
     }
 
@@ -99,12 +137,12 @@ abstract class Setting2<T : Any> {
         var value = defaultBean.value
 
         @JvmField
-        var isEnabled = defaultBean.enabled
+        var isEnabled = defaultBean.isEnabled
     }
 
 
     override fun equals(other: Any?): Boolean {
-        if (other is Setting2<*>)
+        if (other is Setting<*>)
             return preview == other.preview
         return false
     }

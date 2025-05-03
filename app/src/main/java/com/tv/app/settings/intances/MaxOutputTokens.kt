@@ -1,18 +1,21 @@
-package com.tv.app.settings.v2.intances
+package com.tv.app.settings.intances
 
-import com.tv.app.settings.v2.Default
-import com.tv.app.settings.v2.Setting2
+import com.tv.app.settings.Setting
+import com.tv.app.settings.values.Default
+import com.tv.app.settings.values.Names
 
-class MaxOutputTokens : Setting2<Int>() {
+class MaxOutputTokens : Setting<Int>() {
     override val name: String
-        get() = "最大输出 tokens"
+        get() = Names.MAX_OUTPUT_TOKENS
     override val default: Bean<Int>
         get() = Bean(
             value = Default.MAX_OUTPUT_TOKENS,
-            enabled = true
+            isEnabled = true
         )
     override val kind: Kind
         get() = Kind.DIALOG_EDIT
+    override val canSetEnabled: Boolean
+        get() = false
 
 
     override fun onValidate(bean: Bean<Int>): Result {

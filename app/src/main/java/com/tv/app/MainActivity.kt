@@ -7,9 +7,11 @@ import android.net.Uri
 import android.provider.Settings
 import android.view.Menu
 import android.view.MenuItem
+import android.view.MotionEvent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.view.marginBottom
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
@@ -18,16 +20,15 @@ import com.tv.app.chat.ChatViewModel
 import com.tv.app.chat.mvi.ChatEffect
 import com.tv.app.chat.mvi.ChatIntent
 import com.tv.app.databinding.ActivityMainBinding
-import com.tv.app.func.FuncManager
-import com.tv.app.func.models.VisibleViewsModel
+import com.tv.app.keyborad.KeyboardObserver
 import com.tv.app.settings.SettingsActivity
 import com.tv.app.ui.ChatAdapter
 import com.zephyr.extension.ui.PreloadLayoutManager
 import com.zephyr.extension.widget.toast
 import com.zephyr.global_values.TAG
 import com.zephyr.log.logE
+import com.zephyr.scaling_layout.State
 import com.zephyr.vbclass.ViewBindingActivity
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -38,14 +39,6 @@ class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
     private lateinit var preloadLayoutManager: PreloadLayoutManager
 
     private lateinit var overlayPermissionLauncher: ActivityResultLauncher<Intent>
-
-    private fun testFunc() = GlobalScope.launch {
-        delay(5000)
-        val r = FuncManager.executeFunction(
-            VisibleViewsModel.name, mapOf()
-        )
-        logE(TAG, r)
-    }
 
     override fun ActivityMainBinding.initBinding() {
         enableEdgeToEdge()
@@ -65,25 +58,40 @@ class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
         rv.layoutManager = preloadLayoutManager
         (rv.itemAnimator as? SimpleItemAnimator)?.supportsChangeAnimations = false
 
-
-        btn.setOnClickListener {
-            val text = et.text.toString()
-            if (text.isBlank())
+        btnChat.collapse()
+        btnChat.setText("对话")
+        btnChat.setOnSubmitListener { str ->
+            if (str.isBlank()) {
                 "输入不可为空".toast()
-            else
-                viewModel.sendIntent(ChatIntent.Chat(text))
+            } else {
+                viewModel.sendIntent(ChatIntent.Chat(str))
+            }
+            false
+        }
+
+        val keyboardObserver = KeyboardObserver.attach(this@MainActivity)
+        keyboardObserver.keyboardState.observe(this@MainActivity) { state ->
+            if (state == KeyboardObserver.State.Visible) {
+                btnChat.expand()
+            } else {
+                btnChat.collapse()
+            }
+        }
+        keyboardObserver.keyboardHeight.observe(this@MainActivity) { height ->
+            val extraMinus = if (height == 0) 0 else btnChat.marginBottom
+            btnChat.translationY = extraMinus - height.toFloat()
         }
 
         registerMVI()
     }
 
+    override fun onResume() {
+        super.onResume()
+        viewModel.sendIntent(ChatIntent.ReloadChat)
+    }
+
     private fun setInserts() = binding.run {
-        et.setViewInsets { insets ->
-            leftMargin = insets.left // 使用顶部插入值，避免贴到状态栏
-            bottomMargin = insets.bottom // 使用底部插入值，避免贴到导航栏
-        }
-        btn.setViewInsets { insets ->
-            rightMargin = insets.right
+        btnChat.setViewInsets { insets ->
             bottomMargin = insets.bottom
         }
         toolBar.setViewInsets { insets ->
@@ -92,7 +100,7 @@ class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        menuInflater.inflate(R.menu.menu, menu);
+        menuInflater.inflate(R.menu.menu_main, menu);
         return super.onCreateOptionsMenu(menu)
     }
 
@@ -112,6 +120,19 @@ class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
         return super.onOptionsItemSelected(item);
     }
 
+    override fun dispatchTouchEvent(event: MotionEvent): Boolean {
+        if (event.action == MotionEvent.ACTION_UP) {
+            binding.btnChat.run {
+                val touchedView = findViewAtPoint(event.x, event.y)
+                touchedView?.let { view ->
+                    if (state == State.EXPANDED && !view.parentIs(frameLayout))
+                        collapse()
+                }
+            }
+        }
+        return super.dispatchTouchEvent(event)
+    }
+
     private fun registerMVI() {
         viewModel.observeState {
             lifecycleScope.launch {
@@ -127,7 +148,7 @@ class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
                     is ChatEffect.ChatSent -> lifecycleScope.launch {
                         delay(100)
                         if (effect.shouldClear)
-                            binding.et.setText("")
+                            binding.btnChat.editText.setText("")
                         binding.rv.smoothScrollToPosition(chatAdapter.itemCount - 1)
                     }
 

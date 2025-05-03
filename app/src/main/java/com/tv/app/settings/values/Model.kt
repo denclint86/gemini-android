@@ -1,4 +1,4 @@
-package com.tv.app.settings
+package com.tv.app.settings.values
 
 enum class Model(val string: String) {
     GEMINI_2_5_FLASH_PREVIEW_04_17("gemini-2.5-flash-preview-04-17"), // 支持函数调用，实验性，性价比高

@@ -1,8 +1,9 @@
 package com.tv.app
 
+import com.google.ai.client.generativeai.GenerativeModel
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import com.tv.app.settings.v2.SettingsRepository2
+import com.tv.app.settings.SettingsRepository
 import com.zephyr.global_values.TAG
 import com.zephyr.global_values.globalContext
 import com.zephyr.log.logE
@@ -19,7 +20,7 @@ object ApiModelProvider {
     init {
         runBlocking {
             currentIndex = AtomicInteger(
-                SettingsRepository2.indexSetting.value ?: 0
+                SettingsRepository.indexSetting.value ?: 0
             )
         }
     }
@@ -38,13 +39,21 @@ object ApiModelProvider {
         return apiKeys[index].also {
             val currentTime = System.currentTimeMillis()
             switchTimestamps.add(currentTime)
-            SettingsRepository2.indexSetting.value = index
+            SettingsRepository.indexSetting.value = index
             logE(TAG, "api-key switched to index: $index (${it.takeLast(5)})")
             logE(TAG, "api-key request rate: ${getSwitchRatePerMinute()}")
         }
     }
 
-    suspend fun createModel() = SettingsRepository2.createGenerativeModel(getNextKey())
+    suspend fun createModel(newKey: Boolean = true): GenerativeModel {
+        val key = if (newKey)
+            getNextKey()
+        else
+            apiKeys[currentIndex.get()]
+
+        return SettingsRepository.createGenerativeModel(key)
+    }
+
 //
 //    suspend fun createModel1() = SettingsRepository.run {
 //        GenerativeModel(

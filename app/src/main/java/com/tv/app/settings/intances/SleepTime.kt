@@ -1,18 +1,21 @@
-package com.tv.app.settings.v2.intances
+package com.tv.app.settings.intances
 
-import com.tv.app.settings.v2.Default
-import com.tv.app.settings.v2.Setting2
+import com.tv.app.settings.Setting
+import com.tv.app.settings.values.Default
+import com.tv.app.settings.values.Names
 
-class SleepTime : Setting2<Long>() {
+class SleepTime : Setting<Long>() {
     override val name: String
-        get() = "调用冷却时间"
+        get() = Names.SLEEP_TIME
     override val default: Bean<Long>
         get() = Bean(
             value = Default.SLEEP_TIME,
-            enabled = true
+            isEnabled = true
         )
     override val kind: Kind
         get() = Kind.DIALOG_EDIT
+    override val canSetEnabled: Boolean
+        get() = false
 
 
     override fun onValidate(bean: Bean<Long>): Result {

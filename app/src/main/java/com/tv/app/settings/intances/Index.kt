@@ -1,18 +1,21 @@
-package com.tv.app.settings.v2.intances
+package com.tv.app.settings.intances
 
-import com.tv.app.settings.v2.Default
-import com.tv.app.settings.v2.Setting2
+import com.tv.app.settings.Setting
+import com.tv.app.settings.values.Default
+import com.tv.app.settings.values.Names
 
-class Index : Setting2<Int>() {
+class Index : Setting<Int>() {
     override val name: String
-        get() = "api_key 索引"
+        get() = Names.INDEX
     override val default: Bean<Int>
         get() = Bean(
             value = Default.INDEX,
-            enabled = true
+            isEnabled = true
         )
     override val kind: Kind
         get() = Kind.READ_ONLY
+    override val canSetEnabled: Boolean
+        get() = false
 
 
     override fun onValidate(bean: Bean<Int>): Result {

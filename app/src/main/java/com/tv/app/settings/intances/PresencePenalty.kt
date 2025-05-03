@@ -1,18 +1,21 @@
-package com.tv.app.settings.v2.intances
+package com.tv.app.settings.intances
 
-import com.tv.app.settings.v2.Default
-import com.tv.app.settings.v2.Setting2
+import com.tv.app.settings.Setting
+import com.tv.app.settings.values.Default
+import com.tv.app.settings.values.Names
 
-class PresencePenalty : Setting2<Float>() {
+class PresencePenalty : Setting<Float>() {
     override val name: String
-        get() = "令牌惩罚"
+        get() = Names.PRESENCE_PENALTY
     override val default: Bean<Float>
         get() = Bean(
             value = Default.PRESENCE_PENALTY,
-            enabled = false
+            isEnabled = false
         )
     override val kind: Kind
         get() = Kind.DIALOG_EDIT
+    override val canSetEnabled: Boolean
+        get() = true
 
 
     override fun onValidate(bean: Bean<Float>): Result {

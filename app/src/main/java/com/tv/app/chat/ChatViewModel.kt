@@ -17,8 +17,8 @@ import com.tv.app.chat.mvi.bean.systemMsg
 import com.tv.app.chat.mvi.bean.userMsg
 import com.tv.app.func.FuncManager
 import com.tv.app.func.models.VisibleViewsModel
-import com.tv.app.settings.v2.Default
-import com.tv.app.settings.v2.SettingsRepository2
+import com.tv.app.settings.SettingsRepository
+import com.tv.app.settings.values.Default
 import com.tv.app.ui.suspend.ItemViewTouchListener
 import com.tv.app.ui.suspend.SuspendLiveDataManager
 import com.zephyr.extension.mvi.MVIViewModel
@@ -88,17 +88,24 @@ class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>(),
             is ChatIntent.Chat -> chat(intent.text)
             ChatIntent.ResetChat ->
                 viewModelScope.launch {
-                    resetChat()
+                    ChatManager.resetChat()
                     updateState { initUiState() }
                 }
+
+            ChatIntent.ReloadChat -> updateState {
+                modifyList {
+                    set(0, getSystemPromptMsg())
+                }
+            }
         }
     }
 
+    private fun getSystemPromptMsg(): ChatMessage =
+        systemMsg(SettingsRepository.systemPromptSetting.value ?: Default.SYSTEM_PROMPT)
+
     override fun initUiState(): ChatState = runBlocking {
         ChatState(
-            listOf(
-                systemMsg(SettingsRepository2.systemPromptSetting.value ?: Default.SYSTEM_PROMPT)
-            )
+            listOf(getSystemPromptMsg())
         )
     }
 
@@ -110,10 +117,6 @@ class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>(),
             CHAT_TAG,
             if (cut) string.addReturnChars(40) else string
         )
-    }
-
-    private suspend fun resetChat() {
-        ChatManager.resetChat()
     }
 
     private fun chat(text: String) = viewModelScope.launch(Dispatchers.IO) {
@@ -191,7 +194,7 @@ class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>(),
         logC("tools:\n$jsons", false)
 
         logE(TAG, "sleep")
-        delay(SettingsRepository2.sleepTimeSetting.value ?: Default.SLEEP_TIME)
+        delay(SettingsRepository.sleepTimeSetting.value ?: Default.SLEEP_TIME)
 
         val responseMsg = modelMsg("", true)
         updateState {

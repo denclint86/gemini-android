@@ -1,6 +1,7 @@
 package com.tv.app.chat
 
 
+import com.google.ai.client.generativeai.Chat
 import com.google.ai.client.generativeai.type.Content
 import com.google.ai.client.generativeai.type.GenerateContentResponse
 import com.tv.app.ApiModelProvider
@@ -26,14 +27,25 @@ object ChatManager {
     private var chatScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val mutex = Mutex()
 
-    private suspend fun newModel() = ApiModelProvider.createModel()
+    private var updateCallback: ((List<Content>) -> Unit)? = null
 
-    private suspend fun newChat(history: MutableList<Content> = mutableListOf()) =
+    fun setUpdateCallback(c: ((List<Content>) -> Unit)?) {
+        updateCallback = c
+    }
+
+    private suspend fun newModel(newKey: Boolean = true) = ApiModelProvider.createModel(newKey)
+
+    private suspend fun newChat(history: MutableList<Content> = mutableListOf()): Chat =
         newModel().startChat(history = history)
 
-    private suspend fun switchApikey() {
+    suspend fun switchApikey() {
         history = chat.history
         chat = newModel().startChat(history)
+    }
+
+    suspend fun recreateModel() {
+        history = chat.history
+        chat = newModel(false).startChat(history)
     }
 
     suspend fun resetChat() {

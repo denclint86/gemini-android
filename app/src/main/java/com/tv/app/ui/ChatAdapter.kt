@@ -4,16 +4,15 @@ import android.graphics.Color
 import androidx.recyclerview.widget.DiffUtil
 import com.tv.app.chat.Role
 import com.tv.app.chat.mvi.bean.ChatMessage
-import com.tv.app.databinding.ItemChatBinding
+import com.tv.app.databinding.LayoutChatItemBinding
 import com.zephyr.vbclass.ui.ViewBindingListAdapter
 
-class ChatAdapter : ViewBindingListAdapter<ItemChatBinding, ChatMessage>(Callback()) {
+class ChatAdapter : ViewBindingListAdapter<LayoutChatItemBinding, ChatMessage>(Callback()) {
     companion object {
         private const val HIDE_ENABLED = true
     }
 
-
-    override fun ItemChatBinding.onBindViewHolder(data: ChatMessage?, position: Int) {
+    override fun LayoutChatItemBinding.onBindViewHolder(data: ChatMessage?, position: Int) {
         if (data == null) return
 
         val color = when (data.role) {

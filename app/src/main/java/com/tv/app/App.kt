@@ -6,16 +6,13 @@ import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
 import android.os.IBinder
-import androidx.lifecycle.ProcessLifecycleOwner
-import androidx.lifecycle.lifecycleScope
+import com.google.android.material.color.DynamicColors
 import com.tv.app.chat.windowListener
-import com.tv.app.func.models.ShellExecutorModel
 import com.tv.app.ui.suspend.SuspendService
 import com.zephyr.global_values.TAG
 import com.zephyr.log.LogLevel
 import com.zephyr.log.Logger
 import com.zephyr.log.logE
-import kotlinx.coroutines.launch
 import java.lang.ref.WeakReference
 
 class App : Application() {
@@ -29,6 +26,8 @@ class App : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        DynamicColors.applyToActivitiesIfAvailable(this)
+
         Logger.startLogger(this, LogLevel.VERBOSE)
         instance = WeakReference(this)
 

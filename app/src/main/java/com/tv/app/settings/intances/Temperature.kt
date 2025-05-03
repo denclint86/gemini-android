@@ -1,18 +1,21 @@
-package com.tv.app.settings.v2.intances
+package com.tv.app.settings.intances
 
-import com.tv.app.settings.v2.Default
-import com.tv.app.settings.v2.Setting2
+import com.tv.app.settings.Setting
+import com.tv.app.settings.values.Default
+import com.tv.app.settings.values.Names
 
-class Temperature : Setting2<Float>() {
+class Temperature : Setting<Float>() {
     override val name: String
-        get() = "温度"
+        get() = Names.TEMPERATURE
     override val default: Bean<Float>
         get() = Bean(
             value = Default.TEMPERATURE,
-            enabled = true
+            isEnabled = true
         )
     override val kind: Kind
         get() = Kind.DIALOG_EDIT
+    override val canSetEnabled: Boolean
+        get() = false
 
 
     override fun onValidate(bean: Bean<Float>): Result {

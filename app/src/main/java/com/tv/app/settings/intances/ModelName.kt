@@ -1,19 +1,22 @@
-package com.tv.app.settings.v2.intances
+package com.tv.app.settings.intances
 
-import com.tv.app.settings.Model
-import com.tv.app.settings.v2.Default
-import com.tv.app.settings.v2.Setting2
+import com.tv.app.settings.Setting
+import com.tv.app.settings.values.Default
+import com.tv.app.settings.values.Model
+import com.tv.app.settings.values.Names
 
-class ModelName : Setting2<String>() {
+class ModelName : Setting<String>() {
     override val name: String
-        get() = "模型"
+        get() = Names.MODEL_NAME
     override val default: Bean<String>
         get() = Bean(
             value = Default.MODEL_NAME,
-            enabled = true
+            isEnabled = true
         )
     override val kind: Kind
         get() = Kind.DIALOG_SELECT
+    override val canSetEnabled: Boolean
+        get() = false
 
 
     override fun onValidate(bean: Bean<String>): Result {

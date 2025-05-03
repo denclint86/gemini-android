@@ -1,18 +1,21 @@
-package com.tv.app.settings.v2.intances
+package com.tv.app.settings.intances
 
-import com.tv.app.settings.v2.Default
-import com.tv.app.settings.v2.Setting2
+import com.tv.app.settings.Setting
+import com.tv.app.settings.values.Default
+import com.tv.app.settings.values.Names
 
-class SystemPrompt : Setting2<String>() {
+class SystemPrompt : Setting<String>() {
     override val name: String
-        get() = "提示词"
+        get() = Names.SYSTEM_PROMPT
     override val default: Bean<String>
         get() = Bean(
             value = Default.SYSTEM_PROMPT,
-            enabled = true
+            isEnabled = true
         )
     override val kind: Kind
         get() = Kind.ACTIVITY
+    override val canSetEnabled: Boolean
+        get() = false
 
 
     override fun onValidate(bean: Bean<String>): Result {

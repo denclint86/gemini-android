@@ -12,23 +12,23 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="30dp"
         android:layout_height="30dp"
-        android:background="@drawable/circle_background">
+        android:background="?attr/colorSurface">
 
         <ProgressBar
             android:id="@+id/progress_bar"
             style="?android:attr/progressBarStyle"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:indeterminateTint="#ffffff"
+            android:indeterminateTint="?attr/colorPrimary"
             android:visibility="invisible" />
 
-        <TextView
+        <com.google.android.material.textview.MaterialTextView
             android:id="@+id/tv_suspend_text"
             android:layout_width="30dp"
             android:layout_height="30dp"
             android:gravity="center"
             android:text="@{manager.suspendText}"
-            android:textColor="#FFFFFF"
+            android:textColor="?attr/colorPrimary"
             android:textSize="10sp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
