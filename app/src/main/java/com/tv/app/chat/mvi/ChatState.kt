@@ -1,7 +1,6 @@
 package com.tv.app.chat.mvi
 
 import com.tv.app.chat.mvi.bean.ChatMessage
-import java.util.UUID
 
 /**
  * 不要直接操作 messages，请使用 modify list
@@ -11,9 +10,12 @@ data class ChatState(
     var listLastUpdatedTs: Long = System.currentTimeMillis(),
     val isLoading: Boolean = false
 ) {
-    fun modifyMsg(uuid: UUID, block: ChatMessage.() -> ChatMessage): ChatState {
+    fun modifyMsg(
+        which: (ChatMessage) -> Boolean,
+        block: ChatMessage.() -> ChatMessage
+    ): ChatState {
         val list = messages.toMutableList()
-        val index = list.indexOfFirst { it.id == uuid }
+        val index = list.indexOfFirst(which)
         if (index == -1)
             return this
         else

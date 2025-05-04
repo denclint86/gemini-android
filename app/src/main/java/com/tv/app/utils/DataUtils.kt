@@ -1,5 +1,9 @@
 package com.tv.app.utils
 
+import com.google.gson.Gson
+import com.google.gson.GsonBuilder
+import com.google.gson.ToNumberPolicy
+
 
 fun String.addReturnChars(maxLength: Int): String {
     if (this.length <= maxLength || maxLength <= 0) return this
@@ -48,4 +52,18 @@ fun String.addReturnChars(maxLength: Int): String {
     }
 
     return result.toString()
+}
+
+// 全局 Gson 实例，复用以提高性能
+val gson: Gson = GsonBuilder()
+    .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
+    .create()
+
+// 扩展函数，保留 reified 泛型
+inline fun <reified T> String.toJsonClass(): T? {
+    return try {
+        gson.fromJson(this, T::class.java)
+    } catch (e: Exception) {
+        null
+    }
 }

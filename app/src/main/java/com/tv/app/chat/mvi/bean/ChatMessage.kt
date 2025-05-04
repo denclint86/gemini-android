@@ -24,9 +24,9 @@ import java.util.UUID
  */
 data class ChatMessage(
     val id: UUID = UUID.randomUUID(),
-    var text: String = "",
+    val text: String = "",
     val role: Role = Role.USER,
-    var isPending: Boolean = false
+    val isPending: Boolean = false
 )
 
 fun userMsg(text: String, isPending: Boolean = false) =

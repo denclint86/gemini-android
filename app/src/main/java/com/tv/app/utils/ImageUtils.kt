@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import android.media.Image
 import android.util.DisplayMetrics
 import com.tv.app.App
+import kotlinx.coroutines.runBlocking
 
 fun resizeBitmap(bitmap: Bitmap, scaleFactor: Float): Bitmap {
     val newWidth = (bitmap.width * scaleFactor).toInt()
@@ -11,8 +12,8 @@ fun resizeBitmap(bitmap: Bitmap, scaleFactor: Float): Bitmap {
     return Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true)
 }
 
-suspend fun getScreenAsBitmap(): Bitmap? {
-    return App.binder.get()?.captureScreen()
+fun getScreenAsBitmap(): Bitmap? = runBlocking {
+    App.binder.get()?.captureScreen()
 }
 
 fun Image.toBitmap(metrics: DisplayMetrics): Bitmap? {

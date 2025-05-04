@@ -6,30 +6,35 @@ import com.tv.app.utils.getSystemPromptMsg
 import java.util.UUID
 import kotlin.reflect.KFunction1
 
-class StateUpdater : IStateUpdater<ChatState> {
+class StateUpdater : IStateUpdater<ChatMessage, ChatState, StateUpdater.Builder> {
     private var method: (KFunction1<ChatState.() -> ChatState, Unit>)? = null
 
     override fun setUpdateStateMethod(method: KFunction1<ChatState.() -> ChatState, Unit>) {
         this.method = method
     }
 
-    override fun addMessage(state: ChatState, message: ChatMessage) {
+    fun updateAt(index: Int, newMsg: ChatMessage) {
         method?.invoke {
-            state.copy(messages = state.messages + message)
+            modifyList { set(index, newMsg) }
+        }
+    }
+
+    override fun addMessage(message: ChatMessage) {
+        method?.invoke {
+            modifyList { add(message) }
         }
     }
 
     override fun updateMessage(
-        state: ChatState,
-        uuid: UUID,
-        update: (ChatMessage) -> ChatMessage
+        which: ChatMessage.() -> Boolean,
+        update: Builder.() -> Unit
     ) {
         method?.invoke {
-            state.copy(
-                messages = state.messages.map { msg ->
-                    if (msg.id == uuid) update(msg) else msg
-                }
-            )
+            modifyMsg(which) {
+                val builder = Builder(this)
+                builder.update()
+                builder.msg
+            }
         }
     }
 
@@ -37,5 +42,22 @@ class StateUpdater : IStateUpdater<ChatState> {
         method?.invoke {
             ChatState(listOf(getSystemPromptMsg()))
         }
+    }
+
+    class Builder(msg: ChatMessage) {
+        @JvmField
+        var id: UUID = msg.id
+
+        @JvmField
+        var text: String = msg.text
+
+        @JvmField
+        var role: Role = msg.role
+
+        @JvmField
+        var isPending: Boolean = msg.isPending
+
+        val msg: ChatMessage
+            get() = ChatMessage(id, text, role, isPending)
     }
 }

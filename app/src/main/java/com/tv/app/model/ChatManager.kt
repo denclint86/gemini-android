@@ -4,6 +4,7 @@ package com.tv.app.model
 import com.google.ai.client.generativeai.Chat
 import com.google.ai.client.generativeai.type.Content
 import com.google.ai.client.generativeai.type.GenerateContentResponse
+import com.google.ai.client.generativeai.type.TextPart
 import com.tv.app.ApiModelProvider
 import com.zephyr.global_values.TAG
 import com.zephyr.log.logE
@@ -23,25 +24,32 @@ import kotlinx.coroutines.withContext
  */
 object ChatManager : ChatManagerImpl()
 
-
 open class ChatManagerImpl : IChatManager {
-    private var history = mutableListOf<Content>()
+    private var history = listOf<Content>()
 
     private var chat = runBlocking { newChat() }
     private var chatScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val mutex = Mutex()
 
+    private fun copyHistory() {
+        history = chat.history.map { content ->
+            if (content.parts.isEmpty())
+                Content(content.role, listOf(TextPart(" ")))
+            else
+                content
+        }
+    }
 
     override val isActive: Boolean
         get() = mutex.isLocked
 
     override suspend fun switchApiKey() {
-        history = chat.history
+        copyHistory()
         chat = newModel().startChat(history)
     }
 
     override suspend fun recreateModel() {
-        history = chat.history
+        copyHistory()
         chat = newModel(false).startChat(history)
     }
 
@@ -79,11 +87,11 @@ open class ChatManagerImpl : IChatManager {
     private fun open() {
         chatScope =
             CoroutineScope(SupervisorJob() + Dispatchers.Default)
-        history.clear()
+        history = emptyList()
     }
 
     private fun close() {
         chatScope.cancel()
-        history.clear()
+        history = emptyList()
     }
 }

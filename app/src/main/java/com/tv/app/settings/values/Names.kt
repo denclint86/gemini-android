@@ -9,6 +9,7 @@ object Names {
     const val SYSTEM_PROMPT = "提示词"
 
     const val TEMPERATURE = "温度"
+    const val TOOLS = "函数调用"
     const val MAX_OUTPUT_TOKENS = "最大输出 tokens"
     const val TOP_P = "top_p"
     const val TOP_K = "top_k"

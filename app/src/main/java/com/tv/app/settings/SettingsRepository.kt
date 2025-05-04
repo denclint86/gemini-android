@@ -16,10 +16,17 @@ import com.tv.app.settings.intances.SleepTime
 import com.tv.app.settings.intances.Stream
 import com.tv.app.settings.intances.SystemPrompt
 import com.tv.app.settings.intances.Temperature
+import com.tv.app.settings.intances.Tools
 import com.tv.app.settings.intances.TopK
 import com.tv.app.settings.intances.TopP
 import com.tv.app.settings.values.Default
 import com.tv.app.settings.values.Names
+import com.zephyr.global_values.TAG
+import com.zephyr.log.logE
+import com.zephyr.net.toPrettyJson
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 object SettingsRepository {
@@ -31,6 +38,7 @@ object SettingsRepository {
     val systemPromptSetting = SystemPrompt()
 
     val temperatureSetting = Temperature()
+    val tools = Tools()
     val maxOutputTokensSetting = MaxOutputTokens()
     val topPSetting = TopP()
     val topKSetting = TopK()
@@ -47,6 +55,7 @@ object SettingsRepository {
         Names.SYSTEM_PROMPT to systemPromptSetting,
 
         Names.TEMPERATURE to temperatureSetting,
+        Names.TOOLS to tools,
         Names.MAX_OUTPUT_TOKENS to maxOutputTokensSetting,
         Names.TOP_P to topPSetting,
         Names.TOP_K to topKSetting,
@@ -55,15 +64,20 @@ object SettingsRepository {
         Names.FREQUENCY_PENALTY to frequencyPenaltySetting
     )
 
-    private fun getTools(): List<Tool>? = Default.APP_TOOLS
+    private fun getTools(): List<Tool>? {
+        return if (tools.isEnabled)
+            Default.APP_TOOLS
+        else
+            null
+    }
 
     private fun createGenerationConfig(): GenerationConfig {
         return generationConfig {
             temperature = temperatureSetting.value
             maxOutputTokens = maxOutputTokensSetting.value
             topP = topPSetting.value
-            topK = topKSetting.value
-            candidateCount = candidateCountSetting.value
+            topK = topKSetting.value?.toInt()
+            candidateCount = candidateCountSetting.value?.toInt()
             presencePenalty = presencePenaltySetting.value
             frequencyPenalty = frequencyPenaltySetting.value
         }
@@ -82,6 +96,11 @@ object SettingsRepository {
             generationConfig = createGenerationConfig(),
 //            safetySettings = null,
 //            requestOptions = RequestOptions(),
-        )
+        ).also {
+            GlobalScope.launch(Dispatchers.IO) {
+                logE(TAG, it.toPrettyJson())
+                logE(TAG, streamSetting.value.toString())
+            }
+        }
     }
 }

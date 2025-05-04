@@ -10,16 +10,16 @@ import com.zephyr.log.logE
 import kotlinx.coroutines.runBlocking
 import java.io.InputStream
 import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicLong
 
 object ApiModelProvider {
     private val apiKeys: List<String> by lazy { loadApiKeys().toList() }
-    private var currentIndex: AtomicInteger
+    private var currentIndex: AtomicLong
     private val switchTimestamps = ConcurrentLinkedQueue<Long>()
 
     init {
         runBlocking {
-            currentIndex = AtomicInteger(
+            currentIndex = AtomicLong(
                 SettingsRepository.indexSetting.value ?: 0
             )
         }
@@ -33,10 +33,10 @@ object ApiModelProvider {
         if (apiKeys.isEmpty()) {
             throw IllegalStateException("没有设置 key")
         }
-        val index = currentIndex.getAndUpdate { current ->
+        val index: Long = currentIndex.getAndUpdate { current ->
             (current + 1) % apiKeys.size
         }
-        return apiKeys[index].also {
+        return apiKeys[index.toInt()].also {
             val currentTime = System.currentTimeMillis()
             switchTimestamps.add(currentTime)
             SettingsRepository.indexSetting.value = index
@@ -49,11 +49,10 @@ object ApiModelProvider {
         val key = if (newKey)
             getNextKey()
         else
-            apiKeys[currentIndex.get()]
+            apiKeys[currentIndex.get().toInt()]
 
         return SettingsRepository.createGenerativeModel(key)
     }
-
 //
 //    suspend fun createModel1() = SettingsRepository.run {
 //        GenerativeModel(

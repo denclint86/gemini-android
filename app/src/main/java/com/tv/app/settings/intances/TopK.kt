@@ -4,10 +4,10 @@ import com.tv.app.settings.Setting
 import com.tv.app.settings.values.Default
 import com.tv.app.settings.values.Names
 
-class TopK : Setting<Int>() {
+class TopK : Setting<Long>() {
     override val name: String
         get() = Names.TOP_K
-    override val default: Bean<Int>
+    override val default: Bean<Long>
         get() = Bean(
             value = Default.TOP_K,
             isEnabled = true
@@ -18,7 +18,7 @@ class TopK : Setting<Int>() {
         get() = true
 
 
-    override fun onValidate(bean: Bean<Int>): Result {
+    override fun onValidate(bean: Bean<Long>): Result {
         return if (bean.value in 1..100) {
             Result(true, null)
         } else {

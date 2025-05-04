@@ -1,16 +1,15 @@
 package com.tv.app.chat
 
 import androidx.lifecycle.viewModelScope
+import com.google.ai.client.generativeai.type.Content
 import com.google.ai.client.generativeai.type.FunctionResponsePart
-import com.google.ai.client.generativeai.type.GenerateContentResponse
+import com.google.ai.client.generativeai.type.ImagePart
+import com.google.ai.client.generativeai.type.Part
 import com.tv.app.chat.mvi.ChatEffect
 import com.tv.app.chat.mvi.ChatIntent
 import com.tv.app.chat.mvi.ChatState
 import com.tv.app.chat.mvi.bean.ChatMessage
-import com.tv.app.chat.mvi.bean.funcMsg
 import com.tv.app.chat.mvi.bean.modelMsg
-import com.tv.app.chat.mvi.bean.userMsg
-import com.tv.app.func.FuncManager
 import com.tv.app.func.models.VisibleViewsModel
 import com.tv.app.model.ChatManager
 import com.tv.app.model.FuncHandler
@@ -27,14 +26,9 @@ import com.tv.app.utils.getSystemPromptMsg
 import com.tv.app.utils.logC
 import com.tv.app.utils.observe
 import com.zephyr.extension.mvi.MVIViewModel
-import com.zephyr.global_values.TAG
-import com.zephyr.log.logE
-import com.zephyr.net.toPrettyJson
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import org.json.JSONObject
 
 
@@ -52,7 +46,7 @@ class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>()
         get() = ChatManager
     private val funcHandler: IFuncHandler = FuncHandler()
     private val responseHandler: IResponseHandler = ResponseHandler()
-    private val stateUpdater: IStateUpdater<ChatState> = StateUpdater()
+    private val stateUpdater: StateUpdater = StateUpdater()
 
 
     init {
@@ -72,190 +66,93 @@ class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>()
 
     override fun handleIntent(intent: ChatIntent) {
         when (intent) {
-            is ChatIntent.Chat -> chat(intent.text)
+            is ChatIntent.Chat -> {
+                val userContent = userContent { text(intent.text) }
+                chat(userContent, SettingsRepository.streamSetting.value ?: Default.STREAM)
+            }
 
             ChatIntent.ResetChat ->
                 viewModelScope.launch {
                     chatManager.resetChat()
-                    updateState { initUiState() }
+                    stateUpdater.resetState()
                 }
 
-            ChatIntent.ReloadChat -> updateState {
-                modifyList {
-                    set(0, getSystemPromptMsg())
-                }
-            }
+            ChatIntent.ReloadChat ->
+                stateUpdater.updateAt(0, getSystemPromptMsg())
         }
     }
 
-
-    fun chat2(text: String, stream: Boolean) = viewModelScope.launch {
-        if (chatManager.isActive) {
-            sendEffect(ChatEffect.Generating)
-            return@launch
-        }
-        sendEffect(ChatEffect.ChatSent(true))
-
-        logC("user:\n$text")
-        val userMessage = userMsg(text, false)
-        updateState { modifyList { add(userMessage) } }
-
-        val modelMsg = modelMsg("", true)
-        updateState { modifyList { add(modelMsg) } }
-
-        if (stream) {
-            val funcResult = hashMapOf<String, JSONObject>()
-
-            val response = chatManager.sendMsgStream(userContent { text(text) })
-            responseHandler.handle(response).collect { result ->
-                result.text
-
-                funcResult.putAll(funcHandler.handle(result.functionCalls))
+    private fun chat(content: Content, stream: Boolean) {
+        viewModelScope.launch {
+            if (chatManager.isActive) {
+                sendEffect(ChatEffect.Generating)
+                return@launch
             }
-        } else {
-            val response = chatManager.sendMsg(userContent { text(text) })
-            val result = responseHandler.handle(response)
+            sendEffect(ChatEffect.ChatSent(true))
 
-            result.text
-
-            val funcResult = funcHandler.handle(
-                result.functionCalls
+            logC(content.toString())
+            val contentMessage = ChatMessage(
+                text = content.toUIString(),
+                role = content.ROLE,
+                isPending = false
             )
-        }
-    }
+            stateUpdater.addMessage(contentMessage)
 
-    /**
-     * 对话日志
-     */
-    private fun chat(text: String) = viewModelScope.launch(Dispatchers.IO) {
-        if (chatManager.isActive) {
-            sendEffect(ChatEffect.Generating)
-            return@launch
-        }
-        sendEffect(ChatEffect.ChatSent(true))
+            val modelMsg = modelMsg("", true)
+            stateUpdater.addMessage(modelMsg)
 
-        logC("user:\n$text")
-        val userMessage = userMsg(text, false)
-        updateState { modifyList { add(userMessage) } }
-
-        val modelMsg = modelMsg("", true)
-        updateState { modifyList { add(modelMsg) } }
-
-        try {
-            processResponse(chatManager.sendMsg(userContent { text(text) }), modelMsg)
-        } catch (t: Throwable) {
-            t.logE(TAG)
-            updateState {
-                modifyMsg(modelMsg.id) {
-                    copy(
-                        text = (this.text + "\n" + ERROR_UI_MSG + "\n" + t.message).trim(),
-                        isPending = false
-                    )
-                }
-            }
-        }
-    }
-
-    /**
-     * 处理非流式对话响应
-     */
-    private suspend fun processResponse(
-        response: GenerateContentResponse,
-        modelMsg: ChatMessage
-    ) {
-        val responseText = response.text ?: ""
-        val funcCalls = response.functionCalls.map { Pair(it.name, it.args) }
-
-        updateState {
-            modifyMsg(modelMsg.id) { copy(text = responseText, isPending = false) }
-        }
-
-        logC("llm:\n$responseText")
-        if (funcCalls.isNotEmpty()) {
-            logC("tools:\nabout to call ${funcCalls.size} functions")
-            handleFunctionCalls(funcCalls)
-        } else {
-            logC("tools:\nno function was called")
-        }
-    }
-
-    /**
-     * 调用本地函数，统一将结果发送给大模型
-     */
-    private suspend fun handleFunctionCalls(funcCalls: List<Pair<String, Map<String, String?>?>>) {
-        val jsons = StringBuilder()
-        val results = mutableMapOf<String, JSONObject>()
-        withContext(Dispatchers.IO) {
-            funcCalls.forEach { (name, args) ->
-                if (args == null) return@forEach
-                val r = FuncManager.executeFunction(name, args)
-                jsons.append("$name($args): ${r.toPrettyJson()}\n")
-                results[name] = JSONObject(r)
-            }
-        }
-
-        updateState {
-            modifyList { add(funcMsg(jsons.toString(), false)) }
-        }
-
-        logC("tools:\nhandled ${results.size} functions")
-        logC("tools:\n$jsons", false)
-
-        logE(TAG, "sleep")
-        delay(SettingsRepository.sleepTimeSetting.value ?: Default.SLEEP_TIME)
-
-        val responseMsg = modelMsg("", true)
-        updateState {
-            modifyList { add(responseMsg) }
-        }
-
-        sendEffect(ChatEffect.ChatSent(false))
-
-        val funcResponse = try {
-            chatManager.sendMsg(
-                funcContent {
-                    funcCalls.forEach { pair ->
-                        val name = pair.first
-                        val bitmap =
-                            if (name == VisibleViewsModel.name)
-                                runBlocking {
-                                    getScreenAsBitmap()
-                                } else null
-
-                        results[name]?.let {
-                            if (bitmap != null)
-                                image(bitmap)
-                            part(FunctionResponsePart(name, it))
+            val funcResult = hashMapOf<String, JSONObject>()
+            if (stream) {
+                val response = chatManager.sendMsgStream(content)
+                responseHandler.handle(response)
+                    .catch { t ->
+                        stateUpdater.updateMessage({ id == modelMsg.id }) {
+                            this.text = (this.text + "\n" + ERROR_UI_MSG + "\n" + t.message).trim()
+                            isPending = false
                         }
                     }
+                    .collect { result ->
+                        stateUpdater.updateMessage({ id == modelMsg.id }) {
+                            text += result.text
+                        }
+
+                        val f = funcHandler.handle(result.functionCalls)
+                        funcResult.putAll(f)
+                    }
+                stateUpdater.updateMessage({ id == modelMsg.id }) {
+                    isPending = false
                 }
-            )
-        } catch (t: Throwable) {
-            t.logE(TAG)
-            updateState {
-                modifyMsg(responseMsg.id) {
-                    copy(
-                        text = (text + "\n" + ERROR_UI_MSG + "\n" + t.message).trim(),
-                        isPending = false
-                    )
+            } else {
+                val response = chatManager.sendMsg(content)
+                val result = responseHandler.handle(response)
+
+                stateUpdater.updateMessage({ id == modelMsg.id }) {
+                    text = result.text
+                    isPending = false
                 }
+
+                val f = funcHandler.handle(result.functionCalls)
+                funcResult.putAll(f)
             }
-            return
-        }
 
-        val funcResponseText = funcResponse.text ?: ""
-        val newFuncCalls = funcResponse.functionCalls.map { Pair(it.name, it.args) }
+            val parts = mutableListOf<Part>()
+            funcResult.forEach { (name, jsonObj) ->
+                val bitmap = if (name == VisibleViewsModel.name)
+                    getScreenAsBitmap()
+                else
+                    null
+                if (bitmap != null)
+                    parts.add(ImagePart(bitmap))
 
-        updateState {
-            modifyMsg(responseMsg.id) { copy(text = funcResponseText, isPending = false) }
-        }
+                parts.add(FunctionResponsePart(name, jsonObj))
+            }
 
-        if (funcResponseText.isNotEmpty()) {
-            logC("llm:\n$funcResponseText")
-        }
+            val funcContent = funcContent {
+                this.parts.addAll(parts)
+            }
 
-        if (newFuncCalls.isNotEmpty()) {
-            handleFunctionCalls(newFuncCalls)
+            if (funcResult.isNotEmpty())
+                chat(funcContent, stream)
         }
     }
 }

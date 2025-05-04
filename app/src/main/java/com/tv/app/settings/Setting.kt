@@ -2,14 +2,17 @@ package com.tv.app.settings
 
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.google.gson.annotations.SerializedName
+import com.tv.app.utils.toJsonClass
 import com.zephyr.datastore.getValue
 import com.zephyr.datastore.putValue
+import com.zephyr.global_values.TAG
+import com.zephyr.log.logE
 import com.zephyr.net.toJson
-import com.zephyr.net.toJsonClass
 import kotlinx.coroutines.runBlocking
+import kotlin.math.roundToInt
 
 
-abstract class Setting<T : Any> {
+abstract class Setting<T> {
     companion object {
         const val NAME_KEY = "setting_key"
         const val RESULT_NAME_KEY = "setting_result_key"
@@ -55,7 +58,7 @@ abstract class Setting<T : Any> {
 
     suspend fun set(str: String, isEnabled: Boolean = preview.isEnabled): Result {
         val t = parseAsT(str)
-            ?: return Result(false, "parse as t failed")
+            ?: return Result(false, "parse as? t failed")
         val bean = Bean(t, isEnabled)
         return set(bean)
     }
@@ -87,6 +90,7 @@ abstract class Setting<T : Any> {
 
     suspend fun get(): Bean<T> {
         val json = key.getValue("")
+        logE(TAG, json)
 
         return if (json.isNotEmpty()) {
             json.toJsonClass<Bean<T>>()!!
@@ -97,14 +101,19 @@ abstract class Setting<T : Any> {
 
     private fun parseAsT(str: String): T? {
         return try {
+            value?.let { it::class.simpleName?.let { name -> logE(TAG, name) } }
             @Suppress("UNCHECKED_CAST")
             when (value) {
-                is String -> str as T
-                is Int -> str.toInt() as T
-                is Boolean -> str.toBoolean() as T
-                is Float -> str.toFloat() as T
-                is Double -> str.toDouble() as T
-                is Long -> str.toLong() as T
+                is String -> str as? T
+                is Int -> {
+//                    str.toInt() as? T
+                    (str.toIntOrNull() ?: str.toDouble().roundToInt()) as? T
+                }
+
+                is Boolean -> str.toBoolean() as? T
+                is Float -> str.toFloat() as? T
+                is Double -> str.toDouble() as? T
+                is Long -> str.toLong() as? T
                 else -> null
             }
         } catch (e: Exception) {
@@ -119,7 +128,7 @@ abstract class Setting<T : Any> {
         val msg: String? = null
     )
 
-    data class Bean<out T : Any>(
+    data class Bean<out T>(
         @SerializedName("value") val value: T,
         @SerializedName("is_enabled") val isEnabled: Boolean = true
     )
@@ -132,14 +141,13 @@ abstract class Setting<T : Any> {
         ACTIVITY
     }
 
-    class Builder<T : Any>(defaultBean: Bean<T>) {
+    class Builder<T>(defaultBean: Bean<T>) {
         @JvmField
         var value = defaultBean.value
 
         @JvmField
         var isEnabled = defaultBean.isEnabled
     }
-
 
     override fun equals(other: Any?): Boolean {
         if (other is Setting<*>)

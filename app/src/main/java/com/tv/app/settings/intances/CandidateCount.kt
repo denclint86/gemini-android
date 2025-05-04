@@ -4,10 +4,10 @@ import com.tv.app.settings.Setting
 import com.tv.app.settings.values.Default
 import com.tv.app.settings.values.Names
 
-class CandidateCount : Setting<Int>() {
+class CandidateCount : Setting<Long>() {
     override val name: String
         get() = Names.CANDIDATE_COUNT
-    override val default: Bean<Int>
+    override val default: Bean<Long>
         get() = Bean(
             value = Default.CANDIDATE_COUNT,
             isEnabled = true
@@ -18,11 +18,11 @@ class CandidateCount : Setting<Int>() {
         get() = false
 
 
-    override fun onValidate(bean: Bean<Int>): Result {
+    override fun onValidate(bean: Bean<Long>): Result {
         return if (bean.value in 1..8) {
             Result(true, null)
         } else {
-            Result(false, "候选数量必须在 1 至 4 之间")
+            Result(false, "候选数量必须在 1 至 8 之间")
         }
     }
 } 

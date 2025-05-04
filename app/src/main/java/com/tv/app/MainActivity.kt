@@ -57,8 +57,6 @@ class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
         setSupportActionBar(toolBar)
         setInserts()
 
-//        testFunc()
-
         rv.adapter = chatAdapter
         rv.layoutManager = preloadLayoutManager
         (rv.itemAnimator as? SimpleItemAnimator)?.supportsChangeAnimations = false
