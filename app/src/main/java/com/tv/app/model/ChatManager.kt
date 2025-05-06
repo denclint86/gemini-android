@@ -5,7 +5,8 @@ import com.google.ai.client.generativeai.Chat
 import com.google.ai.client.generativeai.type.Content
 import com.google.ai.client.generativeai.type.GenerateContentResponse
 import com.google.ai.client.generativeai.type.TextPart
-import com.tv.app.ApiModelProvider
+import com.tv.app.model.interfaces.IChatManager
+import com.tv.app.utils.ApiModelProvider
 import com.zephyr.global_values.TAG
 import com.zephyr.log.logE
 import kotlinx.coroutines.CoroutineScope
@@ -24,14 +25,14 @@ import kotlinx.coroutines.withContext
  */
 object ChatManager : ChatManagerImpl()
 
-open class ChatManagerImpl : IChatManager {
+open class ChatManagerImpl : IChatManager<Content, GenerateContentResponse> {
     private var history = listOf<Content>()
 
     private var chat = runBlocking { newChat() }
     private var chatScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val mutex = Mutex()
 
-    private fun copyHistory() {
+    private fun copyHistory() = runCatching {
         history = chat.history.map { content ->
             if (content.parts.isEmpty())
                 Content(content.role, listOf(TextPart(" ")))
@@ -44,19 +45,25 @@ open class ChatManagerImpl : IChatManager {
         get() = mutex.isLocked
 
     override suspend fun switchApiKey() {
-        copyHistory()
-        chat = newModel().startChat(history)
+        runCatching {
+            copyHistory()
+            chat = newModel().startChat(history)
+        }
     }
 
     override suspend fun recreateModel() {
-        copyHistory()
-        chat = newModel(false).startChat(history)
+        runCatching {
+            copyHistory()
+            chat = newModel(false).startChat(history)
+        }
     }
 
     override suspend fun resetChat() {
-        close()
-        chat = newChat()
-        open()
+        runCatching {
+            close()
+            chat = newChat()
+            open()
+        }
     }
 
     override suspend fun sendMsg(content: Content): GenerateContentResponse =

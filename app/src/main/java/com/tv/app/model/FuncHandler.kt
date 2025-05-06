@@ -1,6 +1,7 @@
 package com.tv.app.model
 
-import com.tv.app.func.FuncManager
+import com.tv.app.model.interfaces.IFuncHandler
+import com.tv.app.old.func.FuncManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject

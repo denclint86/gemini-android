@@ -26,7 +26,7 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/tool_bar" />
 
-        <com.tv.app.ui.ChatButton
+        <com.tv.app.view.ui.ChatButton
             android:id="@+id/btn_chat"
             android:layout_width="match_parent"
             android:layout_height="0dp"

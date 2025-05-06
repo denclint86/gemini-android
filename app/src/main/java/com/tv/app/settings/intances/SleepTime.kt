@@ -1,10 +1,10 @@
 package com.tv.app.settings.intances
 
-import com.tv.app.settings.Setting
+import com.tv.app.settings.LongSetting
 import com.tv.app.settings.values.Default
 import com.tv.app.settings.values.Names
 
-class SleepTime : Setting<Long>() {
+class SleepTime : LongSetting() {
     override val name: String
         get() = Names.SLEEP_TIME
     override val default: Bean<Long>

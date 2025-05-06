@@ -3,11 +3,11 @@ package com.tv.app.utils
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
-import com.tv.app.chat.ChatViewModel.Companion.CHAT_TAG
-import com.tv.app.chat.mvi.bean.ChatMessage
-import com.tv.app.chat.mvi.bean.systemMsg
-import com.tv.app.settings.SettingsRepository
+import com.tv.app.model.SettingsRepository
 import com.tv.app.settings.values.Default
+import com.tv.app.viewmodel.chat.ChatViewModel.Companion.CHAT_TAG
+import com.tv.app.viewmodel.chat.mvi.bean.ChatMessage
+import com.tv.app.viewmodel.chat.mvi.bean.systemMsg
 import com.zephyr.extension.mvi.MVIViewModel
 import com.zephyr.log.logE
 import kotlinx.coroutines.CoroutineScope
@@ -40,7 +40,7 @@ suspend fun <T> MVIViewModel<*, *, T>.collectFlow(action: suspend (T) -> Unit) {
 }
 
 fun getSystemPromptMsg(): ChatMessage =
-    systemMsg(SettingsRepository.systemPromptSetting.value ?: Default.SYSTEM_PROMPT)
+    systemMsg(SettingsRepository.systemPromptSetting.value(true) ?: Default.SYSTEM_PROMPT)
 
 fun logC(string: String, cut: Boolean = true) {
     logE(

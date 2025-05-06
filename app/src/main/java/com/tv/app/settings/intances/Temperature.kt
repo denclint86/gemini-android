@@ -1,10 +1,10 @@
 package com.tv.app.settings.intances
 
-import com.tv.app.settings.Setting
+import com.tv.app.settings.FloatSetting
 import com.tv.app.settings.values.Default
 import com.tv.app.settings.values.Names
 
-class Temperature : Setting<Float>() {
+class Temperature : FloatSetting() {
     override val name: String
         get() = Names.TEMPERATURE
     override val default: Bean<Float>

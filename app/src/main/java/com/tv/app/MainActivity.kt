@@ -16,19 +16,20 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.SimpleItemAnimator
-import com.tv.app.chat.ChatViewModel
-import com.tv.app.chat.mvi.ChatEffect
-import com.tv.app.chat.mvi.ChatIntent
 import com.tv.app.databinding.ActivityMainBinding
-import com.tv.app.keyborad.KeyboardObserver
-import com.tv.app.settings.SettingsActivity
-import com.tv.app.ui.ChatAdapter
 import com.tv.app.utils.collectFlow
 import com.tv.app.utils.findViewAtPoint
 import com.tv.app.utils.hasOverlayPermission
+import com.tv.app.utils.keyborad.KeyboardObserver
 import com.tv.app.utils.observe
 import com.tv.app.utils.parentIs
 import com.tv.app.utils.setViewInsets
+import com.tv.app.view.EditTextActivity
+import com.tv.app.view.SettingsActivity
+import com.tv.app.view.ui.ChatAdapter
+import com.tv.app.viewmodel.chat.ChatViewModel
+import com.tv.app.viewmodel.chat.mvi.ChatEffect
+import com.tv.app.viewmodel.chat.mvi.ChatIntent
 import com.zephyr.extension.ui.PreloadLayoutManager
 import com.zephyr.extension.widget.toast
 import com.zephyr.global_values.TAG
@@ -45,6 +46,8 @@ class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
 
     private lateinit var overlayPermissionLauncher: ActivityResultLauncher<Intent>
 
+    private lateinit var keyboardObserver: KeyboardObserver
+
     override fun ActivityMainBinding.initBinding() {
         enableEdgeToEdge()
 //        openOverlaySetting()
@@ -59,10 +62,24 @@ class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
 
         rv.adapter = chatAdapter
         rv.layoutManager = preloadLayoutManager
-        (rv.itemAnimator as? SimpleItemAnimator)?.supportsChangeAnimations = false
+        (rv.itemAnimator as SimpleItemAnimator).supportsChangeAnimations = false
 
-        btnChat.collapse()
-        btnChat.setText("对话")
+        when (viewModel.stateValue.buttonState) {
+            State.EXPANDED ->
+                btnChat.expand()
+
+            State.COLLAPSED ->
+                btnChat.collapse()
+
+            State.PROGRESSING -> {}
+        }
+
+        btnChat.setOnNewStateListener { state ->
+            if (state == State.PROGRESSING) return@setOnNewStateListener
+
+            viewModel.sendIntent(ChatIntent.SaveButtonState(state))
+        }
+
         btnChat.setOnSubmitListener { str ->
             if (str.isBlank()) {
                 "输入不可为空".toast()
@@ -72,7 +89,7 @@ class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
             false
         }
 
-        val keyboardObserver = KeyboardObserver.attach(this@MainActivity)
+        keyboardObserver = KeyboardObserver.attach(this@MainActivity)
         keyboardObserver.keyboardState.observe(this@MainActivity) { state ->
             if (state == KeyboardObserver.State.Visible) {
                 btnChat.expand()
@@ -88,9 +105,9 @@ class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
         registerMVI()
     }
 
-    override fun onResume() {
-        super.onResume()
-        viewModel.sendIntent(ChatIntent.ReloadChat)
+    override fun onDestroy() {
+        keyboardObserver.detach()
+        super.onDestroy()
     }
 
     private fun setInserts() = binding.run {
@@ -117,14 +134,16 @@ class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
             R.id.reset ->
                 viewModel.sendIntent(ChatIntent.ResetChat)
 
-            else ->
-                ">_<".toast()
+            else -> {
+                val i = Intent(this, EditTextActivity::class.java)
+                startActivity(i)
+            }
         }
         return super.onOptionsItemSelected(item);
     }
 
     override fun dispatchTouchEvent(event: MotionEvent): Boolean {
-        if (event.action == MotionEvent.ACTION_UP) {
+        if (event.action == MotionEvent.ACTION_DOWN) {
             binding.btnChat.run {
                 val touchedView = findViewAtPoint(event.x, event.y)
                 touchedView?.let { view ->

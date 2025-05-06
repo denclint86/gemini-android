@@ -61,6 +61,22 @@ fun ScalingLayout.safeCollapse(): Boolean {
     }
 }
 
+fun View.setBackgroundColorFromAttr(@AttrRes attrResId: Int) {
+    val typedValue = TypedValue()
+    context.theme.resolveAttribute(attrResId, typedValue, true)
+
+    // 如果属性是引用类型（如颜色资源引用）
+    if (typedValue.resourceId != 0) {
+        setBackgroundColor(ContextCompat.getColor(context, typedValue.resourceId))
+    }
+    // 如果属性直接是颜色值
+    else if (typedValue.type >= TypedValue.TYPE_FIRST_COLOR_INT &&
+        typedValue.type <= TypedValue.TYPE_LAST_COLOR_INT
+    ) {
+        setBackgroundColor(typedValue.data)
+    }
+}
+
 fun TextView.setTextColorFromAttr(@AttrRes attrResId: Int) {
     val typedValue = TypedValue()
     context.theme.resolveAttribute(attrResId, typedValue, true)

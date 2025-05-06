@@ -1,11 +1,11 @@
 package com.tv.app.settings.intances
 
-import com.tv.app.settings.Setting
+import com.tv.app.settings.StringSetting
 import com.tv.app.settings.values.Default
 import com.tv.app.settings.values.Model
 import com.tv.app.settings.values.Names
 
-class ModelName : Setting<String>() {
+class ModelName : StringSetting() {
     override val name: String
         get() = Names.MODEL_NAME
     override val default: Bean<String>

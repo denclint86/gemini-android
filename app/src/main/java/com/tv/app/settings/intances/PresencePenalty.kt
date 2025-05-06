@@ -1,10 +1,10 @@
 package com.tv.app.settings.intances
 
-import com.tv.app.settings.Setting
+import com.tv.app.settings.FloatSetting
 import com.tv.app.settings.values.Default
 import com.tv.app.settings.values.Names
 
-class PresencePenalty : Setting<Float>() {
+class PresencePenalty : FloatSetting() {
     override val name: String
         get() = Names.PRESENCE_PENALTY
     override val default: Bean<Float>

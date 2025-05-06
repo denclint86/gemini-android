@@ -7,8 +7,8 @@ import android.content.Intent
 import android.content.ServiceConnection
 import android.os.IBinder
 import com.google.android.material.color.DynamicColors
-import com.tv.app.chat.windowListener
-import com.tv.app.ui.suspend.SuspendService
+import com.tv.app.viewmodel.chat.windowListener
+import com.tv.app.view.ui.suspend.SuspendService
 import com.zephyr.global_values.TAG
 import com.zephyr.log.LogLevel
 import com.zephyr.log.Logger

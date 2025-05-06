@@ -1,10 +1,10 @@
 package com.tv.app.settings.intances
 
-import com.tv.app.settings.Setting
+import com.tv.app.settings.BooleanSetting
 import com.tv.app.settings.values.Default
 import com.tv.app.settings.values.Names
 
-class Stream : Setting<Boolean>() {
+class Stream : BooleanSetting() {
     override val name: String
         get() = Names.STREAM
     override val default: Bean<Boolean>
@@ -20,9 +20,5 @@ class Stream : Setting<Boolean>() {
 
     override fun onValidate(bean: Bean<Boolean>): Result {
         return Result(true)
-    }
-
-    override suspend fun set(bean: Bean<Boolean>): Result {
-        return super.set(bean.copy(value = isEnabled))
     }
 }

@@ -9,7 +9,7 @@ import android.os.Build
 import android.provider.Settings
 import android.util.DisplayMetrics
 import android.view.WindowManager
-import com.tv.app.func.models.ShellExecutorModel
+import com.tv.app.old.func.models.ShellExecutorModel
 import com.zephyr.global_values.globalContext
 import com.zephyr.log.logE
 import kotlinx.coroutines.Dispatchers

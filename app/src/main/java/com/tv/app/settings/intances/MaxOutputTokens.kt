@@ -1,10 +1,10 @@
 package com.tv.app.settings.intances
 
-import com.tv.app.settings.Setting
+import com.tv.app.settings.IntSetting
 import com.tv.app.settings.values.Default
 import com.tv.app.settings.values.Names
 
-class MaxOutputTokens : Setting<Int>() {
+class MaxOutputTokens : IntSetting() {
     override val name: String
         get() = Names.MAX_OUTPUT_TOKENS
     override val default: Bean<Int>

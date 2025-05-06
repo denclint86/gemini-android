@@ -1,10 +1,10 @@
 package com.tv.app.settings.values
 
 import com.google.ai.client.generativeai.type.Tool
-import com.tv.app.func.FuncManager
+import com.tv.app.old.func.FuncManager
 
 object Default {
-    const val INDEX = 0L
+    const val INDEX = 0
     const val SLEEP_TIME = 0L
     const val STREAM = true
 
@@ -15,8 +15,8 @@ object Default {
     const val TOOLS = true
     const val MAX_OUTPUT_TOKENS = 2048
     const val TOP_P = 0.95f
-    const val TOP_K = 40L
-    const val CANDIDATE_COUNT = 1L
+    const val TOP_K = 40
+    const val CANDIDATE_COUNT = 1
     const val PRESENCE_PENALTY = 0.6f
     const val FREQUENCY_PENALTY = 0.6f
 

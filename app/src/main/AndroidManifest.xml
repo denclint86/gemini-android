@@ -38,12 +38,12 @@
         android:supportsRtl="true"
         android:theme="@style/ai">
         <service
-            android:name=".ui.suspend.SuspendService"
+            android:name=".view.ui.suspend.SuspendService"
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="mediaProjection" />
         <service
-            android:name=".accessibility.MyAccessibilityService"
+            android:name=".old.accessibility.MyAccessibilityService"
             android:exported="true"
             android:label="@string/accessibility_service_label"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
@@ -66,11 +66,11 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".settings.SettingsActivity"
+            android:name=".view.SettingsActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
         <activity
-            android:name=".settings.EditTextActivity"
+            android:name=".view.EditTextActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
 

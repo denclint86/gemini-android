@@ -1,13 +1,13 @@
 package com.tv.app.settings.intances
 
-import com.tv.app.settings.Setting
+import com.tv.app.settings.IntSetting
 import com.tv.app.settings.values.Default
 import com.tv.app.settings.values.Names
 
-class CandidateCount : Setting<Long>() {
+class CandidateCount : IntSetting() {
     override val name: String
         get() = Names.CANDIDATE_COUNT
-    override val default: Bean<Long>
+    override val default: Bean<Int>
         get() = Bean(
             value = Default.CANDIDATE_COUNT,
             isEnabled = true
@@ -18,7 +18,7 @@ class CandidateCount : Setting<Long>() {
         get() = false
 
 
-    override fun onValidate(bean: Bean<Long>): Result {
+    override fun onValidate(bean: Bean<Int>): Result {
         return if (bean.value in 1..8) {
             Result(true, null)
         } else {

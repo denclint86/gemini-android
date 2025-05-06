@@ -16,7 +16,7 @@ fun Setting<*>.getIndex(list: List<String>): Int {
     if (this.kind != Setting.Kind.DIALOG_SELECT) throw IllegalStateException("not kind of 'DIALOG_SELECT'")
 
     when (this.name) {
-        Names.MODEL_NAME -> return list.indexOf(value)
+        Names.MODEL_NAME -> return list.indexOf(value(true))
     }
 
     TODO()

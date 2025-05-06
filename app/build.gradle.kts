@@ -8,7 +8,7 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.tv.bot"
+        applicationId = "com.tv.gemini"
         minSdk = 26
         targetSdk = 35
         versionCode = 1

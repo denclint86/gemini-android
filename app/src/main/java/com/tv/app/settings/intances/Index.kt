@@ -1,13 +1,13 @@
 package com.tv.app.settings.intances
 
-import com.tv.app.settings.Setting
+import com.tv.app.settings.IntSetting
 import com.tv.app.settings.values.Default
 import com.tv.app.settings.values.Names
 
-class Index : Setting<Long>() {
+class Index : IntSetting() {
     override val name: String
         get() = Names.INDEX
-    override val default: Bean<Long>
+    override val default: Bean<Int>
         get() = Bean(
             value = Default.INDEX,
             isEnabled = true
@@ -18,7 +18,7 @@ class Index : Setting<Long>() {
         get() = false
 
 
-    override fun onValidate(bean: Bean<Long>): Result {
+    override fun onValidate(bean: Bean<Int>): Result {
         return if (bean.value >= 0) {
             Result(true, null)
         } else {

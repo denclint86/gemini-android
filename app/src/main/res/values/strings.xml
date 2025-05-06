@@ -10,4 +10,5 @@
     <string name="reset_chat">重置对话</string>
     <string name="click_to_send">click_to_send</string>
     <string name="save">保存</string>
+    <string name="chat">对话</string>
 </resources>

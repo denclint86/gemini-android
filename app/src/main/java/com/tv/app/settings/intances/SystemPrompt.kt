@@ -1,10 +1,10 @@
 package com.tv.app.settings.intances
 
-import com.tv.app.settings.Setting
+import com.tv.app.settings.StringSetting
 import com.tv.app.settings.values.Default
 import com.tv.app.settings.values.Names
 
-class SystemPrompt : Setting<String>() {
+class SystemPrompt : StringSetting() {
     override val name: String
         get() = Names.SYSTEM_PROMPT
     override val default: Bean<String>
