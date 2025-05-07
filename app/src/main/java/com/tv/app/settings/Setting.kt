@@ -56,6 +56,9 @@ abstract class Setting<T> {
         private set
 
     init {
+        if (!canSetEnabled && !default.isEnabled)
+            throw IllegalStateException("")
+
         runBlocking {
             get() // 会初始化 preview
         }

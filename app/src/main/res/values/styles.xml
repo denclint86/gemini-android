@@ -1,10 +1,10 @@
 <resources>
 
     <style name="MyEditTextStyle">
-        <item name="android:textColorHighlight">?attr/colorPrimaryContainer</item>
+        <item name="android:textColorHighlight">?attr/colorOnPrimaryContainer</item>
         <item name="android:textCursorDrawable">@drawable/edit_text_cursor</item>
-        <item name="android:textColorHint">?attr/colorPrimaryContainer</item>
-        <item name="colorControlNormal">?attr/colorPrimaryContainer</item>
-        <item name="colorControlActivated">?attr/colorPrimaryContainer</item>
+        <item name="android:textColorHint">?attr/colorOnPrimaryContainer</item>
+        <item name="colorControlNormal">?attr/colorOnPrimaryContainer</item>
+        <item name="colorControlActivated">?attr/colorOnPrimaryContainer</item>
     </style>
 </resources>

@@ -5,11 +5,9 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
 import com.tv.app.model.SettingsRepository
 import com.tv.app.settings.values.Default
-import com.tv.app.viewmodel.chat.ChatViewModel.Companion.CHAT_TAG
 import com.tv.app.viewmodel.chat.mvi.bean.ChatMessage
 import com.tv.app.viewmodel.chat.mvi.bean.systemMsg
 import com.zephyr.extension.mvi.MVIViewModel
-import com.zephyr.log.logE
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -39,12 +37,15 @@ suspend fun <T> MVIViewModel<*, *, T>.collectFlow(action: suspend (T) -> Unit) {
     uiEffectFlow.collect(action)
 }
 
-fun getSystemPromptMsg(): ChatMessage =
+val testMsgList: List<ChatMessage> = listOf(
+    ChatMessage(text = "SSSSaaaaa\nbbbbb\nccccc\nddddd", role = Role.SYSTEM),
+    ChatMessage(text = "UUUUaaaaa\nbbbbb\nccccc\nddddd", role = Role.USER),
+    ChatMessage(text = "MMMMaaaaa\nbbbbb\nccccc\nddddd", role = Role.MODEL),
+    ChatMessage(text = "FFFFaaaaa\nbbbbb\nccccc\nddddd", role = Role.FUNC),
+    ChatMessage(text = "MMMMaaaaa\nbbbbb\nccccc\nddddd", role = Role.MODEL)
+)
+
+val systemMsg: ChatMessage =
     systemMsg(SettingsRepository.systemPromptSetting.value(true) ?: Default.SYSTEM_PROMPT)
 
-fun logC(string: String, cut: Boolean = true) {
-    logE(
-        CHAT_TAG,
-        if (cut) string.addReturnChars(40) else string
-    )
-}
+val systemMsgList: List<ChatMessage> = listOf(systemMsg)

@@ -2,7 +2,10 @@ package com.tv.app.model
 
 
 import com.google.ai.client.generativeai.GenerativeModel
+import com.google.ai.client.generativeai.type.BlockThreshold
 import com.google.ai.client.generativeai.type.GenerationConfig
+import com.google.ai.client.generativeai.type.HarmCategory
+import com.google.ai.client.generativeai.type.SafetySetting
 import com.google.ai.client.generativeai.type.Tool
 import com.google.ai.client.generativeai.type.content
 import com.google.ai.client.generativeai.type.generationConfig
@@ -71,6 +74,16 @@ object SettingsRepository {
             null
     }
 
+    private fun getSafetySettings(): List<SafetySetting>? {
+//        return null
+        return listOf(
+            SafetySetting(HarmCategory.HARASSMENT, BlockThreshold.NONE),
+            SafetySetting(HarmCategory.HATE_SPEECH, BlockThreshold.NONE),
+            SafetySetting(HarmCategory.SEXUALLY_EXPLICIT, BlockThreshold.NONE),
+            SafetySetting(HarmCategory.DANGEROUS_CONTENT, BlockThreshold.NONE)
+        )
+    }
+
     private fun createGenerationConfig(): GenerationConfig {
         return generationConfig {
             temperature = temperatureSetting.value()
@@ -92,7 +105,7 @@ object SettingsRepository {
             },
             tools = getTools(),
             generationConfig = createGenerationConfig(),
-//            safetySettings = null,
+            safetySettings = getSafetySettings(),
 //            requestOptions = RequestOptions(),
         ).also {
             GlobalScope.launch(Dispatchers.IO) {

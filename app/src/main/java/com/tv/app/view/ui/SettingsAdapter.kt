@@ -10,6 +10,7 @@ import com.tv.app.databinding.LayoutSettingItemBinding
 import com.tv.app.settings.Setting
 import com.tv.app.settings.values.getIndex
 import com.tv.app.settings.values.getOptions
+import com.tv.app.utils.context
 import com.tv.app.utils.setRippleEffect
 import com.tv.app.utils.setTextColorFromAttr
 import com.tv.app.utils.showInputDialog
@@ -122,7 +123,6 @@ class SettingsAdapter(
 
     override fun LayoutSettingItemBinding.onBindViewHolder(data: Setting<*>?, position: Int) {
         if (data == null) return
-        val context = root.context
 
         title.text = data.name
         title.setColorByEnabled(data.isEnabled())

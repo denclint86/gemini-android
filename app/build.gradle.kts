@@ -53,6 +53,8 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.runtime)
 
+    implementation(libs.markwon.core)
+
     implementation(libs.google.gson)
 
     implementation(libs.zephyr.vbclass)

@@ -15,13 +15,13 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_gravity="center"
-            android:layout_marginHorizontal="6dp"
-            android:layout_marginVertical="6dp"
-            android:background="?attr/colorPrimary"
+            android:layout_marginHorizontal="10dp"
+            android:layout_marginVertical="8dp"
+            android:background="?attr/colorOnPrimary"
             android:clickable="true"
             android:elevation="1dp"
             android:stateListAnimator="@animator/sl_state_animator"
-            app:radiusFactor="0.9">
+            app:radiusFactor="0.99">
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/layout_actions"
@@ -41,7 +41,7 @@
                     android:inputType="none"
                     android:maxLines="4"
                     android:scrollbars="vertical"
-                    android:textColor="?attr/colorOnPrimary"
+                    android:textColor="?attr/colorPrimary"
                     android:textSize="13sp"
                     android:theme="@style/MyEditTextStyle"
                     app:layout_constraintBottom_toBottomOf="parent"
@@ -60,7 +60,7 @@
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toEndOf="@id/edit_text"
                     app:layout_constraintTop_toTopOf="parent"
-                    app:tint="?attr/colorOnPrimary" />
+                    app:tint="?attr/colorPrimary" />
             </androidx.constraintlayout.widget.ConstraintLayout>
 
             <TextView
@@ -70,7 +70,7 @@
                 android:layout_gravity="center"
                 android:gravity="center"
                 android:text="@string/chat"
-                android:textColor="?attr/colorOnPrimary"
+                android:textColor="?attr/colorPrimary"
                 android:textSize="18sp"
                 android:textStyle="bold"
                 app:layout_constraintBottom_toBottomOf="parent"

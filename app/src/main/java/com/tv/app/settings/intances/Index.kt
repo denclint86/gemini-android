@@ -25,4 +25,4 @@ class Index : IntSetting() {
             Result(false, "索引必须为非负数")
         }
     }
-} 
+}

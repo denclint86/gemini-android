@@ -15,12 +15,14 @@ junitVersion = "1.2.1"
 espressoCore = "3.6.1"
 appcompat = "1.7.0"
 shizuku_api = "13.1.5"
+markwon = "4.6.2"
 
 [libraries]
 androidx-runtime = { module = "androidx.compose.runtime:runtime", version.ref = "runtime" }
 converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "retrofit" }
 generativeai = { module = "com.google.ai.client.generativeai:generativeai", version.ref = "generativeai" }
 google-gson = { module = "com.google.code.gson:gson", version.ref = "gsonVersion" }
+markwon-core = { module = "io.noties.markwon:core", version.ref = "markwon" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 zephyr-extension = { module = "com.github.p1ay1s.Zephyr:extension", version.ref = "zephyr" }
 zephyr-log = { module = "com.github.p1ay1s.Zephyr:log", version.ref = "zephyr" }

@@ -16,7 +16,10 @@
 
 package com.tv.app.viewmodel.chat.mvi.bean
 
+import com.google.ai.client.generativeai.type.Content
+import com.tv.app.utils.ROLE
 import com.tv.app.utils.Role
+import com.tv.app.utils.toUIString
 import java.util.UUID
 
 /**
@@ -27,7 +30,15 @@ data class ChatMessage(
     val text: String = "",
     val role: Role = Role.USER,
     val isPending: Boolean = false
-)
+) {
+    companion object {
+        fun fromContent(content: Content) = ChatMessage(
+            text = content.toUIString(),
+            role = content.ROLE,
+            isPending = false
+        )
+    }
+}
 
 fun userMsg(text: String, isPending: Boolean = false) =
     ChatMessage(text = text, role = Role.USER, isPending = isPending)

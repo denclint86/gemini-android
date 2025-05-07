@@ -1,6 +1,7 @@
 package com.tv.app.utils
 
 import android.app.Activity
+import android.content.Context
 import android.util.TypedValue
 import android.view.View
 import android.view.ViewGroup
@@ -11,6 +12,7 @@ import androidx.core.graphics.Insets
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updateLayoutParams
+import androidx.viewbinding.ViewBinding
 import com.google.android.material.appbar.MaterialToolbar
 import com.tv.app.R
 import com.zephyr.global_values.TAG
@@ -49,6 +51,9 @@ fun ScalingLayout.safeExpand(): Boolean {
         return false
     }
 }
+
+val ViewBinding.context: Context
+    get() = root.context
 
 fun ScalingLayout.safeCollapse(): Boolean {
     logE(TAG, "isAttachedToWindow: $isAttachedToWindow")

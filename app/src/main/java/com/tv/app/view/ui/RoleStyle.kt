@@ -17,11 +17,11 @@ val roleStyles = mapOf(
         com.google.android.material.R.attr.colorPrimary
     ),
     Role.SYSTEM to RoleStyle(
-        com.google.android.material.R.attr.colorPrimaryContainer,
-        com.google.android.material.R.attr.colorOnPrimaryContainer
+        com.google.android.material.R.attr.colorOnError,
+        com.google.android.material.R.attr.colorError
     ),
     Role.FUNC to RoleStyle(
-        com.google.android.material.R.attr.colorOnPrimarySurface,
-        com.google.android.material.R.attr.colorPrimarySurface
+        com.google.android.material.R.attr.colorError,
+        com.google.android.material.R.attr.colorOnError
     )
 )

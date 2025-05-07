@@ -1,5 +1,6 @@
 package com.tv.app
 
+import android.animation.ObjectAnimator
 import android.content.Context
 import android.content.Intent
 import android.media.projection.MediaProjectionManager
@@ -8,6 +9,7 @@ import android.provider.Settings
 import android.view.Menu
 import android.view.MenuItem
 import android.view.MotionEvent
+import android.view.animation.DecelerateInterpolator
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -99,7 +101,18 @@ class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
         }
         keyboardObserver.keyboardHeight.observe(this@MainActivity) { height ->
             val extraMinus = if (height == 0) 0 else btnChat.marginBottom
-            btnChat.translationY = extraMinus - height.toFloat()
+            val targetTranslationY = extraMinus - height.toFloat()
+
+            ObjectAnimator.ofFloat(
+                btnChat,
+                "translationY",
+                btnChat.translationY,
+                targetTranslationY
+            ).apply {
+                duration = 220
+                interpolator = DecelerateInterpolator()
+                start()
+            }
         }
 
         registerMVI()

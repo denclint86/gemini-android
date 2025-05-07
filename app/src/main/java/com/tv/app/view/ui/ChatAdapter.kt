@@ -5,19 +5,39 @@ import androidx.annotation.AttrRes
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DiffUtil
 import com.tv.app.databinding.LayoutChatItemBinding
+import com.tv.app.utils.Role
 import com.tv.app.utils.setBackgroundColorFromAttr
 import com.tv.app.utils.setTextColorFromAttr
 import com.tv.app.viewmodel.chat.mvi.bean.ChatMessage
+import com.zephyr.global_values.globalContext
 import com.zephyr.vbclass.ui.ViewBindingListAdapter
+import io.noties.markwon.Markwon
+import io.noties.markwon.PrecomputedTextSetterCompat
+import java.util.concurrent.Executors
 
 class ChatAdapter : ViewBindingListAdapter<LayoutChatItemBinding, ChatMessage>(Callback()) {
     companion object {
-        private const val HIDE_ENABLED = true
+        private const val HIDE_ENABLED = false
+    }
+
+    private val markwon: Markwon by lazy {
+        Markwon.builder(globalContext!!)
+//            .usePlugin(HtmlPlugin.create { plugin ->
+//                plugin.addHandler(
+//                    ThinkTagHandler(10)
+//                )
+//            })
+            .textSetter(PrecomputedTextSetterCompat.create(Executors.newCachedThreadPool()))
+            .build()
     }
 
     override fun LayoutChatItemBinding.onBindViewHolder(data: ChatMessage?, position: Int) {
         root.visibility = when {
-            currentList.lastIndex < position -> View.INVISIBLE
+            currentList.lastIndex < position -> {
+                tv.text = "\n\n\n"
+                View.INVISIBLE
+            }
+
             (HIDE_ENABLED && position == 0) -> View.GONE
             else -> View.VISIBLE
         }
@@ -38,11 +58,16 @@ class ChatAdapter : ViewBindingListAdapter<LayoutChatItemBinding, ChatMessage>(C
         if (currentTextColor != newTextColor) {
             tv.setTextColorFromAttr(style.textColorAttr)
         }
-        tv.text = data.text
+
+        if (data.role != Role.FUNC) {
+            markwon.setMarkdown(tv, data.text)
+        } else {
+            tv.text = data.text
+        }
     }
 
     override fun getItemCount(): Int {
-        return super.getItemCount() + 3
+        return super.getItemCount() + 2
     }
 
     // 提取颜色解析逻辑，避免重复解析

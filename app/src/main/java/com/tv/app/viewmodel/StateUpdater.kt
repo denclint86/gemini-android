@@ -1,9 +1,9 @@
 package com.tv.app.viewmodel
 
+import com.tv.app.utils.Role
+import com.tv.app.utils.systemMsg
 import com.tv.app.viewmodel.chat.mvi.ChatState
 import com.tv.app.viewmodel.chat.mvi.bean.ChatMessage
-import com.tv.app.utils.Role
-import com.tv.app.utils.getSystemPromptMsg
 import com.zephyr.scaling_layout.State
 import java.util.UUID
 import kotlin.reflect.KFunction1
@@ -42,7 +42,7 @@ class StateUpdater : IStateUpdater<ChatMessage, ChatState, StateUpdater.Builder>
 
     override fun resetState() {
         method?.invoke {
-            ChatState(listOf(getSystemPromptMsg()), buttonState = State.COLLAPSED)
+            ChatState(listOf(systemMsg), buttonState = State.COLLAPSED)
         }
     }
 
