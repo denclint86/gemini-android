@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.Intent
 import android.graphics.PixelFormat
 import android.view.Gravity
 import android.view.View
@@ -11,6 +12,9 @@ import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.EditText
 import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.zephyr.extension.widget.toast
@@ -19,6 +23,17 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
+
+inline fun <reified T : ViewModel> ViewModelStoreOwner.createViewModel(): T {
+    return ViewModelProvider(this)[T::class.java]
+//    return ViewModelProvider(this).get(T::class.java) // 重写 [] get 操作符来实现语法简化
+}
+
+inline fun <reified T : Activity> Context.startActivity(block: Intent.() -> Unit = {}) {
+    val i = Intent(this, T::class.java)
+    i.block()
+    startActivity(i)
+}
 
 fun Activity.copyToClipboard(text: String) {
     val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager

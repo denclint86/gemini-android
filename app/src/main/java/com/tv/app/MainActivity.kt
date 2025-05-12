@@ -14,18 +14,20 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.marginBottom
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.SimpleItemAnimator
 import com.tv.app.databinding.ActivityMainBinding
+import com.tv.app.utils.Role
 import com.tv.app.utils.collectFlow
+import com.tv.app.utils.createViewModel
 import com.tv.app.utils.findViewAtPoint
 import com.tv.app.utils.hasOverlayPermission
 import com.tv.app.utils.keyborad.KeyboardObserver
 import com.tv.app.utils.observe
 import com.tv.app.utils.parentIs
 import com.tv.app.utils.setViewInsets
+import com.tv.app.utils.startActivity
 import com.tv.app.view.EditTextActivity
 import com.tv.app.view.SettingsActivity
 import com.tv.app.view.ui.ChatAdapter
@@ -38,8 +40,10 @@ import com.zephyr.global_values.TAG
 import com.zephyr.log.logE
 import com.zephyr.scaling_layout.State
 import com.zephyr.vbclass.ViewBindingActivity
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
     private lateinit var viewModel: ChatViewModel
@@ -57,7 +61,7 @@ class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
 
         chatAdapter = ChatAdapter()
         preloadLayoutManager = PreloadLayoutManager(this@MainActivity, RecyclerView.VERTICAL)
-        viewModel = ViewModelProvider(this@MainActivity)[ChatViewModel::class.java]
+        viewModel = this@MainActivity.createViewModel<ChatViewModel>()
 
         setSupportActionBar(toolBar)
         setInserts()
@@ -140,16 +144,14 @@ class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.settings -> {
-                val i = Intent(this, SettingsActivity::class.java)
-                startActivity(i)
+                startActivity<SettingsActivity>()
             }
 
             R.id.reset ->
                 viewModel.sendIntent(ChatIntent.ResetChat)
 
             else -> {
-                val i = Intent(this, EditTextActivity::class.java)
-                startActivity(i)
+                startActivity<EditTextActivity>()
             }
         }
         return super.onOptionsItemSelected(item);
@@ -170,7 +172,13 @@ class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
 
     private fun registerMVI() {
         viewModel.observe(lifecycleScope, { it.messages }) {
-            chatAdapter.submitList(it)
+            val list = if (ChatAdapter.HIDE_ENABLED)
+                withContext(Dispatchers.IO) {
+                    it.filter { msg -> msg.role != Role.SYSTEM }
+                }
+            else
+                it
+            chatAdapter.submitList(list)
         }
 
         lifecycleScope.launch {

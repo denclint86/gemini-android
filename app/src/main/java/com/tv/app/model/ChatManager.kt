@@ -23,9 +23,9 @@ import kotlinx.coroutines.withContext
 /**
  * 依赖 api provider 实现循环切换 apikey
  */
-object ChatManager : ChatManagerImpl()
+object ChatManager : IChatManager<Content, GenerateContentResponse> by ChatManagerImpl()
 
-open class ChatManagerImpl : IChatManager<Content, GenerateContentResponse> {
+class ChatManagerImpl : IChatManager<Content, GenerateContentResponse> {
     private var history = listOf<Content>()
 
     private var chat = runBlocking { newChat() }

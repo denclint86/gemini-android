@@ -17,7 +17,7 @@ import java.util.concurrent.Executors
 
 class ChatAdapter : ViewBindingListAdapter<LayoutChatItemBinding, ChatMessage>(Callback()) {
     companion object {
-        private const val HIDE_ENABLED = false
+        const val HIDE_ENABLED = true
     }
 
     private val markwon: Markwon by lazy {
@@ -38,7 +38,6 @@ class ChatAdapter : ViewBindingListAdapter<LayoutChatItemBinding, ChatMessage>(C
                 View.INVISIBLE
             }
 
-            (HIDE_ENABLED && position == 0) -> View.GONE
             else -> View.VISIBLE
         }
 
