@@ -12,6 +12,8 @@ import com.google.ai.client.generativeai.type.ImagePart
 import com.google.ai.client.generativeai.type.Part
 import com.google.ai.client.generativeai.type.TextPart
 import com.google.ai.client.generativeai.type.content
+import com.zephyr.global_values.TAG
+import com.zephyr.log.logE
 
 enum class Role(val str: String?) {
     USER("user"),
@@ -52,7 +54,9 @@ fun List<Part>.toUIString(): String {
             if (this@toUIString.last() != part)
                 append("\n")
         }
-        toString()
+        val s = toString()
+        logE(TAG, "$size parts --> $s")
+        s
     }
 }
 
@@ -66,26 +70,10 @@ fun Part.toUIString(): String {
         is FunctionResponsePart -> "[func_response -> $name]"
         is ExecutableCodePart -> "[code]"
         is CodeExecutionResultPart -> "[code_result]"
-        else -> "[known]"
-    }
-}
-
-fun Content.toLogString(): String {
-    return when (ROLE) {
-        Role.USER -> "user: ${parts[0]}"
-        Role.MODEL -> ""
-        Role.FUNC -> ""
-        Role.SYSTEM -> ""
+        else -> "[unknown]"
     }
 }
 
 fun userContent(init: Content.Builder.() -> Unit) = content(role = Role.USER.str, init)
 fun funcContent(init: Content.Builder.() -> Unit) = content(role = Role.FUNC.str, init)
 fun modelContent(init: Content.Builder.() -> Unit) = content(role = Role.MODEL.str, init)
-
-fun createContent(role: Role = Role.USER, init: Content.Builder.() -> Unit): Content {
-    if (isGeminiSupported(role))
-        return content(role.str, init)
-    else
-        throw IllegalArgumentException("gemini 不支持这个角色 ($role)")
-}

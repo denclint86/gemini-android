@@ -1,6 +1,6 @@
 package com.tv.app.settings.values
 
-import com.tv.app.settings.Setting
+import com.tv.app.settings.intances.Setting
 
 fun Setting<*>.getOptions(): List<String> {
     if (this.kind != Setting.Kind.DIALOG_SELECT) throw IllegalStateException("not kind of 'DIALOG_SELECT'")

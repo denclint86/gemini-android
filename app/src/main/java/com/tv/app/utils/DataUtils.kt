@@ -3,15 +3,16 @@ package com.tv.app.utils
 import androidx.lifecycle.MutableLiveData
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
-import com.tv.app.settings.BooleanSetting
-import com.tv.app.settings.DoubleSetting
-import com.tv.app.settings.FloatSetting
-import com.tv.app.settings.IntSetting
-import com.tv.app.settings.LongSetting
-import com.tv.app.settings.Setting
-import com.tv.app.settings.StringSetting
+import com.tv.app.settings.intances.BooleanSetting
+import com.tv.app.settings.intances.DoubleSetting
+import com.tv.app.settings.intances.FloatSetting
+import com.tv.app.settings.intances.IntSetting
+import com.tv.app.settings.intances.LongSetting
+import com.tv.app.settings.intances.Setting
+import com.tv.app.settings.intances.StringSetting
 import com.zephyr.global_values.TAG
 import com.zephyr.log.logE
+import kotlin.reflect.KClass
 
 
 inline fun <reified T> Any.castAs(onCast: (Any) -> T?): T? =
@@ -76,6 +77,27 @@ fun <T> MutableLiveData<T>.setIfChange(t: T): Boolean {
     return diff
 }
 
+fun <T : Any> getSealedClassObjects(
+    sealedClass: KClass<T>,
+    filter: (KClass<out T>) -> T?
+): List<T> {
+    require(sealedClass.isSealed) { "传入的参数必须是封装类" }
+
+    // 递归收集所有子类的函数
+    fun collectSubclasses(kClass: KClass<out T>): List<KClass<out T>> {
+        return if (kClass.isSealed) {
+            // 如果是密封类, 递归收集其直接子类的子类
+            kClass.sealedSubclasses.flatMap { collectSubclasses(it) }
+        } else {
+            // 如果不是密封类, 直接返回自身
+            listOf(kClass)
+        }
+    }
+
+    // 获取所有子类 (包括间接子类), 然后应用 filter
+    return collectSubclasses(sealedClass).mapNotNull(filter)
+}
+
 fun String.addReturnChars(maxLength: Int): String {
     if (this.length <= maxLength || maxLength <= 0) return this
 
@@ -98,7 +120,7 @@ fun String.addReturnChars(maxLength: Int): String {
             continue
         }
 
-        // 没有自然换行符时，找合适的断点
+        // 没有自然换行符时, 找合适的断点
         var endIndex = currentIndex + maxLength
         if (endIndex >= this.length) {
             endIndex = this.length
@@ -125,12 +147,12 @@ fun String.addReturnChars(maxLength: Int): String {
     return result.toString()
 }
 
-// 全局 Gson 实例，复用以提高性能
+// 全局 Gson 实例, 复用以提高性能
 val gson: Gson = GsonBuilder()
 //    .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
     .create()
 
-// 扩展函数，保留 reified 泛型
+// 扩展函数, 保留 reified 泛型
 inline fun <reified T> String.toJsonClass(): T? {
     return try {
         gson.fromJson(this, T::class.java)

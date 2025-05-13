@@ -2,10 +2,10 @@ package com.tv.app.old.func
 
 import com.google.gson.annotations.SerializedName
 import com.tv.app.old.func.models.BaseFuncModel
+import com.tv.app.utils.getSealedClassObjects
 import com.zephyr.global_values.TAG
 import com.zephyr.log.logE
 import com.zephyr.net.toJson
-import kotlin.reflect.KClass
 
 /**
  * 所有的函数 model 都要在这里添加
@@ -17,7 +17,9 @@ object FuncManager {
 
     init {
         // 注册所有实现
-        val list = getSealedClassObjects(BaseFuncModel::class)
+        val list = getSealedClassObjects(BaseFuncModel::class) { kClass ->
+            kClass.objectInstance
+        }
         list.forEach { model ->
             _functionMap[model.name] = model
         }
@@ -41,16 +43,4 @@ object FuncManager {
         @SerializedName("unknown_function")
         val msg: String
     )
-}
-
-/**
- * 反射筛选一个封装类的 object 实现
- */
-fun <T : Any> getSealedClassObjects(sealedClass: KClass<T>): List<T> {
-    require(sealedClass.isSealed) { "传入的参数必须是封装类" }
-
-    return sealedClass.sealedSubclasses
-        .mapNotNull { subclass ->
-            subclass.objectInstance
-        }
 }

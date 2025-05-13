@@ -193,6 +193,7 @@ class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
 
                     is ChatEffect.Generating -> "请等待当前回答结束".toast()
                     is ChatEffect.Error -> effect.t?.message.toast()
+                    ChatEffect.Done -> "已完成".toast()
                 }
             }
         }

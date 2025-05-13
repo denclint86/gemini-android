@@ -1,4 +1,4 @@
-package com.tv.app.settings
+package com.tv.app.settings.intances
 
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.google.gson.annotations.SerializedName
@@ -11,6 +11,55 @@ import com.zephyr.global_values.TAG
 import com.zephyr.log.logE
 import com.zephyr.net.toJson
 import kotlinx.coroutines.runBlocking
+import kotlin.math.roundToInt
+import kotlin.math.roundToLong
+
+// 由于封装类的限制, 改用反射获取全部设置项需要将他们放在一个包下
+
+sealed class StringSetting : Setting<String>() {
+    override fun parseFromString(string: String): String? {
+        return string // 直接返回字符串，空字符串也有效
+    }
+}
+
+sealed class IntSetting : Setting<Int>() {
+    override fun parseFromString(string: String): Int? {
+        return string.toDoubleOrNull()?.roundToInt()
+    }
+}
+
+sealed class LongSetting : Setting<Long>() {
+    override fun parseFromString(string: String): Long? {
+        return string.toDoubleOrNull()?.roundToLong()
+    }
+}
+
+sealed class FloatSetting : Setting<Float>() {
+    override fun parseFromString(string: String): Float? {
+        return string.toFloatOrNull()
+    }
+}
+
+sealed class DoubleSetting : Setting<Double>() {
+    override fun parseFromString(string: String): Double? {
+        return string.toDoubleOrNull()
+    }
+}
+
+sealed class BooleanSetting : Setting<Boolean>() {
+    override fun parseFromString(string: String): Boolean? {
+        return string.toBooleanStrictOrNull()
+    }
+
+    // 强制绑定开关和 value 的值
+    override suspend fun set(bean: Bean<Boolean>): Result {
+        return super.set(bean.copy(value = bean.isEnabled))
+    }
+
+    override suspend fun get(): Bean<Boolean> {
+        return super.get().copy(value = isEnabled())
+    }
+}
 
 
 sealed class Setting<T> {

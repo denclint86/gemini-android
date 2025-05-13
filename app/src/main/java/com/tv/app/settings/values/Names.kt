@@ -3,6 +3,7 @@ package com.tv.app.settings.values
 object Names {
     const val INDEX = "api_key 索引"
     const val SLEEP_TIME = "调用冷却时间"
+    const val TIMEOUT = "网络请求超时(ms)"
     const val STREAM = "使用流式传输"
 
     const val MODEL_NAME = "模型"

@@ -49,7 +49,6 @@ dependencies {
 
     implementation(libs.androidx.datastore)
 
-//    implementation(libs.generativeai)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.runtime)
 

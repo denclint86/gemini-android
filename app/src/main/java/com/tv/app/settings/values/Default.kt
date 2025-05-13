@@ -6,6 +6,7 @@ import com.tv.app.old.func.FuncManager
 object Default {
     const val INDEX = 0
     const val SLEEP_TIME = 0L
+    const val TIMEOUT_MS = 20_000L
     const val STREAM = true
 
     val MODEL_NAME = Model.GEMINI_2_5_FLASH_PREVIEW_04_17.string
