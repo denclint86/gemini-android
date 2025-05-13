@@ -7,7 +7,7 @@ import android.view.MenuItem
 import androidx.activity.enableEdgeToEdge
 import com.tv.app.R
 import com.tv.app.databinding.ActivityEditTextBinding
-import com.tv.app.model.SettingsRepository
+import com.tv.app.model.SettingManager
 import com.tv.app.settings.intances.Setting
 import com.tv.app.utils.setBackAffair
 import com.tv.app.utils.setViewInsets
@@ -34,14 +34,14 @@ class EditTextActivity : ViewBindingActivity<ActivityEditTextBinding>() {
         name?.run {
             supportActionBar?.title = "修改$name"
 
-            setting = SettingsRepository.settingMap[name]
+            setting = SettingManager.settingMap[name]
             setting?.let {
                 et.setText(it.value()!!.toString()) // 显示当前值
             }
         } ?: run { // 进入关于模式
             supportActionBar?.title = "关于"
             val builder = StringBuilder()
-            SettingsRepository.settingMap.forEach { (k, v) ->
+            SettingManager.settingMap.forEach { (k, v) ->
                 builder.append("$k: ")
                 builder.append(v.bean.toJson())
                 builder.append("\n")

@@ -4,7 +4,8 @@ import com.google.ai.client.generativeai.GenerativeModel
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.tv.app.R
-import com.tv.app.model.SettingsRepository
+import com.tv.app.model.SettingManager
+import com.tv.app.model.getSetting
 import com.tv.app.settings.intances.Index
 import com.zephyr.global_values.TAG
 import com.zephyr.global_values.globalContext
@@ -22,7 +23,7 @@ object ApiModelProvider {
     init {
         runBlocking {
             currentIndex = AtomicInteger(
-                SettingsRepository.get<Index>()?.value(true) ?: 0
+                getSetting<Index>()?.value(true) ?: 0
             )
         }
     }
@@ -41,7 +42,7 @@ object ApiModelProvider {
         return apiKeys[index].also {
             val currentTime = System.currentTimeMillis()
             switchTimestamps.add(currentTime)
-            SettingsRepository.get<Index>()?.set {
+            getSetting<Index>()?.set {
                 value = index
             }
             logE(TAG, "api-key switched to index: $index (${it.takeLast(5)})")
@@ -55,7 +56,7 @@ object ApiModelProvider {
         else
             apiKeys[currentIndex.get()]
 
-        return SettingsRepository.createGenerativeModel(key)
+        return SettingManager.createGenerativeModel(key)
     }
 
     fun getCount(): Int = apiKeys.size

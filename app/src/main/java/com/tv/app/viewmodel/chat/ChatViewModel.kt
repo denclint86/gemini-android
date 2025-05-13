@@ -10,7 +10,7 @@ import com.google.ai.client.generativeai.type.Part
 import com.tv.app.model.ChatManager
 import com.tv.app.model.FuncHandler
 import com.tv.app.model.ResponseHandler
-import com.tv.app.model.SettingsRepository
+import com.tv.app.model.getSetting
 import com.tv.app.model.interfaces.IChatManager
 import com.tv.app.model.interfaces.IFuncHandler
 import com.tv.app.model.interfaces.IResponseHandler
@@ -80,7 +80,7 @@ class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>() {
             when (intent) {
                 is ChatIntent.Chat -> {
                     val userContent = userContent { text(intent.text) }
-                    chat(userContent, SettingsRepository.get<Stream>()?.value(true) ?: true)
+                    chat(userContent, getSetting<Stream>()?.value(true) ?: true)
                 }
 
                 ChatIntent.ResetChat -> {
@@ -140,7 +140,7 @@ class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>() {
     }
 
     private suspend fun handleFunctionCalls(stream: Boolean, funcResult: Map<String, JSONObject>) {
-        val delay = SettingsRepository.get<SleepTime>()?.value(true) ?: 0
+        val delay = getSetting<SleepTime>()?.value(true) ?: 0
         delay(delay)
         val parts = mutableListOf<Part>()
         funcResult.forEach { (name, jsonObj) ->
@@ -158,7 +158,7 @@ class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>() {
             this.parts.addAll(parts)
         }
 
-        if (funcResult.isNotEmpty() && SettingsRepository.get<Tools>()?.isEnabled() != false)
+        if (funcResult.isNotEmpty() && getSetting<Tools>()?.isEnabled() != false)
             chat(funcContent, stream)
         else
             sendEffect(ChatEffect.Done)

@@ -13,6 +13,7 @@ import com.tv.app.settings.intances.StringSetting
 import com.zephyr.global_values.TAG
 import com.zephyr.log.logE
 import kotlin.reflect.KClass
+import kotlin.reflect.full.createInstance
 
 
 inline fun <reified T> Any.castAs(onCast: (Any) -> T?): T? =
@@ -77,7 +78,22 @@ fun <T> MutableLiveData<T>.setIfChange(t: T): Boolean {
     return diff
 }
 
-fun <T : Any> getSealedClassObjects(
+fun <T : Any> KClass<T>.createInstanceOrNull(): T? = try {
+    if (isAbstract)
+        null
+    else
+        createInstance()
+} catch (t: Throwable) {
+    null
+}
+
+inline fun <reified T : Any> getSealedChildren(
+    noinline filter: (KClass<out T>) -> T?
+): List<T> {
+    return getSealedChildren(T::class, filter)
+}
+
+fun <T : Any> getSealedChildren(
     sealedClass: KClass<T>,
     filter: (KClass<out T>) -> T?
 ): List<T> {

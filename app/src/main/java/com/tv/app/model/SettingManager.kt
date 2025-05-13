@@ -23,33 +23,38 @@ import com.tv.app.settings.intances.Tools
 import com.tv.app.settings.intances.TopK
 import com.tv.app.settings.intances.TopP
 import com.tv.app.settings.values.Default
-import com.tv.app.utils.getSealedClassObjects
-import kotlin.reflect.full.createInstance
+import com.tv.app.utils.createInstanceOrNull
+import com.tv.app.utils.getSealedChildren
+import com.zephyr.global_values.TAG
+import com.zephyr.log.logE
+import kotlin.reflect.KClass
 
-object SettingsRepository {
+inline fun <reified T : Setting<*>> getSetting(): T? =
+    SettingManager[T::class]
+
+object SettingManager {
     private val _settingMap = mutableMapOf<String, Setting<*>>()
     val settingMap: Map<String, Setting<*>>
         get() = _settingMap
 
-    inline fun <reified T : Setting<*>> get(): T? =
-        settingMap.values.firstOrNull { it is T } as? T
+    @Suppress("UNCHECKED_CAST")
+    operator fun <T : Setting<*>> get(clazz: KClass<T>): T? =
+        settingMap.values.firstOrNull { clazz.isInstance(it) } as? T
 
     init {
-        val list = getSealedClassObjects(Setting::class) { kClass ->
-            if (!kClass.isAbstract && kClass.constructors.any { it.parameters.isEmpty() }) {
-                kClass.createInstance()
-            } else {
-                null
-            }
+        val list = getSealedChildren<Setting<*>> { kClass ->
+            kClass.createInstanceOrNull()
         }
 
         list.sortedBy { it.name }.forEach { setting ->
             _settingMap[setting.name] = setting
         }
+
+        logE(TAG, "已注册设置: ${settingMap.keys}")
     }
 
     private fun getTools(): List<Tool>? {
-        return if (get<Tools>()?.isEnabled() != false)
+        return if (getSetting<Tools>()?.isEnabled() != false)
             Default.APP_TOOLS
         else
             null
@@ -67,28 +72,28 @@ object SettingsRepository {
 
     private fun createGenerationConfig(): GenerationConfig {
         return generationConfig {
-            temperature = get<Temperature>()?.value()
-            maxOutputTokens = get<MaxOutputTokens>()?.value()
-            topP = get<TopP>()?.value()
-            topK = get<TopK>()?.value()
-            candidateCount = get<CandidateCount>()?.value()
-            presencePenalty = get<PresencePenalty>()?.value()
-            frequencyPenalty = get<FrequencyPenalty>()?.value()
+            temperature = getSetting<Temperature>()?.value()
+            maxOutputTokens = getSetting<MaxOutputTokens>()?.value()
+            topP = getSetting<TopP>()?.value()
+            topK = getSetting<TopK>()?.value()
+            candidateCount = getSetting<CandidateCount>()?.value()
+            presencePenalty = getSetting<PresencePenalty>()?.value()
+            frequencyPenalty = getSetting<FrequencyPenalty>()?.value()
         }
     }
 
     fun createGenerativeModel(key: String): GenerativeModel {
         return GenerativeModel(
-            modelName = get<ModelName>()?.value(true) ?: Default.MODEL_NAME,
+            modelName = getSetting<ModelName>()?.value(true) ?: Default.MODEL_NAME,
             apiKey = key,
             systemInstruction = content {
-                text(get<SystemPrompt>()?.value(true) ?: Default.SYSTEM_PROMPT)
+                text(getSetting<SystemPrompt>()?.value(true) ?: Default.SYSTEM_PROMPT)
             },
             tools = getTools(),
             generationConfig = createGenerationConfig(),
             safetySettings = getSafetySettings(),
             requestOptions = RequestOptions(
-                timeout = get<Timeout>()?.value(true) ?: Default.TIMEOUT_MS, // 超时
+                timeout = getSetting<Timeout>()?.value(true) ?: Default.TIMEOUT_MS, // 超时
                 apiVersion = "v1beta", // api 版本
             )
         )

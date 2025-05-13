@@ -2,7 +2,7 @@ package com.tv.app.old.func
 
 import com.google.gson.annotations.SerializedName
 import com.tv.app.old.func.models.BaseFuncModel
-import com.tv.app.utils.getSealedClassObjects
+import com.tv.app.utils.getSealedChildren
 import com.zephyr.global_values.TAG
 import com.zephyr.log.logE
 import com.zephyr.net.toJson
@@ -17,12 +17,14 @@ object FuncManager {
 
     init {
         // 注册所有实现
-        val list = getSealedClassObjects(BaseFuncModel::class) { kClass ->
+        val list = getSealedChildren<BaseFuncModel> { kClass ->
             kClass.objectInstance
         }
+
         list.forEach { model ->
             _functionMap[model.name] = model
         }
+
         logE(TAG, "已注册函数: ${functionMap.keys}")
     }
 
