@@ -34,6 +34,8 @@ import com.tv.app.viewmodel.chat.mvi.ChatState
 import com.tv.app.viewmodel.chat.mvi.bean.ChatMessage
 import com.tv.app.viewmodel.chat.mvi.bean.modelMsg
 import com.zephyr.extension.mvi.MVIViewModel
+import com.zephyr.global_values.TAG
+import com.zephyr.log.logE
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -88,6 +90,15 @@ class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>() {
 
                 ChatIntent.ReloadChat ->
                     stateUpdater.updateAt(0, systemMsg)
+
+                ChatIntent.LogHistory -> {
+                    val stringBuilder = StringBuilder()
+                    chatManager.history.forEach { content ->
+                        stringBuilder.append("[${content.role}]: ${content.parts.toUIString()}")
+                        stringBuilder.append("\n")
+                    }
+                    logE(TAG, stringBuilder.toString())
+                }
             }
         }
     }

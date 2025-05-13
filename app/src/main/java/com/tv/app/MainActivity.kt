@@ -151,6 +151,7 @@ class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
                 viewModel.sendIntent(ChatIntent.ResetChat)
 
             else -> {
+                viewModel.sendIntent(ChatIntent.LogHistory)
                 startActivity<EditTextActivity>()
             }
         }

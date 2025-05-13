@@ -5,6 +5,8 @@ import kotlinx.coroutines.flow.Flow
 
 interface IChatManager<CONTENT, RESPONSE> {
     val isActive: Boolean
+    val history: List<CONTENT>
+    
     suspend fun switchApiKey()
     suspend fun recreateModel()
     suspend fun resetChat()

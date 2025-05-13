@@ -26,14 +26,16 @@ import kotlinx.coroutines.withContext
 object ChatManager : IChatManager<Content, GenerateContentResponse> by ChatManagerImpl()
 
 class ChatManagerImpl : IChatManager<Content, GenerateContentResponse> {
-    private var history = listOf<Content>()
+    private var _history = listOf<Content>()
+    override val history: List<Content>
+        get() = chat.history
 
     private var chat = runBlocking { newChat() }
     private var chatScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val mutex = Mutex()
 
     private fun copyHistory() = runCatching {
-        history = chat.history.map { content ->
+        _history = chat.history.map { content ->
             if (content.parts.isEmpty())
                 Content(content.role, listOf(TextPart(" ")))
             else
@@ -47,14 +49,14 @@ class ChatManagerImpl : IChatManager<Content, GenerateContentResponse> {
     override suspend fun switchApiKey() {
         runCatching {
             copyHistory()
-            chat = newModel().startChat(history)
+            chat = newModel().startChat(_history)
         }
     }
 
     override suspend fun recreateModel() {
         runCatching {
             copyHistory()
-            chat = newModel(false).startChat(history)
+            chat = newModel(false).startChat(_history)
         }
     }
 
@@ -94,11 +96,11 @@ class ChatManagerImpl : IChatManager<Content, GenerateContentResponse> {
     private fun open() {
         chatScope =
             CoroutineScope(SupervisorJob() + Dispatchers.Default)
-        history = emptyList()
+        _history = emptyList()
     }
 
     private fun close() {
         chatScope.cancel()
-        history = emptyList()
+        _history = emptyList()
     }
 }
