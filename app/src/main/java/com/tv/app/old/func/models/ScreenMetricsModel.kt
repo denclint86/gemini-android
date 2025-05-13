@@ -3,14 +3,13 @@ package com.tv.app.old.func.models
 import com.google.ai.client.generativeai.type.Schema
 import com.tv.app.utils.getScreenSize
 
-data object ScreenMetricsModel : BaseFuncModel() {
-    override val name: String = "get_screen_metrics"
+data object ScreenMetricsInfoModel : BaseFuncModel() {
+    override val name: String = "get_screen_metrics_info"
     override val description: String =
-        "get the screen metrics as pixels. Returns json with height and width."
-    override val parameters: List<Schema<*>> = listOf(
-        Schema.str("default", "Just simply pass in 0.")
-    )
-    override val requiredParameters: List<String> = listOf("default")
+        "获取用户设备的屏幕长宽像素大小, 用于为基于坐标的操作提供数值计算参考"
+    override val parameters: List<Schema<*>> = defaultParameters
+    override val requiredParameters: List<String> = defaultRequiredParameters
+
     override suspend fun call(args: Map<String, Any?>): Map<String, Any?> {
         try {
             val pair = getScreenSize()

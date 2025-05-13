@@ -14,7 +14,7 @@ import com.tv.app.model.getSetting
 import com.tv.app.model.interfaces.IChatManager
 import com.tv.app.model.interfaces.IFuncHandler
 import com.tv.app.model.interfaces.IResponseHandler
-import com.tv.app.old.func.models.VisibleViewsModel
+import com.tv.app.old.func.models.ScreenContentModel
 import com.tv.app.settings.intances.SleepTime
 import com.tv.app.settings.intances.Stream
 import com.tv.app.settings.intances.Tools
@@ -37,6 +37,7 @@ import com.zephyr.extension.mvi.MVIViewModel
 import com.zephyr.global_values.TAG
 import com.zephyr.log.logE
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -58,6 +59,8 @@ class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>() {
 
     val stateValue: ChatState
         get() = uiStateFlow.value
+
+    private var job: Job? = null
 
     init {
 //        windowListener = this
@@ -104,39 +107,42 @@ class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>() {
     }
 
     private suspend fun chat(content: Content, stream: Boolean) {
-        if (chatManager.isActive) {
-            sendEffect(ChatEffect.Generating)
-            return
-        } else {
-            sendEffect(ChatEffect.ChatSent(true))
-        }
-
-        val contentMessage = ChatMessage.fromContent(content)
-
-        stateUpdater.addMessage(contentMessage)
-
-        val modelMsg = modelMsg("", true)
-        val helper = ChatHelper.bindTo(stateUpdater, modelMsg)
-
-        stateUpdater.addMessage(modelMsg)
-
-        helper.apply {
-            try {
-                chatInternal(stream, content)
-            } catch (t: Throwable) {
-                handleError(t)
-                sendEffect(ChatEffect.Done)
-                return
+        job?.cancel()
+        job = viewModelScope.launch(Dispatchers.IO) {
+            if (chatManager.isActive) {
+                sendEffect(ChatEffect.Generating)
+                return@launch
+            } else {
+                sendEffect(ChatEffect.ChatSent(true))
             }
 
-            update {
-                text = toUIString(string, calls)
-                isPending = false
-            }
-        }
+            val contentMessage = ChatMessage.fromContent(content)
 
-        val funcResult = funcHandler.handleParts(helper.calls)
-        handleFunctionCalls(stream, funcResult)
+            stateUpdater.addMessage(contentMessage)
+
+            val modelMsg = modelMsg("", true)
+            val helper = ChatHelper.bindTo(stateUpdater, modelMsg)
+
+            stateUpdater.addMessage(modelMsg)
+
+            helper.apply {
+                try {
+                    chatInternal(stream, content)
+                } catch (t: Throwable) {
+                    handleError(t)
+                    sendEffect(ChatEffect.Done)
+                    return@launch
+                }
+
+                update {
+                    text = toUIString(string, calls)
+                    isPending = false
+                }
+            }
+
+            val funcResult = funcHandler.handleParts(helper.calls)
+            handleFunctionCalls(stream, funcResult)
+        }
     }
 
     private suspend fun handleFunctionCalls(stream: Boolean, funcResult: Map<String, JSONObject>) {
@@ -144,7 +150,7 @@ class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>() {
         delay(delay)
         val parts = mutableListOf<Part>()
         funcResult.forEach { (name, jsonObj) ->
-            val bitmap = if (name == VisibleViewsModel.name)
+            val bitmap = if (name == ScreenContentModel.name)
                 getScreenAsBitmap()
             else
                 null

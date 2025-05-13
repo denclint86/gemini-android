@@ -11,6 +11,7 @@ import com.zephyr.global_values.TAG
 import com.zephyr.log.logE
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
@@ -33,6 +34,8 @@ class ChatManagerImpl : IChatManager<Content, GenerateContentResponse> {
     private var chat = runBlocking { newChat() }
     private var chatScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val mutex = Mutex()
+
+    private var job: Job? = null
 
     private fun copyHistory() = runCatching {
         _history = chat.history.map { content ->

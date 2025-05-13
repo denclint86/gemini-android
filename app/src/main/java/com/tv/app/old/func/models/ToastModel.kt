@@ -5,13 +5,14 @@ import com.zephyr.extension.thread.runOnMain
 import com.zephyr.extension.widget.toast
 
 data object ToastModel : BaseFuncModel() {
-    override val name: String = "send_toast"
+    override val name: String = "display_toast"
     override val description: String =
-        "Displays a toast message to the user."
+        "向用户发送 toast 消息"
     override val parameters: List<Schema<*>> = listOf(
-        Schema.str("msg", "the message to display in the toast.")
+        Schema.str("msg", "toast 的消息内容")
     )
     override val requiredParameters: List<String> = listOf("msg")
+
     override suspend fun call(args: Map<String, Any?>): Map<String, Any?> {
         val msg = args.readAsString("msg") ?: return errorFuncCallMap()
 

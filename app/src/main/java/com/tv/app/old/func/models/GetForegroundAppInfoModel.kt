@@ -6,13 +6,11 @@ import com.tv.app.old.accessibility.foreground.ForegroundAppManager
 
 data object GetForegroundAppInfoModel : BaseFuncModel() {
     override val name: String =
-        "get_foreground_app"
+        "get_foreground_app_info"
     override val description: String =
-        "Get info of the foreground application: package name and app name)."
-    override val parameters: List<Schema<*>> = listOf(
-        Schema.str("default", "Just simply pass in 0.")
-    )
-    override val requiredParameters: List<String> = listOf("default")
+        "获取用户设备当前的前台应用信息"
+    override val parameters: List<Schema<*>> = defaultParameters
+    override val requiredParameters: List<String> = defaultRequiredParameters
 
     override suspend fun call(args: Map<String, Any?>): Map<String, Any?> {
         MyAccessibilityService.instance.get() ?: return accessibilityErrorMap()

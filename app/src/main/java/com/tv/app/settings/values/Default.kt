@@ -31,7 +31,7 @@ object Default {
 
     const val TEMPERATURE = 0.7f // 增加随机性和创造性
     const val TOOLS = true // 假设关闭可能的内容过滤
-    const val MAX_OUTPUT_TOKENS = 4096 // 允许更长输出
+    const val MAX_OUTPUT_TOKENS = 1024 * 8 // 允许更长输出
     const val TOP_P = 1.0f // 不限制词选择范围
     const val TOP_K = 60 // 考虑更多词，增加多样性
     const val CANDIDATE_COUNT = 1 // 无需调整

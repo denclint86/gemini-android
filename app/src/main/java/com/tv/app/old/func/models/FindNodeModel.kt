@@ -8,30 +8,27 @@ import com.tv.app.old.accessibility.click
 import com.tv.app.old.accessibility.longClick
 import com.tv.app.old.accessibility.text
 
-data object FindNodeModel : BaseFuncModel() {
-    override val name: String = "find_node_and_do"
+data object FindNodeAndPerformModel : BaseFuncModel() {
+    override val name: String = "find_node_and_perform"
     override val description: String =
-        "Find the view node by hash key and perform the specified action. " +
-                "The view must be visible on the screen, so call this function " +
-                "after ensuring screen content is updated. Always use the latest " +
-                "result from ${VisibleViewsModel.name}. Note: 'node' refers " +
-                "to android's AccessibilityNodeInfo class."
+        "根据哈希值对相应的视图节点进行特定的操作. " +
+                "视图必须在屏幕上可见, 因此需在确保屏幕内容更新后再调用此功能. " +
+                "始终使用 ${ScreenContentModel.name} 的最新结果. " +
+                "注意: '节点'指的是安卓的 AccessibilityNodeInfo 类"
     override val parameters: List<Schema<*>> = listOf(
         Schema.str(
-            "hash", "The hash key from ${VisibleViewsModel.name}" +
-                    "'s result. Only use the key that is sure"
+            "hash", "调用 ${ScreenContentModel.name} 后得到的结果中, 节点的哈希值"
         ),
         Schema.str(
             "action",
-            "The action to perform on the view node. Options: " +
-                    "'${Action.CLICK.v}', " +
-                    "'${Action.LONG_CLICK.v}', " +
+            "要对节点进行的操作. (Options: " +
+                    "'${Action.CLICK.v}', '${Action.LONG_CLICK.v}', " +
                     "'${Action.SET_TEXT.v}', '${Action.FOCUS.v}', " +
-                    "'${Action.CLEAR_FOCUS.v}'. Note: focus means the focus of android accessibility service."
+                    "'${Action.CLEAR_FOCUS.v}'). 注意: 此工具所指的'焦点'是安卓无障碍服务的焦点"
         ),
         Schema.str(
             "text",
-            "Optional. Text to set, only available for 'set text' action and the node's isEditable is true"
+            "可选. 要对节点设置的文本(action 为 '${Action.SET_TEXT}' 时有效), 只有在节点的 'isEditable' 属性为真时可用"
         ),
     )
     override val requiredParameters: List<String> = listOf("hash", "action")
