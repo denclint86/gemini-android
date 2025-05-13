@@ -23,7 +23,8 @@ import com.tv.app.utils.collectFlow
 import com.tv.app.utils.createViewModel
 import com.tv.app.utils.findViewAtPoint
 import com.tv.app.utils.hasOverlayPermission
-import com.tv.app.utils.keyborad.KeyboardObserver
+import com.tv.app.utils.keyborad.IKeyboardUtil
+import com.tv.app.utils.keyborad.KeyboardUtil
 import com.tv.app.utils.observe
 import com.tv.app.utils.parentIs
 import com.tv.app.utils.setViewInsets
@@ -52,7 +53,9 @@ class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
 
     private lateinit var overlayPermissionLauncher: ActivityResultLauncher<Intent>
 
-    private lateinit var keyboardObserver: KeyboardObserver
+    private lateinit var keyboardUtil: IKeyboardUtil
+
+    private var btnAnimator: ObjectAnimator? = null
 
     override fun ActivityMainBinding.initBinding() {
         enableEdgeToEdge()
@@ -70,20 +73,8 @@ class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
         rv.layoutManager = preloadLayoutManager
         (rv.itemAnimator as SimpleItemAnimator).supportsChangeAnimations = false
 
-        when (viewModel.stateValue.buttonState) {
-            State.EXPANDED ->
-                btnChat.expand()
-
-            State.COLLAPSED ->
-                btnChat.collapse()
-
-            State.PROGRESSING -> {}
-        }
-
         btnChat.setOnNewStateListener { state ->
             if (state == State.PROGRESSING) return@setOnNewStateListener
-
-            viewModel.sendIntent(ChatIntent.SaveButtonState(state))
         }
 
         btnChat.setOnSubmitListener { str ->
@@ -95,19 +86,26 @@ class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
             false
         }
 
-        keyboardObserver = KeyboardObserver.attach(this@MainActivity)
-        keyboardObserver.keyboardState.observe(this@MainActivity) { state ->
-            if (state == KeyboardObserver.State.Visible) {
-                btnChat.expand()
-            } else {
+        keyboardUtil = KeyboardUtil.attach(btnChat.editText, this@MainActivity)
+
+        btnChat.setIFocusHandler(keyboardUtil.getFocusHandler())
+
+        keyboardUtil.state.observe(this@MainActivity) { state ->
+            if (state is IKeyboardUtil.State.Hidden) {
                 btnChat.collapse()
+            } else {
+                btnChat.expand()
             }
         }
-        keyboardObserver.keyboardHeight.observe(this@MainActivity) { height ->
-            val extraMinus = if (height == 0) 0 else btnChat.marginBottom
-            val targetTranslationY = extraMinus - height.toFloat()
 
-            ObjectAnimator.ofFloat(
+        keyboardUtil.height.observe(this@MainActivity) { height ->
+            val h = height ?: 0
+
+            val extraMinus = if (h == 0) 0 else btnChat.marginBottom
+            val targetTranslationY = extraMinus - h.toFloat()
+
+            btnAnimator?.cancel()
+            btnAnimator = ObjectAnimator.ofFloat(
                 btnChat,
                 "translationY",
                 btnChat.translationY,
@@ -115,15 +113,17 @@ class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
             ).apply {
                 duration = 220
                 interpolator = DecelerateInterpolator()
-                start()
             }
+            btnAnimator?.start()
         }
 
         registerMVI()
     }
 
     override fun onDestroy() {
-        keyboardObserver.detach()
+        binding.btnChat.setIFocusHandler(null)
+        keyboardUtil.detach()
+        btnAnimator?.cancel()
         super.onDestroy()
     }
 
@@ -184,7 +184,7 @@ class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
         lifecycleScope.launch {
             viewModel.collectFlow { effect ->
                 when (effect) {
-                    is ChatEffect.ChatSent -> lifecycleScope.launch {
+                    is ChatEffect.ChatSent -> {
                         delay(100)
                         if (effect.shouldClear)
                             binding.btnChat.editText.setText("")

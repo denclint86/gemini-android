@@ -31,7 +31,6 @@ import com.tv.app.viewmodel.chat.mvi.ChatState
 import com.tv.app.viewmodel.chat.mvi.bean.ChatMessage
 import com.tv.app.viewmodel.chat.mvi.bean.modelMsg
 import com.zephyr.extension.mvi.MVIViewModel
-import com.zephyr.scaling_layout.State
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
@@ -70,8 +69,7 @@ class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>()
     override fun initUiState(): ChatState = runBlocking {
         ChatState(
 // testMsgList,
-            systemMsgList,
-            buttonState = State.COLLAPSED
+            systemMsgList
         )
     }
 
@@ -90,8 +88,6 @@ class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>()
 
                 ChatIntent.ReloadChat ->
                     stateUpdater.updateAt(0, systemMsg)
-
-                is ChatIntent.SaveButtonState -> updateState { copy(buttonState = buttonState) }
             }
         }
     }

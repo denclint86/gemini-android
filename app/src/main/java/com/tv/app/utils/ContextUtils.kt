@@ -20,6 +20,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.zephyr.extension.widget.toast
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
@@ -89,8 +90,8 @@ fun Context.withLifecycleScope(
     context: CoroutineContext = EmptyCoroutineContext,
     start: CoroutineStart = CoroutineStart.DEFAULT,
     block: suspend CoroutineScope.() -> Unit
-) {
-    (this as? LifecycleOwner)?.lifecycleScope?.launch(context, start, block)
+): Job? {
+    return (this as? LifecycleOwner)?.lifecycleScope?.launch(context, start, block)
 }
 
 fun Context.showInputDialog(

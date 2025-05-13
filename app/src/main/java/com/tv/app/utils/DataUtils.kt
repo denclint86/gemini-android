@@ -1,5 +1,6 @@
 package com.tv.app.utils
 
+import androidx.lifecycle.MutableLiveData
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.tv.app.settings.BooleanSetting
@@ -66,6 +67,13 @@ fun <T> Setting<*>.parseAsT(v: Any): T? {
 
     logE(TAG, "$v 解析为: $value[${(value ?: Any())::class.java.simpleName}]")
     return value as? T
+}
+
+fun <T> MutableLiveData<T>.setIfChange(t: T): Boolean {
+    val diff = value != t
+    if (diff)
+        value = t
+    return diff
 }
 
 fun String.addReturnChars(maxLength: Int): String {

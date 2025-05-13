@@ -11,7 +11,7 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.tv.app.databinding.LayoutChatButtonBinding
-import com.tv.app.utils.keyborad.KeyBoardControl
+import com.tv.app.utils.keyborad.IKeyboardUtil
 import com.tv.app.utils.safeCollapse
 import com.tv.app.utils.safeExpand
 import com.zephyr.scaling_layout.ScalingLayout
@@ -45,6 +45,8 @@ class ChatButton @JvmOverloads constructor(
     private var onNewStateListener: ((State) -> Unit)? = null
     private var onSubmitListener: ((String) -> Boolean)? = null
 
+    private var iFocusHandler: IKeyboardUtil.IFocusHandler? = null
+
     init {
         setScalingLayout()
         setOnClick()
@@ -54,14 +56,22 @@ class ChatButton @JvmOverloads constructor(
         binding.tvTint.visibility = View.VISIBLE
     }
 
-    fun expand() {
-        if (scalingLayout.safeExpand())
-            KeyBoardControl.focusOn(editText)
+    fun setIFocusHandler(i: IKeyboardUtil.IFocusHandler?) {
+        iFocusHandler = i
     }
 
-    fun collapse() {
-        if (scalingLayout.safeCollapse())
-            KeyBoardControl.loseFocusOn(editText)
+    fun expand(): Boolean {
+        val r = scalingLayout.safeExpand()
+        if (r)
+            iFocusHandler?.focus()
+        return r
+    }
+
+    fun collapse(): Boolean {
+        val r = scalingLayout.safeCollapse()
+        if (r)
+            iFocusHandler?.loseFocus()
+        return r
     }
 
     fun setText(str: String) {

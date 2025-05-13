@@ -1,15 +1,13 @@
 package com.tv.app.viewmodel.chat.mvi
 
 import com.tv.app.viewmodel.chat.mvi.bean.ChatMessage
-import com.zephyr.scaling_layout.State
 
 /**
  * 不要直接操作 messages，请使用 modify list
  */
 data class ChatState(
     val messages: List<ChatMessage> = listOf(),
-    var listLastUpdatedTs: Long = System.currentTimeMillis(),
-    val buttonState: State
+    var listLastUpdatedTs: Long = System.currentTimeMillis()
 ) {
     fun modifyMsg(
         which: (ChatMessage) -> Boolean,
