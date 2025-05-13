@@ -3,12 +3,12 @@ package com.tv.app.settings.intances
 import com.tv.app.settings.values.Default
 import com.tv.app.settings.values.Names
 
-class MaxOutputTokens : IntSetting() {
+class Timeout : LongSetting() {
     override val name: String
-        get() = Names.MAX_OUTPUT_TOKENS
-    override val default: Bean<Int>
+        get() = Names.TIMEOUT
+    override val default: Bean<Long>
         get() = Bean(
-            value = Default.MAX_OUTPUT_TOKENS,
+            value = Default.TIMEOUT_MS,
             isEnabled = true
         )
     override val kind: Kind
@@ -17,11 +17,11 @@ class MaxOutputTokens : IntSetting() {
         get() = false
 
 
-    override fun onValidate(bean: Bean<Int>): Result {
-        return if (bean.value > 0) {
+    override fun onValidate(bean: Bean<Long>): Result {
+        return if (bean.value >= 0) {
             Result(true, null)
         } else {
-            Result(false, "此项必须为正数")
+            Result(false, "非法的超时设置")
         }
     }
-} 
+}

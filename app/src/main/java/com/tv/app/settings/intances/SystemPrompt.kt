@@ -1,6 +1,5 @@
 package com.tv.app.settings.intances
 
-import com.tv.app.settings.StringSetting
 import com.tv.app.settings.values.Default
 import com.tv.app.settings.values.Names
 

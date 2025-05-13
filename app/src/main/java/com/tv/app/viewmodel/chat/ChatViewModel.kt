@@ -15,6 +15,9 @@ import com.tv.app.model.interfaces.IChatManager
 import com.tv.app.model.interfaces.IFuncHandler
 import com.tv.app.model.interfaces.IResponseHandler
 import com.tv.app.old.func.models.VisibleViewsModel
+import com.tv.app.settings.intances.SleepTime
+import com.tv.app.settings.intances.Stream
+import com.tv.app.settings.intances.Tools
 import com.tv.app.utils.funcContent
 import com.tv.app.utils.getScreenAsBitmap
 import com.tv.app.utils.observe
@@ -32,7 +35,7 @@ import com.tv.app.viewmodel.chat.mvi.bean.ChatMessage
 import com.tv.app.viewmodel.chat.mvi.bean.modelMsg
 import com.zephyr.extension.mvi.MVIViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
@@ -40,12 +43,9 @@ import org.json.JSONObject
 
 var windowListener: ItemViewTouchListener.OnTouchEventListener? = null
 
-class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>()
-//, ItemViewTouchListener.OnTouchEventListener
-{
+class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>() {
     companion object {
         const val ERROR_UI_MSG = "出错了，请重试"
-        const val CHAT_TAG = "ChatTag" // 用于过滤日志
     }
 
     private val chatManager: IChatManager<Content, GenerateContentResponse>
@@ -78,7 +78,7 @@ class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>()
             when (intent) {
                 is ChatIntent.Chat -> {
                     val userContent = userContent { text(intent.text) }
-                    chat(userContent, SettingsRepository.streamSetting.value(true)!!)
+                    chat(userContent, SettingsRepository.get<Stream>()?.value(true) ?: true)
                 }
 
                 ChatIntent.ResetChat -> {
@@ -109,9 +109,15 @@ class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>()
 
         stateUpdater.addMessage(modelMsg)
 
-        helper.chatInternal(stream, content)
-
         helper.apply {
+            try {
+                chatInternal(stream, content)
+            } catch (t: Throwable) {
+                handleError(t)
+                sendEffect(ChatEffect.Done)
+                return
+            }
+
             update {
                 text = toUIString(string, calls)
                 isPending = false
@@ -123,6 +129,8 @@ class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>()
     }
 
     private suspend fun handleFunctionCalls(stream: Boolean, funcResult: Map<String, JSONObject>) {
+        val delay = SettingsRepository.get<SleepTime>()?.value(true) ?: 0
+        delay(delay)
         val parts = mutableListOf<Part>()
         funcResult.forEach { (name, jsonObj) ->
             val bitmap = if (name == VisibleViewsModel.name)
@@ -139,30 +147,31 @@ class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>()
             this.parts.addAll(parts)
         }
 
-        if (funcResult.isNotEmpty() && SettingsRepository.toolsSetting.isEnabled())
+        if (funcResult.isNotEmpty() && SettingsRepository.get<Tools>()?.isEnabled() != false)
             chat(funcContent, stream)
+        else
+            sendEffect(ChatEffect.Done)
     }
 
     private suspend fun ChatHelper.chatInternal(
         stream: Boolean,
         content: Content
-    ) = try {
+    ) {
         if (stream) {
             sendStream(content)
         } else {
             send(content)
         }
-    } catch (t: Throwable) {
-        handleError(t)
     }
 
     private suspend fun ChatHelper.sendStream(content: Content) {
         val response = chatManager.sendMsgStream(content)
 
         responseHandler.handle(response)
-            .catch { t ->
-                handleError(t)
-            }
+//            .catch { t ->
+//                handleError(t)
+//                sendEffect(ChatEffect.Done)
+//            }
             .collect { result ->
                 update {
                     text += result.text
@@ -174,7 +183,6 @@ class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>()
 
     private suspend fun ChatHelper.send(content: Content) {
         val response = chatManager.sendMsg(content)
-
         append(response.text)
         addAll(response.functionCalls)
     }

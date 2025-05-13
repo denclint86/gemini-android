@@ -7,11 +7,11 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import com.tv.app.databinding.ActivitySettingsBinding
 import com.tv.app.model.ChatManager
-import com.tv.app.settings.Setting
 import com.tv.app.model.SettingsRepository
-import com.tv.app.view.ui.SettingsAdapter
+import com.tv.app.settings.intances.Setting
 import com.tv.app.utils.setBackAffair
 import com.tv.app.utils.setViewInsets
+import com.tv.app.view.ui.SettingsAdapter
 import com.zephyr.extension.ui.PreloadLayoutManager
 import com.zephyr.extension.widget.addLineDecoration
 import com.zephyr.vbclass.ViewBindingActivity
@@ -49,7 +49,7 @@ class SettingsActivity : ViewBindingActivity<ActivitySettingsBinding>() {
         rv.addLineDecoration(this@SettingsActivity, RecyclerView.VERTICAL)
 
         settingsAdapter.submitList(
-            SettingsRepository.getSettings().values.toList()
+            SettingsRepository.settingMap.values.toList()
         )
     }
 

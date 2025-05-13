@@ -7,7 +7,7 @@ import android.widget.TextView
 import androidx.activity.result.ActivityResultLauncher
 import androidx.recyclerview.widget.DiffUtil
 import com.tv.app.databinding.LayoutSettingItemBinding
-import com.tv.app.settings.Setting
+import com.tv.app.settings.intances.Setting
 import com.tv.app.settings.values.getIndex
 import com.tv.app.settings.values.getOptions
 import com.tv.app.utils.context
