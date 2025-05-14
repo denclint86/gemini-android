@@ -15,16 +15,14 @@ data object GetForegroundAppInfoModel : BaseFuncModel() {
     override suspend fun call(args: Map<String, Any?>): Map<String, Any?> {
         MyAccessibilityService.instance.get() ?: return accessibilityErrorMap()
 
-        // 使用 ForegroundAppManager 获取前台应用信息
         val appInfo = ForegroundAppManager.getCurrentApp()
         return if (appInfo.first != null) {
             mapOf(
-                "status" to "ok",
                 "packageName" to appInfo.first,
                 "appName" to appInfo.second
             )
         } else {
-            defaultMap("error", "foreground app info is null")
+            errorMap("foreground app info is null")
         }
     }
 }

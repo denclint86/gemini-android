@@ -23,7 +23,7 @@ object ApiModelProvider {
     init {
         runBlocking {
             currentIndex = AtomicInteger(
-                getSetting<Index>()?.value(true) ?: 0
+                getSetting<Index>()?.value(true)!!
             )
         }
     }
@@ -32,7 +32,7 @@ object ApiModelProvider {
      * 请求一次换一个，以避免被谷歌限速
      * 使用 AtomicInteger 无锁操作，适合低并发场景
      */
-    private suspend fun getNextKey(): String {
+    suspend fun getNextKey(): String {
         if (apiKeys.isEmpty()) {
             throw IllegalStateException("没有设置 key")
         }

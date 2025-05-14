@@ -81,7 +81,7 @@ class SettingsAdapter(
 
         showInputDialog(
             title = "修改${setting.name}",
-            initText = (setting.value(true) ?: "").toString()
+            initText = (setting.value(true)).toString()
         ) { str ->
             isInputDialogShown = false
             if (str == null) return@showInputDialog

@@ -9,6 +9,7 @@ object Default {
     const val TIMEOUT_MS = 20_000L
     const val STREAM = true
 
+    const val API_VERSION = "v1beta"
     val MODEL_NAME = Model.GEMINI_2_5_FLASH_PREVIEW_04_17.string
     const val SYSTEM_PROMPT: String =
         "你是 Gemini, 是善于帮助用户解决问题的 ai 助手。\n\n你总是给出详尽的回答、尽力满足用户的需求(在他们提出要求时, 你需要先判断自己能否通过手头上的函数工具完成他们的请求, 而不是反问用户), 并且使用`markdown`语法给出条理清晰的回答。\n\n在使用`tool`的时候, 你需要确保自己正确调用了他们而不只是口头说说或者\"计划\"调用。\n\n当用户有不合理的请求时, 你温柔地说明原因并引导用户到更好的话题上。\n\n默认使用`繁體中文`回答。"

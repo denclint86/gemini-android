@@ -14,7 +14,7 @@ class CandidateCount : IntSetting() {
     override val kind: Kind
         get() = Kind.DIALOG_EDIT
     override val canSetEnabled: Boolean
-        get() = false
+        get() = true
 
 
     override fun onValidate(bean: Bean<Int>): Result {

@@ -3,25 +3,25 @@ package com.tv.app.settings.intances
 import com.tv.app.settings.values.Default
 import com.tv.app.settings.values.Names
 
-class Temperature : FloatSetting() {
+class ApiVersion : StringSetting() {
     override val name: String
-        get() = Names.TEMPERATURE
-    override val default: Bean<Float>
+        get() = Names.API_VERSION
+    override val default: Bean<String>
         get() = Bean(
-            value = Default.TEMPERATURE,
+            value = Default.API_VERSION,
             isEnabled = true
         )
     override val kind: Kind
         get() = Kind.DIALOG_EDIT
     override val canSetEnabled: Boolean
-        get() = true
+        get() = false
 
 
-    override fun onValidate(bean: Bean<Float>): Result {
-        return if (bean.value in 0.0F..2.0F) {
+    override fun onValidate(bean: Bean<String>): Result {
+        return if (bean.value.isNotBlank()) {
             Result(true, null)
         } else {
-            Result(false, "温度值必须在0.0至2.0之间")
+            Result(false, "api 版本不能为空")
         }
     }
-} 
+}

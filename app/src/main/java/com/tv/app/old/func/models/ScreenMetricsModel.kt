@@ -11,16 +11,17 @@ data object ScreenMetricsInfoModel : BaseFuncModel() {
     override val requiredParameters: List<String> = defaultRequiredParameters
 
     override suspend fun call(args: Map<String, Any?>): Map<String, Any?> {
-        try {
+        return try {
             val pair = getScreenSize()
             val w = pair.first
             val h = pair.second
-            return mapOf(
+
+            mapOf(
                 "width" to w,
                 "height" to h
             )
         } catch (t: Throwable) {
-            return defaultMap("error", t.toSimpleLog())
+            errorMap(t)
         }
     }
 }

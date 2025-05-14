@@ -75,11 +75,12 @@ data object FindNodeAndPerformModel : BaseFuncModel() {
 
             node.recycle()
 
-            val status = if (result) "ok" else "failed"
-            val msg = if (result) "" else "action perform failed"
-            return defaultMap(status, msg)
+            return if (result)
+                successMap()
+            else
+                errorMap("动作未被执行")
         }
 
-        return defaultMap("error", "node not found")
+        return errorMap("未找到节点")
     }
 }

@@ -5,7 +5,6 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
 import com.tv.app.model.getSetting
 import com.tv.app.settings.intances.SystemPrompt
-import com.tv.app.settings.values.Default
 import com.tv.app.viewmodel.chat.mvi.bean.ChatMessage
 import com.tv.app.viewmodel.chat.mvi.bean.systemMsg
 import com.zephyr.extension.mvi.MVIViewModel
@@ -47,6 +46,6 @@ val testMsgList: List<ChatMessage> = listOf(
 )
 
 val systemMsg: ChatMessage =
-    systemMsg(getSetting<SystemPrompt>()?.value(true) ?: Default.SYSTEM_PROMPT)
+    systemMsg(getSetting<SystemPrompt>()?.value(true)!!)
 
 val systemMsgList: List<ChatMessage> = listOf(systemMsg)

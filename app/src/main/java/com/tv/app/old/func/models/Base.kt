@@ -8,21 +8,25 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 
-fun defaultMap(status: String, result: Any = "") =
-    mapOf<String, Any?>("status" to status, "result" to result)
+fun defaultMap(status: String, result: Any? = "") =
+    mapOf("status" to status, "result" to result)
 
-fun accessibilityErrorMap() = defaultMap(
-    "error",
-    "accessibility service is unavailable."
-)
+fun accessibilityErrorMap() = errorMap("无障碍服务不可用")
 
-fun okMap() = defaultMap("ok")
+fun successMap() = mapOf("status" to "succeed")
 
-fun errorFuncCallMap() = defaultMap(
-    "error",
-    "incorrect function calling"
-)
+fun errorMap(t: Throwable) = errorMap(t.toSimpleLog())
 
+fun errorMap(msg: String) = defaultMap("error", msg)
+
+fun errorFuncCallMap() = errorMap("非法的函数调用")
+
+fun Throwable.toSimpleLog(): String {
+    return "message: ${message}\ncause: $cause"
+}
+
+suspend fun <T> Map<T, Any?>.readAsString(key: T): String? =
+    withContext(Dispatchers.IO) { get(key) as? String }
 
 sealed class ShellExecutorModel : BaseFuncModel() {
 //    override val name: String = "run_shell_command"
@@ -37,12 +41,12 @@ sealed class ShellExecutorModel : BaseFuncModel() {
 //    )
 //    override val requiredParameters: List<String> = listOf("command")
 
-    protected val shellManager: ShellManager = ShellManager()
+    private val shellManager: ShellManager = ShellManager()
 
     suspend fun runShell(command: String, timeout: Long? = 15_000): Map<String, Any?> =
         withContext(Dispatchers.IO) {
             try {
-                // 使用 ShellManager 执行命令，并根据超时参数处理
+                // 使用 ShellManager 执行命令, 并根据超时参数处理
                 val result = if (timeout != null && timeout > 0) {
                     withTimeout(timeout) {
                         shellManager.exec(command)
@@ -53,7 +57,7 @@ sealed class ShellExecutorModel : BaseFuncModel() {
 
                 result.toMap()
             } catch (e: Exception) {
-                defaultMap("error", e.toSimpleLog())
+                errorMap(e)
             }
         }
 }
@@ -86,11 +90,4 @@ sealed class BaseFuncModel {
 
     protected val defaultRequiredParameters
         get() = listOf("default")
-
-    protected fun Throwable.toSimpleLog(): String {
-        return "message: ${message}\ncause: $cause"
-    }
-
-    protected suspend fun <T> Map<T, Any?>.readAsString(key: T): String? =
-        withContext(Dispatchers.IO) { get(key) as? String }
 }

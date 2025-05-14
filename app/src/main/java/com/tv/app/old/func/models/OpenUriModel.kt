@@ -5,7 +5,9 @@ import com.google.ai.client.generativeai.type.Schema
 data object OpenUriModel : ShellExecutorModel() {
     override val name: String = "open_uri"
     override val description: String =
-        "通过传入 uri 在用户的设备上运行安卓隐式 intent. 可以打开如浏览器, 文件管理器, 拨号器, 地图等. 传入的 uri 可以是 https://, file://, tel:, geo://等"
+        "通过传入 uri 在用户的设备上运行安卓隐式 intent. " +
+                "可以打开如浏览器, 文件管理器, 拨号器, 地图等. " +
+                "传入的 uri 可以是 https://, file://, tel:, geo://等"
     override val parameters: List<Schema<*>> = listOf(
         Schema.str("uri", "uri 地址")
     )

@@ -1,8 +1,9 @@
 package com.tv.app.old.func.models
 
 import com.google.ai.client.generativeai.type.Schema
-import com.zephyr.extension.thread.runOnMain
 import com.zephyr.extension.widget.toast
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 data object ToastModel : BaseFuncModel() {
     override val name: String = "display_toast"
@@ -16,13 +17,14 @@ data object ToastModel : BaseFuncModel() {
     override suspend fun call(args: Map<String, Any?>): Map<String, Any?> {
         val msg = args.readAsString("msg") ?: return errorFuncCallMap()
 
-        try {
-            runOnMain {
+        return try {
+            withContext(Dispatchers.Main) {
                 toast(msg)
             }
-            return okMap()
+
+            successMap()
         } catch (t: Throwable) {
-            return defaultMap("error", t.toSimpleLog())
+            errorMap(t)
         }
     }
 }

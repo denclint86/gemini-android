@@ -6,6 +6,8 @@ object Names {
     const val TIMEOUT = "网络请求超时(ms)"
     const val STREAM = "使用流式传输"
 
+    const val API_VERSION = "api 版本"
+
     const val MODEL_NAME = "模型"
     const val SYSTEM_PROMPT = "提示词"
 

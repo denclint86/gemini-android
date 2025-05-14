@@ -1,7 +1,6 @@
 package com.tv.app.old.func.models
 
 import com.google.ai.client.generativeai.type.Schema
-import com.tv.app.utils.count
 import com.zephyr.log.logE
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -24,11 +23,12 @@ data object GetAppListModel : ShellExecutorModel() {
 
             val appList = getAllInstalledApps(type)
             if (appList.isEmpty())
-                defaultMap("failed", "应用信息列表为空")
+                errorMap("应用信息列表为空")
             else
-                defaultMap("success", appList)
+                mapOf("app_list" to appList)
         } catch (t: Throwable) {
-            defaultMap("error", "shell 命令执行失败")
+            // getAllInstalledApps 主动抛出异常
+            errorMap("shell 命令执行失败")
         }
     }
 
@@ -44,7 +44,7 @@ data object GetAppListModel : ShellExecutorModel() {
             }
 
             // 执行 Shell 命令
-            val result = count("执行 shell") { runShell(command) }
+            val result = runShell(command)
             val output = result.readAsString("output")
 
             if (output.isNullOrEmpty()) {
@@ -53,12 +53,10 @@ data object GetAppListModel : ShellExecutorModel() {
             }
 
             // 提取包名
-            count("提取") {
-                output.lines()
-                    .filter { it.startsWith("package:") }
-                    .map { it.removePrefix("package:") }
-                    .toCollection(appSet)
-            }
+            output.lines()
+                .filter { it.startsWith("package:") }
+                .map { it.removePrefix("package:") }
+                .toCollection(appSet)
 
             appSet
         }

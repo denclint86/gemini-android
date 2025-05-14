@@ -14,7 +14,7 @@ class SystemPrompt : StringSetting() {
     override val kind: Kind
         get() = Kind.ACTIVITY
     override val canSetEnabled: Boolean
-        get() = false
+        get() = true
 
 
     override fun onValidate(bean: Bean<String>): Result {

@@ -8,7 +8,7 @@ import com.zephyr.log.logE
 import com.zephyr.net.toJson
 
 /**
- * 所有的函数 model 都要在这里添加
+ * 所有的函数 model 都被动态添加
  */
 object FuncManager {
     private val _functionMap = mutableMapOf<String, BaseFuncModel>()

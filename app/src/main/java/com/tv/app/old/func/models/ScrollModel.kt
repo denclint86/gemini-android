@@ -30,8 +30,8 @@ data object ScrollModel : BaseFuncModel() {
 
         val dispatched = service.scroll(startX, startY, endX, endY, 0, duration)
         return if (dispatched)
-            okMap()
+            successMap()
         else
-            defaultMap("error", "动作未被执行")
+            errorMap("动作未被执行")
     }
 }
