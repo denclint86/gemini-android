@@ -43,6 +43,7 @@ android {
 dependencies {
     implementation(project(":shizuku"))
 
+    implementation("com.google.ai.client.generativeai:common:niki")
     implementation("com.google.ai.client.generativeai:generativeai:niki")
 
     implementation(libs.shizuku.provider)

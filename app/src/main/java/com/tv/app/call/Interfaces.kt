@@ -12,7 +12,7 @@ interface IWebSocketManager {
 
     fun connect(apiKey: String)
     fun sendMessage(message: String)
-    fun sendMessage(content: WebSocketManager.ClientContentMessage)
+    fun sendMessage(content: WSSManager.ClientContentMessage)
     fun close()
 
     fun interface OnEventListener {
@@ -21,6 +21,8 @@ interface IWebSocketManager {
 
     sealed class Event {
         data object Opened : Event()
+
+        data object SetupCompleted : Event()
 
         data class Message(val text: String) : Event()
 

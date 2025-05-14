@@ -14,12 +14,10 @@ class MessageParser : IMessageParser {
 
     override fun parseTextMessage(text: String): ParsedResult? {
         try {
+            logE(TAG, text)
             if (text.contains("setupComplete")) {
-                val json = text.toJsonClass<Data.SetupComplete>()
-                if (json?.isComplete == true) {
-                    isSetupComplete = true
-                    return ParsedResult.SetupCompleted
-                }
+                isSetupComplete = true
+                return ParsedResult.SetupCompleted
             } else {
                 val json = text.toJsonClass<Data.Blob>()
 

@@ -7,6 +7,9 @@ import com.google.ai.client.generativeai.type.FunctionResponsePart
 import com.google.ai.client.generativeai.type.GenerateContentResponse
 import com.google.ai.client.generativeai.type.ImagePart
 import com.google.ai.client.generativeai.type.Part
+import com.tv.app.call.IWebSocketManager
+import com.tv.app.call.WSSClient
+import com.tv.app.call.WSSManager.ClientContentMessage
 import com.tv.app.model.ChatManager
 import com.tv.app.model.FuncHandler
 import com.tv.app.model.ResponseHandler
@@ -15,9 +18,11 @@ import com.tv.app.model.interfaces.IChatManager
 import com.tv.app.model.interfaces.IFuncHandler
 import com.tv.app.model.interfaces.IResponseHandler
 import com.tv.app.old.func.models.ScreenContentModel
+import com.tv.app.settings.intances.Live
 import com.tv.app.settings.intances.SleepTime
 import com.tv.app.settings.intances.Stream
 import com.tv.app.settings.intances.Tools
+import com.tv.app.utils.ApiModelProvider
 import com.tv.app.utils.funcContent
 import com.tv.app.utils.getScreenAsBitmap
 import com.tv.app.utils.observe
@@ -51,16 +56,24 @@ class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>() {
         const val ERROR_UI_MSG = "出错了，请重试"
     }
 
+    private val wss = WSSClient(viewModelScope)
+
     private val chatManager: IChatManager<Content, GenerateContentResponse>
         get() = ChatManager
+
     private val funcHandler: IFuncHandler<FunctionCallPart> = FuncHandler()
+
     private val responseHandler: IResponseHandler<GenerateContentResponse> = ResponseHandler()
+
     private val stateUpdater: StateUpdater = StateUpdater()
+
 
     val stateValue: ChatState
         get() = uiStateFlow.value
 
+
     private var job: Job? = null
+
 
     init {
 //        windowListener = this
@@ -69,29 +82,6 @@ class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>() {
         }
 
         stateUpdater.setUpdateStateMethod(::updateState)
-
-//        viewModelScope.launch {
-//            try {
-//                val apiKey = ApiModelProvider.getNextKey() // 替换为你的 API Key
-//                val listModelService = ListModelService()
-////                listModelService.call(apiKey, "v1") { r ->
-////                    if (r is NetResult.Success) {
-////                        logE(TAG, r.data?.models?.map { it.name }.toString())
-////                    } else {
-////                        logE(TAG, "list model 失败")
-////                    }
-////                }
-//
-//                val client = WebSocketClient(viewModelScope)
-//
-//                client.connect(apiKey)
-//
-//                delay(100_000)
-//                client.close()
-//            } catch (t: Throwable) {
-//                t.logE(TAG)
-//            }
-//        }
     }
 
     override fun initUiState(): ChatState = runBlocking {
@@ -105,8 +95,13 @@ class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>() {
         viewModelScope.launch(Dispatchers.IO) {
             when (intent) {
                 is ChatIntent.Chat -> {
-                    val userContent = userContent { text(intent.text) }
-                    chat(userContent, getSetting<Stream>()?.value(true)!!)
+                    if (getSetting<Live>()?.value(true)!!) {
+                        liveChat(intent.text)
+                    } else {
+                        val userContent = userContent { text(intent.text) }
+                        chat(userContent, getSetting<Stream>()?.value(true)!!)
+                    }
+
                 }
 
                 ChatIntent.ResetChat -> {
@@ -129,7 +124,42 @@ class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>() {
         }
     }
 
-    private suspend fun chat(content: Content, stream: Boolean) {
+    private fun liveChat(message: String) {
+        job?.cancel()
+        job = viewModelScope.launch(Dispatchers.IO) {
+            sendEffect(ChatEffect.ChatSent(true))
+
+            val contentMessage = ChatMessage.fromContent(userContent { text(message) })
+
+            stateUpdater.addMessage(contentMessage)
+
+            wss.close()
+            wss.setOnEventListener { e ->
+                logE(TAG, e::class.simpleName!!)
+                if (e is IWebSocketManager.Event.SetupCompleted) {
+                    val turn = ClientContentMessage.ClientContent.Turn(
+                        role = "user",
+                        parts = listOf(
+                            ClientContentMessage.ClientContent.Turn.Part(message)
+                        )
+                    )
+
+                    val m = ClientContentMessage(
+                        clientContent = ClientContentMessage.ClientContent(
+                            turns = listOf(turn),
+                            turnComplete = true
+                        )
+                    )
+
+                    wss.sendClientContent(m)
+                    wss.setOnEventListener(null)
+                }
+            }
+            wss.connect(ApiModelProvider.getNextKey())
+        }
+    }
+
+    private fun chat(content: Content, stream: Boolean) {
         job?.cancel()
         job = viewModelScope.launch(Dispatchers.IO) {
             if (chatManager.isActive) {

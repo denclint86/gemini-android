@@ -20,6 +20,7 @@ dependencyResolutionManagement {
     repositories {
         maven {
             url = uri("file:///C:/0_Dev/android/_lao/generative-ai-android-main/generativeai/m2")
+            url = uri("file:///C:/0_Dev/android/_lao/generative-ai-android-main/common/m2")
         }
 
         maven { url = uri("https://maven.aliyun.com/repository/central") }

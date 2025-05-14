@@ -35,6 +35,7 @@ object Default {
 
     const val TEMPERATURE = 0.7f
     const val TOOLS = true
+    const val LIVE = false
     const val MAX_OUTPUT_TOKENS = 1024 * 8
     const val TOP_P = 1.0f
     const val TOP_K = 60
