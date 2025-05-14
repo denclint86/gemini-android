@@ -56,6 +56,9 @@ dependencies {
 
     implementation(libs.google.gson)
 
+    implementation(libs.converter.gson)
+    implementation(libs.retrofit)
+
     implementation(libs.zephyr.vbclass)
     implementation(libs.zephyr.scaling.layout)
     implementation(libs.zephyr.global.values)

@@ -69,6 +69,29 @@ class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>() {
         }
 
         stateUpdater.setUpdateStateMethod(::updateState)
+
+//        viewModelScope.launch {
+//            try {
+//                val apiKey = ApiModelProvider.getNextKey() // 替换为你的 API Key
+//                val listModelService = ListModelService()
+////                listModelService.call(apiKey, "v1") { r ->
+////                    if (r is NetResult.Success) {
+////                        logE(TAG, r.data?.models?.map { it.name }.toString())
+////                    } else {
+////                        logE(TAG, "list model 失败")
+////                    }
+////                }
+//
+//                val client = WebSocketClient(viewModelScope)
+//
+//                client.connect(apiKey)
+//
+//                delay(100_000)
+//                client.close()
+//            } catch (t: Throwable) {
+//                t.logE(TAG)
+//            }
+//        }
     }
 
     override fun initUiState(): ChatState = runBlocking {
@@ -83,7 +106,7 @@ class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>() {
             when (intent) {
                 is ChatIntent.Chat -> {
                     val userContent = userContent { text(intent.text) }
-                    chat(userContent, getSetting<Stream>()?.value(true) ?: true)
+                    chat(userContent, getSetting<Stream>()?.value(true)!!)
                 }
 
                 ChatIntent.ResetChat -> {
@@ -146,7 +169,7 @@ class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>() {
     }
 
     private suspend fun handleFunctionCalls(stream: Boolean, funcResult: Map<String, JSONObject>) {
-        val delay = getSetting<SleepTime>()?.value(true) ?: 0
+        val delay = getSetting<SleepTime>()?.value(true)!!
         delay(delay)
         val parts = mutableListOf<Part>()
         funcResult.forEach { (name, jsonObj) ->
