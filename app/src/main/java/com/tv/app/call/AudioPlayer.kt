@@ -77,6 +77,4 @@ class AudioPlayer : IAudioPlayer {
         isInitialized = false
         logE(TAG, "AudioTrack 已释放")
     }
-
-    fun getCurrentSampleRate(): Int = sampleRate
 }
