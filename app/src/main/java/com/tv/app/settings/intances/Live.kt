@@ -9,7 +9,7 @@ class Live : BooleanSetting() {
     override val default: Bean<Boolean>
         get() = Bean(
             value = Default.LIVE,
-            isEnabled = false
+            isEnabled = true
         )
     override val kind: Kind
         get() = Kind.DIRECT

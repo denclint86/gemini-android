@@ -11,9 +11,13 @@ interface IWebSocketManager {
 
     fun setOnEventListener(l: OnEventListener?)
 
-    fun connect(apiKey: String)
-    fun sendMessage(message: String)
-    fun sendMessage(content: WSManager.ClientContentMessage)
+    fun connect()
+
+    /**
+     * 用于发送原数据
+     */
+    fun sendMessage(raw: String)
+    fun sendMessage(content: ClientContentMessage)
     fun close()
 
     fun interface OnEventListener {

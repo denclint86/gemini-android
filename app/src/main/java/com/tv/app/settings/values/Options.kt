@@ -1,5 +1,7 @@
 package com.tv.app.settings.values
 
+import com.tv.app.call.beans.Language
+import com.tv.app.call.beans.Voice
 import com.tv.app.settings.intances.Setting
 
 fun Setting<*>.getOptions(): List<String> {
@@ -7,6 +9,8 @@ fun Setting<*>.getOptions(): List<String> {
 
     when (this.name) {
         Names.MODEL_NAME -> return Model.entries.map { it.string }
+        Names.LIVE_VOICE_NAME -> return Voice.entries.map { it.string }
+        Names.LIVE_LANGUAGE -> return Language.entries.map { it.string }
     }
 
     TODO()
@@ -17,6 +21,8 @@ fun Setting<*>.getIndex(list: List<String>): Int {
 
     when (this.name) {
         Names.MODEL_NAME -> return list.indexOf(value(true))
+        Names.LIVE_VOICE_NAME -> return list.indexOf(value(true))
+        Names.LIVE_LANGUAGE -> return list.indexOf(value(true))
     }
 
     TODO()

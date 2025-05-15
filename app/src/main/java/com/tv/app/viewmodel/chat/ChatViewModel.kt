@@ -7,9 +7,9 @@ import com.google.ai.client.generativeai.type.FunctionResponsePart
 import com.google.ai.client.generativeai.type.GenerateContentResponse
 import com.google.ai.client.generativeai.type.ImagePart
 import com.google.ai.client.generativeai.type.Part
+import com.tv.app.call.ClientContentMessage
 import com.tv.app.call.IWebSocketManager
 import com.tv.app.call.LiveChatClient
-import com.tv.app.call.WSManager.ClientContentMessage
 import com.tv.app.model.ChatManager
 import com.tv.app.model.FuncHandler
 import com.tv.app.model.ResponseHandler
@@ -22,7 +22,6 @@ import com.tv.app.settings.intances.Live
 import com.tv.app.settings.intances.SleepTime
 import com.tv.app.settings.intances.Stream
 import com.tv.app.settings.intances.Tools
-import com.tv.app.utils.ApiModelProvider
 import com.tv.app.utils.funcContent
 import com.tv.app.utils.getScreenAsBitmap
 import com.tv.app.utils.observe
@@ -79,6 +78,8 @@ class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>() {
         }
 
         stateUpdater.setUpdateStateMethod(::updateState)
+
+//        sendIntent(ChatIntent.Chat("hi there"))
     }
 
 
@@ -140,7 +141,7 @@ class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>() {
 
             if (!client.isAlive && !client.isSetupComplete) {
                 logE(TAG, "重建 web socket")
-                client.connect(ApiModelProvider.getNextKey())
+                client.connect()
             } else {
                 logE(TAG, "复用 web socket")
                 sendLiveMessage(message)
@@ -173,6 +174,7 @@ class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>() {
                         if (t !is SocketException)
                             helper.handleError(t)
                     } ?: run { sendEffect(ChatEffect.Done) }
+                    client.close()
                     client.setOnEventListener(null)
                 }
 

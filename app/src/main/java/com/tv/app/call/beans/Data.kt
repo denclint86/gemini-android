@@ -15,8 +15,6 @@ sealed class Data {
         @SerializedName("serverContent") val serverContent: ServerContent?
     ) : Data()
 
-    data object SetupComplete : Data()
-
     // bean
     data class ServerContent(
         @SerializedName("modelTurn") val modelTurn: ModelTurn?,

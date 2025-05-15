@@ -1,18 +1,16 @@
 package com.tv.app.call
 
-import com.google.gson.annotations.SerializedName
-import com.tv.app.call.beans.AudioTranscriptionConfig
 import com.tv.app.call.beans.BidiGenerateContentSetup
-import com.tv.app.call.beans.GenerationConfig
 import com.tv.app.call.beans.ParsedResult
 import com.tv.app.call.beans.SetupConfig
-import com.tv.app.call.beans.SpeechConfig
+import com.tv.app.utils.ApiModelProvider
 import com.zephyr.global_values.TAG
 import com.zephyr.log.logE
 import com.zephyr.net.toJson
-import com.zephyr.net.toPrettyJson
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -22,7 +20,7 @@ import okhttp3.WebSocketListener
 import okio.ByteString
 
 
-class WSManager(
+abstract class WSManager(
     private val scope: CoroutineScope,
     private val messageParser: IMessageParser,
     private val audioPlayer: IAudioPlayer
@@ -32,9 +30,14 @@ class WSManager(
         OkHttpClient()
     }
 
+    private var lastOnMsg = 0L
+    private var timeoutJob: Job? = null
+
     override val isAlive
         get() = webSocket != null
     private var listener: IWebSocketManager.OnEventListener? = null
+
+    abstract fun getSetupConfig(): SetupConfig
 
     private fun getUrl(apiKey: String): String {
         val apiVersion = "v1beta"
@@ -45,24 +48,38 @@ class WSManager(
         listener = l
     }
 
-    override fun connect(apiKey: String) {
+    override fun connect() {
         scope.launch(Dispatchers.IO) {
             val request = Request.Builder()
-                .url(getUrl(apiKey))
+                .url(getUrl(ApiModelProvider.getNextKey()))
                 .build()
             webSocket = client.newWebSocket(request, webSocketListener!!)
         }
     }
 
     override fun sendMessage(content: ClientContentMessage) {
+        timeoutJob?.cancel()
+        timeoutJob = scope.launch(Dispatchers.IO) {
+            val timeoutMillis = 2000L // 2秒超时
+            val startTime = System.currentTimeMillis()
+
+            while (System.currentTimeMillis() - lastOnMsg > timeoutMillis) {
+                if (System.currentTimeMillis() - startTime > timeoutMillis) {
+                    connect()
+                    break
+                }
+                delay(100)
+            }
+        }
+
         scope.launch {
             webSocket?.send(content.toJson()) ?: logE(TAG, "WebSocket 未连接")
         }
     }
 
-    override fun sendMessage(message: String) {
+    override fun sendMessage(raw: String) {
         scope.launch {
-            webSocket?.send(message) ?: logE(TAG, "WebSocket 未连接")
+            webSocket?.send(raw) ?: logE(TAG, "WebSocket 未连接")
         }
     }
 
@@ -71,22 +88,11 @@ class WSManager(
         webSocket?.close(1000, "正常关闭")
         webSocket = null
         audioPlayer.release()
+        messageParser.isSetupComplete = false
     }
 
     private fun sendSetupMessage() {
-        val setupMessage = BidiGenerateContentSetup(
-            setup = SetupConfig(
-//                model = "models/gemini-2.0-flash-live-preview-04-09",
-                model = "models/gemini-2.0-flash-exp",
-                generationConfig = GenerationConfig(
-                    responseModalities = listOf("AUDIO"),
-                    speechConfig = SpeechConfig("en-US", "zephyr")
-                ),
-                inputAudioTranscription = AudioTranscriptionConfig,
-                outputAudioTranscription = AudioTranscriptionConfig
-            )
-        )
-        logE(TAG, setupMessage.toPrettyJson())
+        val setupMessage = BidiGenerateContentSetup(getSetupConfig())
         sendMessage(setupMessage.toJson())
     }
 
@@ -102,7 +108,7 @@ class WSManager(
         }
 
         override fun onMessage(webSocket: WebSocket, text: String) {
-            logE(TAG, "WebSocket 接收数据")
+            lastOnMsg = System.currentTimeMillis()
 
             when (val result = messageParser.parseTextMessage(text)) {
                 is ParsedResult.Audio -> {
@@ -125,7 +131,7 @@ class WSManager(
                     close()
 
                 null ->
-                    logE(TAG, "ws 解析出空数据")
+                    logE(TAG, "ws 解析失败:\n$text")
             }
         }
 
@@ -149,30 +155,6 @@ class WSManager(
 
             audioPlayer.release()
             listener?.onEvent(IWebSocketManager.Event.Down(t))
-        }
-    }
-
-
-    data class ClientContentMessage(
-        @SerializedName("client_content") val clientContent: ClientContent
-    ) {
-        data class ClientContent(
-            val turns: List<Turn>,
-            @SerializedName("turn_complete") val turnComplete: Boolean
-        ) {
-            data class Turn(
-                val role: String,
-                val parts: List<Part>
-            ) {
-                constructor(role: String, msg: String) : this(
-                    role = role,
-                    parts = listOf(Part(msg))
-                )
-
-                data class Part(
-                    val text: String
-                )
-            }
         }
     }
 }

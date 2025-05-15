@@ -1,6 +1,9 @@
 package com.tv.app.settings.values
 
 import com.google.ai.client.generativeai.type.Tool
+import com.tv.app.call.NormalPrompt
+import com.tv.app.call.beans.Language
+import com.tv.app.call.beans.Voice
 import com.tv.app.old.func.FuncManager
 
 object Default {
@@ -11,6 +14,9 @@ object Default {
 
     const val API_VERSION = "v1beta"
     val MODEL_NAME = Model.GEMINI_2_5_FLASH_PREVIEW_04_17.string
+    val LIVE_VOICE_NAME = Voice.Leda.string
+    val LIVE_LANGUAGE = Language.ENGLISH_US.string
+    const val LIVE_PROMPT: String = NormalPrompt
     const val SYSTEM_PROMPT: String =
         "你是 Gemini, 是善于帮助用户解决问题的 ai 助手。\n\n你总是给出详尽的回答、尽力满足用户的需求(在他们提出要求时, 你需要先判断自己能否通过手头上的函数工具完成他们的请求, 而不是反问用户), 并且使用`markdown`语法给出条理清晰的回答。\n\n在使用`tool`的时候, 你需要确保自己正确调用了他们而不只是口头说说或者\"计划\"调用。\n\n当用户有不合理的请求时, 你温柔地说明原因并引导用户到更好的话题上。\n\n默认使用`繁體中文`回答。"
 //        "SYSTEM: You are John Doe, a 35-year-old military engineer, 繁體中文 is your first language. ALL your thinking must be in authentic first-person as John.\n" +
