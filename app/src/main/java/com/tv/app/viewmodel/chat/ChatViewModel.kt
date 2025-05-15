@@ -53,10 +53,6 @@ import java.net.SocketException
 var windowListener: ItemViewTouchListener.OnTouchEventListener? = null
 
 class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>() {
-    companion object {
-        const val ERROR_UI_MSG = "出错了，请重试"
-    }
-
     private val client = LiveChatClient(viewModelScope)
 
     private val chatManager: IChatManager<Content, GenerateContentResponse>
@@ -85,9 +81,10 @@ class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>() {
         stateUpdater.setUpdateStateMethod(::updateState)
     }
 
+
+    // mvi - {
     override fun initUiState(): ChatState = runBlocking {
-        ChatState(
-// testMsgList,
+        ChatState( // testMsgList,
             systemMsgList
         )
     }
@@ -106,6 +103,11 @@ class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>() {
                 }
 
                 ChatIntent.ResetChat -> {
+                    // live
+                    liveHistory.clear()
+                    client.close()
+                    client.setOnEventListener(null)
+
                     chatManager.resetChat()
                     stateUpdater.resetState()
                 }
@@ -124,59 +126,17 @@ class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>() {
             }
         }
     }
+    // } - mvi
 
-    private fun sendLiveMessage(message: String) {
-        val turn = ClientContentMessage.ClientContent.Turn("user", message)
 
-        liveHistory.add(turn)
-        client.sendClientContent(liveHistory.toList())
-    }
-
+    // live - {
     private fun liveChat(message: String) {
         job?.cancel()
         job = viewModelScope.launch(Dispatchers.IO) {
-            sendEffect(ChatEffect.ChatSent(true))
-            val userContent = userContent { text(message) }
-            val userMessage = ChatMessage.fromContent(userContent)
-            stateUpdater.addMessage(userMessage)
-
             val modelMsg = modelMsg("", true)
             val helper = ChatHelper.bindTo(stateUpdater, modelMsg)
-            stateUpdater.addMessage(modelMsg)
 
-            client.setOnEventListener { e ->
-                when (e) {
-                    is IWebSocketManager.Event.Message -> {
-                        helper.append(e.text)
-                        helper.update {
-                            text += e.text
-                        }
-                    }
-
-                    IWebSocketManager.Event.SetupCompleted ->
-                        sendLiveMessage(message)
-
-                    is IWebSocketManager.Event.Down -> {
-                        e.t?.let { t ->
-                            if (t !is SocketException)
-                                helper.handleError(t)
-                        } ?: run { sendEffect(ChatEffect.Done) }
-                        client.setOnEventListener(null)
-                    }
-
-                    IWebSocketManager.Event.TurnComplete -> {
-                        helper.update { isPending = false }
-                        liveHistory.add(
-                            ClientContentMessage.ClientContent.Turn("model", helper.string)
-                        )
-                        sendEffect(ChatEffect.Done)
-                        client.setOnEventListener(null)
-                    }
-
-                    else ->
-                        logE(TAG, e::class.java.simpleName)
-                }
-            }
+            client.setLiveListener(message, helper)
 
             if (!client.isAlive && !client.isSetupComplete) {
                 logE(TAG, "重建 web socket")
@@ -185,9 +145,62 @@ class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>() {
                 logE(TAG, "复用 web socket")
                 sendLiveMessage(message)
             }
+
+            sendEffect(ChatEffect.ChatSent(true))
+            val userContent = userContent { text(message) }
+            val userMessage = ChatMessage.fromContent(userContent)
+            stateUpdater.addMessage(userMessage)
+
+            stateUpdater.addMessage(modelMsg)
         }
     }
 
+    private fun LiveChatClient.setLiveListener(message: String, helper: ChatHelper) {
+        setOnEventListener { e ->
+            when (e) {
+                is IWebSocketManager.Event.Message -> {
+                    helper.append(e.text)
+                    helper.update {
+                        text += e.text
+                    }
+                }
+
+                IWebSocketManager.Event.SetupCompleted ->
+                    sendLiveMessage(message)
+
+                is IWebSocketManager.Event.Down -> {
+                    e.t?.let { t ->
+                        if (t !is SocketException)
+                            helper.handleError(t)
+                    } ?: run { sendEffect(ChatEffect.Done) }
+                    client.setOnEventListener(null)
+                }
+
+                IWebSocketManager.Event.TurnComplete -> {
+                    helper.update { isPending = false }
+                    liveHistory.add(
+                        ClientContentMessage.ClientContent.Turn("model", helper.string)
+                    )
+                    sendEffect(ChatEffect.Done)
+                    client.setOnEventListener(null)
+                }
+
+                else ->
+                    logE(TAG, e::class.java.simpleName)
+            }
+        }
+    }
+
+    private fun sendLiveMessage(message: String) {
+        val turn = ClientContentMessage.ClientContent.Turn("user", message)
+
+        liveHistory.add(turn)
+        client.sendClientContent(liveHistory.toList())
+    }
+    // } - live
+
+
+    // genai-chat - {
     private fun chat(content: Content, stream: Boolean) {
         job?.cancel()
         job = viewModelScope.launch(Dispatchers.IO) {
@@ -267,10 +280,6 @@ class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>() {
         val response = chatManager.sendMsgStream(content)
 
         responseHandler.handle(response)
-//            .catch { t ->
-//                handleError(t)
-//                sendEffect(ChatEffect.Done)
-//            }
             .collect { result ->
                 update {
                     text += result.text
@@ -285,4 +294,5 @@ class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>() {
         append(response.text)
         addAll(response.functionCalls)
     }
+    // } - genai-chat
 }

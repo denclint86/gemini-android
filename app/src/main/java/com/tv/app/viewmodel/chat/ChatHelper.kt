@@ -2,7 +2,6 @@ package com.tv.app.viewmodel.chat;
 
 import com.google.ai.client.generativeai.type.FunctionCallPart
 import com.tv.app.viewmodel.StateUpdater
-import com.tv.app.viewmodel.chat.ChatViewModel.Companion.ERROR_UI_MSG
 import com.tv.app.viewmodel.chat.mvi.bean.ChatMessage
 import com.zephyr.global_values.TAG
 import com.zephyr.log.logE
@@ -11,10 +10,13 @@ class ChatHelper private constructor(
     private val updater: StateUpdater,
     private val msg: ChatMessage
 ) {
+
     private val stringBuilder = StringBuilder()
     private val list = mutableListOf<FunctionCallPart>()
 
     companion object {
+        private const val ERROR_UI_MSG = "出错了，请重试"
+
         fun bindTo(updater: StateUpdater, msg: ChatMessage): ChatHelper {
             return ChatHelper(updater, msg)
         }
