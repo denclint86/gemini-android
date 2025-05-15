@@ -3,6 +3,12 @@ package com.tv.app.call.beans
 sealed class ParsedResult {
     data object SetupCompleted : ParsedResult()
 
+    data object TurnComplete : ParsedResult()
+
+    data object GoAway : ParsedResult()
+
+    data class OutputTranscription(val text: String) : ParsedResult()
+
     data class Audio(val pcmData: ByteArray, val sampleRate: Int) : ParsedResult() {
         override fun equals(other: Any?): Boolean {
             if (this === other) return true

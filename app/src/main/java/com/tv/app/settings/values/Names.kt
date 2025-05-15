@@ -13,7 +13,7 @@ object Names {
 
     const val TEMPERATURE = "温度"
     const val TOOLS = "函数调用"
-    const val LIVE = "实时通话(启用后其他设置失效, 并且仅支持单轮对话)"
+    const val LIVE = "Live(启用后其他设置失效)"
     const val MAX_OUTPUT_TOKENS = "最大输出 tokens"
     const val TOP_P = "top_p"
     const val TOP_K = "top_k"

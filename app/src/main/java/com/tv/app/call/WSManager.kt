@@ -1,10 +1,11 @@
 package com.tv.app.call
 
 import com.google.gson.annotations.SerializedName
+import com.tv.app.call.beans.AudioTranscriptionConfig
 import com.tv.app.call.beans.BidiGenerateContentSetup
-import com.tv.app.call.beans.GenerationConfig1
+import com.tv.app.call.beans.GenerationConfig
 import com.tv.app.call.beans.ParsedResult
-import com.tv.app.call.beans.SetupConfig1
+import com.tv.app.call.beans.SetupConfig
 import com.tv.app.call.beans.SpeechConfig
 import com.zephyr.global_values.TAG
 import com.zephyr.log.logE
@@ -21,7 +22,7 @@ import okhttp3.WebSocketListener
 import okio.ByteString
 
 
-class WSSManager(
+class WSManager(
     private val scope: CoroutineScope,
     private val messageParser: IMessageParser,
     private val audioPlayer: IAudioPlayer
@@ -31,6 +32,8 @@ class WSSManager(
         OkHttpClient()
     }
 
+    override val isAlive
+        get() = webSocket != null
     private var listener: IWebSocketManager.OnEventListener? = null
 
     private fun getUrl(apiKey: String): String {
@@ -72,12 +75,15 @@ class WSSManager(
 
     private fun sendSetupMessage() {
         val setupMessage = BidiGenerateContentSetup(
-            setup = SetupConfig1(
+            setup = SetupConfig(
+//                model = "models/gemini-2.0-flash-live-preview-04-09",
                 model = "models/gemini-2.0-flash-exp",
-                generationConfig = GenerationConfig1(
+                generationConfig = GenerationConfig(
                     responseModalities = listOf("AUDIO"),
-                    speechConfig = SpeechConfig("en-US")
-                )
+                    speechConfig = SpeechConfig("en-US", "zephyr")
+                ),
+                inputAudioTranscription = AudioTranscriptionConfig,
+                outputAudioTranscription = AudioTranscriptionConfig
             )
         )
         logE(TAG, setupMessage.toPrettyJson())
@@ -88,7 +94,7 @@ class WSSManager(
         override fun onOpen(webSocket: WebSocket, response: Response) {
             logE(TAG, "WebSocket 连接已打开")
 
-            this@WSSManager.webSocket = webSocket
+            this@WSManager.webSocket = webSocket
             sendSetupMessage()
             scope.launch { audioPlayer.initialize(24000) }
 
@@ -96,7 +102,7 @@ class WSSManager(
         }
 
         override fun onMessage(webSocket: WebSocket, text: String) {
-            logE(TAG, "接收到文本消息: $text")
+            logE(TAG, "WebSocket 接收数据")
 
             when (val result = messageParser.parseTextMessage(text)) {
                 is ParsedResult.Audio -> {
@@ -109,36 +115,40 @@ class WSSManager(
                 ParsedResult.SetupCompleted ->
                     listener?.onEvent(IWebSocketManager.Event.SetupCompleted)
 
-                null ->
-                    logE(TAG, "wss 解析出空数据")
-            }
+                is ParsedResult.OutputTranscription ->
+                    listener?.onEvent(IWebSocketManager.Event.Message(result.text))
 
-            listener?.onEvent(IWebSocketManager.Event.Message(text))
+                ParsedResult.TurnComplete ->
+                    listener?.onEvent(IWebSocketManager.Event.TurnComplete)
+
+                ParsedResult.GoAway ->
+                    close()
+
+                null ->
+                    logE(TAG, "ws 解析出空数据")
+            }
         }
 
         override fun onMessage(webSocket: WebSocket, bytes: ByteString) {
-            logE(TAG, "接收到字节流数据")
             onMessage(webSocket, bytes.utf8())
         }
 
         override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
             logE(TAG, "WebSocket 连接正在关闭: $code $reason")
-
-            listener?.onEvent(IWebSocketManager.Event.Closing)
         }
 
         override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
             logE(TAG, "WebSocket 连接已关闭: $code $reason")
 
             audioPlayer.release()
-            listener?.onEvent(IWebSocketManager.Event.Closed)
+            listener?.onEvent(IWebSocketManager.Event.Down(null))
         }
 
         override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
             t.logE(TAG)
 
             audioPlayer.release()
-            listener?.onEvent(IWebSocketManager.Event.Failure(t))
+            listener?.onEvent(IWebSocketManager.Event.Down(t))
         }
     }
 
@@ -154,6 +164,11 @@ class WSSManager(
                 val role: String,
                 val parts: List<Part>
             ) {
+                constructor(role: String, msg: String) : this(
+                    role = role,
+                    parts = listOf(Part(msg))
+                )
+
                 data class Part(
                     val text: String
                 )

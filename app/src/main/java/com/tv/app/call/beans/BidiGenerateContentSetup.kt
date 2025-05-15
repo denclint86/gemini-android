@@ -4,19 +4,28 @@ import com.google.ai.client.generativeai.type.Schema
 import com.google.gson.annotations.SerializedName
 
 data class BidiGenerateContentSetup(
-    val setup: SetupConfig1
+    val setup: SetupConfig
 )
 
-data class SetupConfig1(
+data class SetupConfig(
     @SerializedName("model") val model: String, // 模型名称，例如 "gemini-2.0-flash-live-preview-04-09"
-    @SerializedName("generationConfig") val generationConfig: GenerationConfig1? = null, // 生成配置
+    @SerializedName("generationConfig") val generationConfig: GenerationConfig? = null, // 生成配置
     @SerializedName("systemInstruction") val systemInstruction: String? = null, // 系统指令
 //    @SerializedName("tools") val tools: List<com.google.ai.client.generativeai.common.client.Tool>? = Default.APP_TOOLS?.map {it.functionDeclarations.map { d->d.toInternal() } }, // 工具定义列表
-    @SerializedName("sessionResumption") val sessionResumption: SessionResumption? = null // 会话恢复配置
+    @SerializedName("sessionResumption") val sessionResumption: SessionResumption? = null, // 会话恢复配置
+    @SerializedName("input_audio_transcription") val inputAudioTranscription: AudioTranscriptionConfig? = null,
+    @SerializedName("output_audio_transcription") val outputAudioTranscription: AudioTranscriptionConfig? = null
 )
 
+//data class AudioTranscription(
+//    val text: String?,
+//    val finished: Boolean?
+//)
+
+data object AudioTranscriptionConfig
+
 // 生成配置
-data class GenerationConfig1(
+data class GenerationConfig(
     @SerializedName("candidateCount") val candidateCount: Int? = null, // 候选答案数量
     @SerializedName("maxOutputTokens") val maxOutputTokens: Int? = null, // 最大输出 token 数
     @SerializedName("temperature") val temperature: Float? = null, // 采样温度

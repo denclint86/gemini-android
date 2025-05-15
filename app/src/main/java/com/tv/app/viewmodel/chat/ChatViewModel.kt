@@ -8,8 +8,8 @@ import com.google.ai.client.generativeai.type.GenerateContentResponse
 import com.google.ai.client.generativeai.type.ImagePart
 import com.google.ai.client.generativeai.type.Part
 import com.tv.app.call.IWebSocketManager
-import com.tv.app.call.WSSClient
-import com.tv.app.call.WSSManager.ClientContentMessage
+import com.tv.app.call.LiveChatClient
+import com.tv.app.call.WSManager.ClientContentMessage
 import com.tv.app.model.ChatManager
 import com.tv.app.model.FuncHandler
 import com.tv.app.model.ResponseHandler
@@ -47,6 +47,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
+import java.net.SocketException
 
 
 var windowListener: ItemViewTouchListener.OnTouchEventListener? = null
@@ -56,7 +57,7 @@ class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>() {
         const val ERROR_UI_MSG = "出错了，请重试"
     }
 
-    private val wss = WSSClient(viewModelScope)
+    private val client = LiveChatClient(viewModelScope)
 
     private val chatManager: IChatManager<Content, GenerateContentResponse>
         get() = ChatManager
@@ -66,7 +67,7 @@ class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>() {
     private val responseHandler: IResponseHandler<GenerateContentResponse> = ResponseHandler()
 
     private val stateUpdater: StateUpdater = StateUpdater()
-
+    private var liveHistory: MutableList<ClientContentMessage.ClientContent.Turn> = mutableListOf()
 
     val stateValue: ChatState
         get() = uiStateFlow.value
@@ -124,38 +125,66 @@ class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>() {
         }
     }
 
+    private fun sendLiveMessage(message: String) {
+        val turn = ClientContentMessage.ClientContent.Turn("user", message)
+
+        liveHistory.add(turn)
+        client.sendClientContent(liveHistory.toList())
+    }
+
     private fun liveChat(message: String) {
         job?.cancel()
         job = viewModelScope.launch(Dispatchers.IO) {
             sendEffect(ChatEffect.ChatSent(true))
+            val userContent = userContent { text(message) }
+            val userMessage = ChatMessage.fromContent(userContent)
+            stateUpdater.addMessage(userMessage)
 
-            val contentMessage = ChatMessage.fromContent(userContent { text(message) })
+            val modelMsg = modelMsg("", true)
+            val helper = ChatHelper.bindTo(stateUpdater, modelMsg)
+            stateUpdater.addMessage(modelMsg)
 
-            stateUpdater.addMessage(contentMessage)
+            client.setOnEventListener { e ->
+                when (e) {
+                    is IWebSocketManager.Event.Message -> {
+                        helper.append(e.text)
+                        helper.update {
+                            text += e.text
+                        }
+                    }
 
-            wss.close()
-            wss.setOnEventListener { e ->
-                logE(TAG, e::class.simpleName!!)
-                if (e is IWebSocketManager.Event.SetupCompleted) {
-                    val turn = ClientContentMessage.ClientContent.Turn(
-                        role = "user",
-                        parts = listOf(
-                            ClientContentMessage.ClientContent.Turn.Part(message)
+                    IWebSocketManager.Event.SetupCompleted ->
+                        sendLiveMessage(message)
+
+                    is IWebSocketManager.Event.Down -> {
+                        e.t?.let { t ->
+                            if (t !is SocketException)
+                                helper.handleError(t)
+                        } ?: run { sendEffect(ChatEffect.Done) }
+                        client.setOnEventListener(null)
+                    }
+
+                    IWebSocketManager.Event.TurnComplete -> {
+                        helper.update { isPending = false }
+                        liveHistory.add(
+                            ClientContentMessage.ClientContent.Turn("model", helper.string)
                         )
-                    )
+                        sendEffect(ChatEffect.Done)
+                        client.setOnEventListener(null)
+                    }
 
-                    val m = ClientContentMessage(
-                        clientContent = ClientContentMessage.ClientContent(
-                            turns = listOf(turn),
-                            turnComplete = true
-                        )
-                    )
-
-                    wss.sendClientContent(m)
-                    wss.setOnEventListener(null)
+                    else ->
+                        logE(TAG, e::class.java.simpleName)
                 }
             }
-            wss.connect(ApiModelProvider.getNextKey())
+
+            if (!client.isAlive && !client.isSetupComplete) {
+                logE(TAG, "重建 web socket")
+                client.connect(ApiModelProvider.getNextKey())
+            } else {
+                logE(TAG, "复用 web socket")
+                sendLiveMessage(message)
+            }
         }
     }
 

@@ -36,10 +36,6 @@ class AudioPlayer : IAudioPlayer {
             ).also {
                 it.play()
                 isInitialized = it.state == AudioTrack.STATE_INITIALIZED
-                logE(
-                    TAG,
-                    "AudioTrack 初始化成功，采样率: $sampleRate Hz, 初始化状态: $isInitialized"
-                )
             }
         } catch (e: Exception) {
             logE(TAG, "AudioTrack 初始化失败: ${e.message}")
@@ -61,7 +57,6 @@ class AudioPlayer : IAudioPlayer {
         }
         try {
             audioTrack?.write(pcmData, 0, pcmData.size)
-            logE(TAG, "PCM 数据写入 AudioTrack，长度: ${pcmData.size}")
         } catch (e: Exception) {
             logE(TAG, "PCM 数据写入失败: ${e.message}")
             isInitialized = false
