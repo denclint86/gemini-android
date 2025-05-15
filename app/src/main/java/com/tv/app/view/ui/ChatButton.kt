@@ -11,9 +11,9 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.tv.app.databinding.LayoutChatButtonBinding
-import com.tv.app.utils.keyborad.IKeyboardUtil
-import com.tv.app.utils.safeCollapse
-import com.tv.app.utils.safeExpand
+import com.tv.utils.keyborad.IKeyboardUtil
+import com.tv.utils.safeCollapse
+import com.tv.utils.safeExpand
 import com.zephyr.scaling_layout.ScalingLayout
 import com.zephyr.scaling_layout.ScalingLayoutListener
 import com.zephyr.scaling_layout.State

@@ -6,11 +6,11 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import com.tv.app.databinding.ActivitySettingsBinding
-import com.tv.app.model.ChatManager
-import com.tv.app.model.SettingManager
-import com.tv.app.settings.intances.Setting
-import com.tv.app.utils.setBackAffair
-import com.tv.app.utils.setViewInsets
+import com.tv.app.chat.models.ChatManager
+import com.tv.settings.SettingManager
+import com.tv.settings.intances.Setting
+import com.tv.utils.setBackAffair
+import com.tv.utils.setViewInsets
 import com.tv.app.view.ui.SettingsAdapter
 import com.zephyr.extension.ui.PreloadLayoutManager
 import com.zephyr.extension.widget.addLineDecoration
@@ -31,7 +31,7 @@ class SettingsActivity : ViewBindingActivity<ActivitySettingsBinding>() {
         val activityResultLauncher =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
                 if (result.resultCode == Activity.RESULT_OK) {
-                    val name = result.data?.getStringExtra(Setting.RESULT_NAME_KEY)
+                    val name = result.data?.getStringExtra(com.tv.settings.intances.Setting.RESULT_NAME_KEY)
                         ?: return@registerForActivityResult
                     lifecycleScope.launch {
                         settingsAdapter.notifySettingOn(name)
@@ -49,7 +49,7 @@ class SettingsActivity : ViewBindingActivity<ActivitySettingsBinding>() {
         rv.addLineDecoration(this@SettingsActivity, RecyclerView.VERTICAL)
 
         settingsAdapter.submitList(
-            SettingManager.settingMap.values.toList()
+            com.tv.settings.SettingManager.settingMap.values.toList()
         )
     }
 

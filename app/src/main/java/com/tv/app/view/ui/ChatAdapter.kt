@@ -5,10 +5,10 @@ import androidx.annotation.AttrRes
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DiffUtil
 import com.tv.app.databinding.LayoutChatItemBinding
-import com.tv.app.utils.Role
-import com.tv.app.utils.setBackgroundColorFromAttr
-import com.tv.app.utils.setTextColorFromAttr
-import com.tv.app.viewmodel.chat.mvi.bean.ChatMessage
+import com.tv.utils.Role
+import com.tv.utils.setBackgroundColorFromAttr
+import com.tv.utils.setTextColorFromAttr
+import com.tv.app.chat.beans.ChatMessage
 import com.zephyr.global_values.globalContext
 import com.zephyr.vbclass.ui.ViewBindingListAdapter
 import io.noties.markwon.Markwon

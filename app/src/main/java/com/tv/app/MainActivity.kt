@@ -17,24 +17,25 @@ import androidx.core.view.marginBottom
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.SimpleItemAnimator
+import com.tv.app.chat.ChatViewModel
+import com.tv.app.chat.mvi.ChatEffect
+import com.tv.app.chat.mvi.ChatIntent
+import com.tv.app.chat.mvi.collectFlow
+import com.tv.app.chat.mvi.observe
 import com.tv.app.databinding.ActivityMainBinding
-import com.tv.app.utils.Role
-import com.tv.app.utils.collectFlow
-import com.tv.app.utils.createViewModel
-import com.tv.app.utils.findViewAtPoint
-import com.tv.app.utils.hasOverlayPermission
-import com.tv.app.utils.keyborad.IKeyboardUtil
-import com.tv.app.utils.keyborad.KeyboardUtil
-import com.tv.app.utils.observe
-import com.tv.app.utils.parentIs
-import com.tv.app.utils.setViewInsets
-import com.tv.app.utils.startActivity
 import com.tv.app.view.EditTextActivity
 import com.tv.app.view.SettingsActivity
+import com.tv.app.view.suspendview.SuspendViewService
 import com.tv.app.view.ui.ChatAdapter
-import com.tv.app.viewmodel.chat.ChatViewModel
-import com.tv.app.viewmodel.chat.mvi.ChatEffect
-import com.tv.app.viewmodel.chat.mvi.ChatIntent
+import com.tv.utils.Role
+import com.tv.utils.createViewModel
+import com.tv.utils.findViewAtPoint
+import com.tv.utils.hasOverlayPermission
+import com.tv.utils.keyborad.IKeyboardUtil
+import com.tv.utils.keyborad.KeyboardUtil
+import com.tv.utils.parentIs
+import com.tv.utils.setViewInsets
+import com.tv.utils.startActivity
 import com.zephyr.extension.ui.PreloadLayoutManager
 import com.zephyr.extension.widget.toast
 import com.zephyr.global_values.TAG
@@ -59,8 +60,8 @@ class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
 
     override fun ActivityMainBinding.initBinding() {
         enableEdgeToEdge()
-//        openOverlaySetting()
-//        setUpScreenCapture()
+        openOverlaySettingIfNeeded()
+        setUpScreenCapture()
 
         chatAdapter = ChatAdapter()
         preloadLayoutManager = PreloadLayoutManager(this@MainActivity, RecyclerView.VERTICAL)
@@ -173,12 +174,12 @@ class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
 
     private fun registerMVI() {
         viewModel.observe(lifecycleScope, { it.messages }) {
-            val list = if (ChatAdapter.HIDE_ENABLED)
-                withContext(Dispatchers.IO) {
+            val list = withContext(Dispatchers.IO) {
+                if (ChatAdapter.HIDE_ENABLED)
                     it.filter { msg -> msg.role != Role.SYSTEM }
-                }
-            else
-                it
+                else
+                    it
+            }
             chatAdapter.submitList(list)
         }
 
@@ -201,12 +202,16 @@ class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
     }
 
     private fun setUpScreenCapture() {
-        if (App.binder.get()?.isScreenCaptureEnabled() == true) return
         val screenCaptureLauncher =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+                val captureManager =
+                    SuspendViewService.binder?.captureManager ?: return@registerForActivityResult
+                if (captureManager.isAvailable) return@registerForActivityResult
+
+
                 if (result.resultCode == RESULT_OK) {
                     result.data?.let {
-                        App.binder.get()?.setupScreenCapture(result.resultCode, it)
+                        captureManager.setup(result.resultCode, it)
                     }
                     logE(TAG, "已授权屏幕获取")
                 } else {
@@ -219,7 +224,7 @@ class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
         screenCaptureLauncher.launch(mediaProjectionManager.createScreenCaptureIntent())
     }
 
-    private fun openOverlaySetting() {
+    private fun openOverlaySettingIfNeeded() {
         if (!hasOverlayPermission()) {
             overlayPermissionLauncher =
                 registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {

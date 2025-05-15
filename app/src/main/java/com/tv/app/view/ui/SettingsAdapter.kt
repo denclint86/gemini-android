@@ -7,15 +7,15 @@ import android.widget.TextView
 import androidx.activity.result.ActivityResultLauncher
 import androidx.recyclerview.widget.DiffUtil
 import com.tv.app.databinding.LayoutSettingItemBinding
-import com.tv.app.settings.intances.Setting
-import com.tv.app.settings.values.getIndex
-import com.tv.app.settings.values.getOptions
-import com.tv.app.utils.context
-import com.tv.app.utils.setRippleEffect
-import com.tv.app.utils.setTextColorFromAttr
-import com.tv.app.utils.showInputDialog
-import com.tv.app.utils.showSingleChoiceDialog
-import com.tv.app.utils.withLifecycleScope
+import com.tv.settings.intances.Setting
+import com.tv.settings.values.getIndex
+import com.tv.settings.values.getOptions
+import com.tv.utils.context
+import com.tv.utils.setRippleEffect
+import com.tv.utils.setTextColorFromAttr
+import com.tv.utils.showInputDialog
+import com.tv.utils.showSingleChoiceDialog
+import com.tv.utils.withLifecycleScope
 import com.tv.app.view.EditTextActivity
 import com.zephyr.extension.widget.toast
 import com.zephyr.vbclass.ui.ViewBindingListAdapter
@@ -24,30 +24,30 @@ import kotlinx.coroutines.withContext
 
 class SettingsAdapter(
     private val activityResultLauncher: ActivityResultLauncher<Intent>
-) : ViewBindingListAdapter<LayoutSettingItemBinding, Setting<*>>(Callback()) {
+) : ViewBindingListAdapter<LayoutSettingItemBinding, com.tv.settings.intances.Setting<*>>(Callback()) {
 
     private var isInputDialogShown = false
     private var isSelectDialogShown = false
 
-    private fun Context.onClickEvent(setting: Setting<*>) {
+    private fun Context.onClickEvent(setting: com.tv.settings.intances.Setting<*>) {
         when (setting.kind) {
-            Setting.Kind.READ_ONLY -> {
+            com.tv.settings.intances.Setting.Kind.READ_ONLY -> {
             }
 
-            Setting.Kind.DIALOG_EDIT ->
+            com.tv.settings.intances.Setting.Kind.DIALOG_EDIT ->
                 openDialogToSet(setting)
 
-            Setting.Kind.DIALOG_SELECT ->
+            com.tv.settings.intances.Setting.Kind.DIALOG_SELECT ->
                 openDialogToSelect(setting)
 
-            Setting.Kind.ACTIVITY ->
+            com.tv.settings.intances.Setting.Kind.ACTIVITY ->
                 startActivityToSet(setting)
 
-            Setting.Kind.DIRECT -> {}
+            com.tv.settings.intances.Setting.Kind.DIRECT -> {}
         }
     }
 
-    private fun Context.openDialogToSelect(setting: Setting<*>) {
+    private fun Context.openDialogToSelect(setting: com.tv.settings.intances.Setting<*>) {
         if (isSelectDialogShown) return
         isSelectDialogShown = true
 
@@ -75,7 +75,7 @@ class SettingsAdapter(
         }
     }
 
-    private fun Context.openDialogToSet(setting: Setting<*>) {
+    private fun Context.openDialogToSet(setting: com.tv.settings.intances.Setting<*>) {
         if (isInputDialogShown) return
         isInputDialogShown = true
 
@@ -98,9 +98,9 @@ class SettingsAdapter(
         }
     }
 
-    private fun Context.startActivityToSet(setting: Setting<*>) {
+    private fun Context.startActivityToSet(setting: com.tv.settings.intances.Setting<*>) {
         val i = Intent(this, EditTextActivity::class.java)
-        i.putExtra(Setting.NAME_KEY, setting.name)
+        i.putExtra(com.tv.settings.intances.Setting.NAME_KEY, setting.name)
         activityResultLauncher.launch(i)
     }
 
@@ -121,20 +121,20 @@ class SettingsAdapter(
         setTextColorFromAttr(attr)
     }
 
-    override fun LayoutSettingItemBinding.onBindViewHolder(data: Setting<*>?, position: Int) {
+    override fun LayoutSettingItemBinding.onBindViewHolder(data: com.tv.settings.intances.Setting<*>?, position: Int) {
         if (data == null) return
 
         title.text = data.name
         title.setColorByEnabled(data.isEnabled())
 
         preview.text = data.value(true).toString()
-        if (data.kind == Setting.Kind.DIRECT) {
+        if (data.kind == com.tv.settings.intances.Setting.Kind.DIRECT) {
             preview.visibility = View.GONE
         } else {
             preview.visibility = View.VISIBLE
         }
 
-        val isReadOnly = (data.kind == Setting.Kind.READ_ONLY)
+        val isReadOnly = (data.kind == com.tv.settings.intances.Setting.Kind.READ_ONLY)
         root.setRippleEffect(!isReadOnly)
 
         sw.isChecked = data.isEnabled()
@@ -149,7 +149,7 @@ class SettingsAdapter(
         }
 
         root.setOnClickListener {
-            if (data.kind == Setting.Kind.DIRECT)
+            if (data.kind == com.tv.settings.intances.Setting.Kind.DIRECT)
                 context.withLifecycleScope(Dispatchers.IO) {
                     data.set { isEnabled = true }
                     withContext(Dispatchers.Main) {
@@ -161,12 +161,12 @@ class SettingsAdapter(
         }
     }
 
-    class Callback : DiffUtil.ItemCallback<Setting<*>>() {
-        override fun areItemsTheSame(oldItem: Setting<*>, newItem: Setting<*>): Boolean {
+    class Callback : DiffUtil.ItemCallback<com.tv.settings.intances.Setting<*>>() {
+        override fun areItemsTheSame(oldItem: com.tv.settings.intances.Setting<*>, newItem: com.tv.settings.intances.Setting<*>): Boolean {
             return oldItem == newItem
         }
 
-        override fun areContentsTheSame(oldItem: Setting<*>, newItem: Setting<*>): Boolean {
+        override fun areContentsTheSame(oldItem: com.tv.settings.intances.Setting<*>, newItem: com.tv.settings.intances.Setting<*>): Boolean {
             return oldItem == newItem
         }
     }

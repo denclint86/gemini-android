@@ -1,6 +1,6 @@
 package com.tv.app.view.ui
 
-import com.tv.app.utils.Role
+import com.tv.utils.Role
 
 data class RoleStyle(
     val backgroundAttr: Int,

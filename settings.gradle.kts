@@ -41,3 +41,6 @@ dependencyResolutionManagement {
 rootProject.name = "gemini"
 include(":app")
 include(":shizuku")
+include(":tool")
+include(":utils")
+include(":settings")

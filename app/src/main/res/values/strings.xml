@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">gemini</string>
     <string name="accessibility_service_description">无障碍服务</string>
-    <string name="accessibility_service_label">phone-bot"</string>
+    <string name="accessibility_service_label">TV-Gemini"</string>
     <string name="hint">输入指令</string>
     <string name="send">发送</string>
     <string name="suspend_text">bot</string>

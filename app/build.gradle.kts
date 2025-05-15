@@ -42,13 +42,14 @@ android {
 
 dependencies {
     implementation(project(":shizuku"))
+    implementation(project(":tool"))
+    implementation(project(":settings"))
+    implementation(project(":utils"))
 
     implementation("com.google.ai.client.generativeai:common:niki")
     implementation("com.google.ai.client.generativeai:generativeai:niki")
 
     implementation(libs.shizuku.provider)
-
-    implementation(libs.androidx.datastore)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.runtime)
@@ -63,7 +64,6 @@ dependencies {
     implementation(libs.zephyr.vbclass)
     implementation(libs.zephyr.scaling.layout)
     implementation(libs.zephyr.global.values)
-    implementation(libs.zephyr.datastore)
     implementation(libs.zephyr.net)
     implementation(libs.zephyr.log)
     implementation(libs.zephyr.extension)

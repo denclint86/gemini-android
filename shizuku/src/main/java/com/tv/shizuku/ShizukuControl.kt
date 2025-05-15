@@ -15,9 +15,9 @@ import rikka.shizuku.Shizuku.UserServiceArgs
 import kotlin.coroutines.resume
 
 /*
-    // 1. 检查 Shizuku 是否可用（可选）
+    // 1. 检查 Shizuku 是否可用(可选)
     if (!ShizukuControl.ping()) {
-        // "Shizuku 未运行，请启动"
+        // "Shizuku 未运行, 请启动"
         return@launch
     }
 
@@ -28,7 +28,7 @@ import kotlin.coroutines.resume
         return@launch
     }
 
-    // 3. 等待服务启动（可选但推荐）
+    // 3. 等待服务启动(可选但推荐)
     val serviceResult = ShizukuControl.waitForService()
     if (!serviceResult.isSuccess) {
         // "服务未启动: ${serviceResult.msg}"
@@ -50,7 +50,7 @@ import kotlin.coroutines.resume
         // "执行失败: ${e.message}"
     }
 
-    // 6. 释放资源（视需求）
+    // 6. 释放资源(视需求)
     ShizukuControl.release()
 */
 
@@ -83,7 +83,7 @@ object ShizukuControl {
             resume(value)
     }
 
-    // 阻塞方法：等待服务启动
+    // 阻塞方法: 等待服务启动
     suspend fun waitForService(timeoutMs: Long = DEFAULT_TIMEOUT_MS): Result =
         withTimeoutOrNull(timeoutMs) {
             try {
@@ -111,7 +111,7 @@ object ShizukuControl {
             }
         } ?: Result(false, "等待服务启动超时")
 
-    // 阻塞方法：请求权限
+    // 阻塞方法: 请求权限
     suspend fun requestPermission(timeoutMs: Long = DEFAULT_TIMEOUT_MS): Result =
         withTimeoutOrNull(timeoutMs) {
             try {
@@ -152,7 +152,7 @@ object ShizukuControl {
             }
         } ?: Result(false, "请求权限超时")
 
-    // 阻塞方法：绑定服务
+    // 阻塞方法: 绑定服务
     suspend fun bindService(timeoutMs: Long = DEFAULT_TIMEOUT_MS): Result =
         withTimeoutOrNull(timeoutMs) {
             try {
@@ -201,7 +201,7 @@ object ShizukuControl {
             }
         } ?: Result(false, "绑定服务超时")
 
-    // 阻塞方法：执行命令
+    // 阻塞方法: 执行命令
     suspend fun exec(command: String, timeoutMs: Long = DEFAULT_TIMEOUT_MS): ExecResult =
         withTimeoutOrNull(timeoutMs) {
             val bindResult = bindService(timeoutMs)
@@ -230,7 +230,7 @@ object ShizukuControl {
         isRunning = false
     }
 
-    // 阻塞方法：等待服务终止
+    // 阻塞方法: 等待服务终止
 //    suspend fun waitForServiceDead(timeoutMs: Long = DEFAULT_TIMEOUT_MS): Result =
 //        withTimeoutOrNull(timeoutMs) {
 //            try {

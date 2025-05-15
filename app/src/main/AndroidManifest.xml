@@ -39,12 +39,12 @@
         android:supportsRtl="true"
         android:theme="@style/ai">
         <service
-            android:name=".view.ui.suspend.SuspendService"
+            android:name=".view.suspendview.SuspendViewService"
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="mediaProjection" />
         <service
-            android:name=".old.accessibility.MyAccessibilityService"
+            android:name="com.tv.utils.accessibility.Accessibility"
             android:exported="true"
             android:label="@string/accessibility_service_label"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
