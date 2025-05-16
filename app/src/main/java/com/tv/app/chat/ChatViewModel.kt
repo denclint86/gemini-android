@@ -32,6 +32,7 @@ import com.tv.settings.intances.Live
 import com.tv.settings.intances.SleepTime
 import com.tv.settings.intances.Stream
 import com.tv.settings.intances.Tools
+import com.tv.utils.Role
 import com.tv.utils.funcContent
 import com.tv.utils.toUIString
 import com.tv.utils.userContent
@@ -97,10 +98,7 @@ class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>() {
                     if (getSetting<Live>()?.value(true)!!) {
                         liveChat(intent.text)
                     } else {
-                        val capture = SuspendViewService.binder?.captureManager?.capture()
                         val userContent = userContent {
-                            if (capture != null)
-                                image(capture)
                             text(intent.text)
                         }
                         chat(userContent, getSetting<Stream>()?.value(true)!!)
@@ -211,13 +209,13 @@ class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>() {
 
 
     // genai-chat - {
-    private fun chat(content: Content, stream: Boolean) {
+    private fun chat(content: Content, stream: Boolean, sendImageAtTheEnd: Boolean = false) {
         job?.cancel()
         job = viewModelScope.launch(Dispatchers.IO) {
             if (chatManager.isActive) {
                 sendEffect(ChatEffect.Generating)
                 return@launch
-            } else {
+            } else if (content.role != Role.FUNC.str) {
                 sendEffect(ChatEffect.ChatSent(true))
             }
 
@@ -245,16 +243,31 @@ class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>() {
                 }
             }
 
-            val funcResult = funcHandler.handleParts(helper.calls)
-            handleFunctionCalls(stream, funcResult)
+            if (sendImageAtTheEnd) {
+                val capture = SuspendViewService.binder?.captureManager?.capture() ?: return@launch
+                val imageContent = userContent {
+                    text("[这是客户端发送的]")
+                    image(capture)
+                }
+                chat(imageContent, stream)
+            } else {
+                val funcResult = funcHandler.handleParts(helper.calls)
+                handleFunctionCalls(stream, funcResult)
+            }
         }
     }
 
     private suspend fun handleFunctionCalls(stream: Boolean, funcResult: Map<String, JSONObject>) {
         val delay = getSetting<SleepTime>()?.value(true)!!
         delay(delay)
+
+        var sendImageAtTheEnd = false
         val parts = mutableListOf<Part>()
         funcResult.forEach { (name, jsonObj) ->
+//            if (name == ScreenContentModel.name) {
+//                sendImageAtTheEnd = true
+//            }
+
             parts.add(FunctionResponsePart(name, jsonObj))
         }
 
@@ -263,7 +276,7 @@ class ChatViewModel : MVIViewModel<ChatIntent, ChatState, ChatEffect>() {
         }
 
         if (funcResult.isNotEmpty() && getSetting<Tools>()?.isEnabled() != false)
-            chat(funcContent, stream)
+            chat(funcContent, stream, sendImageAtTheEnd)
         else
             sendEffect(ChatEffect.Done)
     }

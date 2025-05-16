@@ -1,6 +1,8 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
+
+//    id("com.google.gms.google-services")
 }
 
 android {
@@ -45,6 +47,10 @@ dependencies {
     implementation(project(":tool"))
     implementation(project(":settings"))
     implementation(project(":utils"))
+
+//    implementation(platform("com.google.firebase:firebase-bom:33.13.0"))
+//    implementation("com.google.firebase:firebase-analytics")
+//    implementation("com.google.firebase:firebase-vertexai")
 
     implementation("com.google.ai.client.generativeai:common:niki")
     implementation("com.google.ai.client.generativeai:generativeai:niki")

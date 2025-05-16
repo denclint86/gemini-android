@@ -16,10 +16,8 @@ import com.tv.utils.resizeBitmap
 import com.tv.utils.toBitmap
 import com.zephyr.global_values.TAG
 import com.zephyr.log.logE
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withContext
 
 /**
  * 屏幕捕获管理器, 负责截取当前屏幕内容
@@ -101,10 +99,10 @@ class CaptureManager(private val context: Context) : ICaptureManager {
     /**
      * 捕获当前屏幕内容, 返回缩放后的位图
      */
-    override suspend fun capture(): Bitmap? = withContext(Dispatchers.IO) {
-        if (!isAvailable) return@withContext null
+    override suspend fun capture(): Bitmap? {
+        if (!isAvailable) return null
 
-        return@withContext captureMutex.withLock {
+        return captureMutex.withLock {
             try {
                 imageReader?.acquireLatestImage()?.let { img ->
                     img.toBitmap(metrics)?.let { bitmap ->

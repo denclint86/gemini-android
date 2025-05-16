@@ -41,9 +41,9 @@ class SuspendViewService : Service() {
         var binder: SuspendServiceBinder? = null
             private set
 
-        private val _suspendViewVisibility = MutableLiveData(View.VISIBLE)
-        val suspendViewVisibility: LiveData<Int>
-            get() = _suspendViewVisibility
+//        private val _suspendViewVisibility = MutableLiveData(View.VISIBLE)
+//        val suspendViewVisibility: LiveData<Int>
+//            get() = _suspendViewVisibility
 
         private val _suspendText = MutableLiveData("Hi")
         val suspendText: LiveData<String>
@@ -91,9 +91,10 @@ class SuspendViewService : Service() {
         super.onCreate()
         try {
             startForegroundService()
-            initObserve()
+//            initObserve()
         } catch (e: Exception) {
             e.logE(TAG)
+            stopSelf()
         }
     }
 
@@ -104,7 +105,7 @@ class SuspendViewService : Service() {
     override fun onDestroy() {
         captureManager.release()
         suspendViewManager.release()
-        suspendViewVisibility.removeObservers(alwaysActiveLifecycleOwner)
+//        suspendViewVisibility.removeObservers(alwaysActiveLifecycleOwner)
         super.onDestroy()
     }
 
@@ -122,29 +123,23 @@ class SuspendViewService : Service() {
             .setSmallIcon(android.R.drawable.ic_dialog_info)
             .build()
 
-        try {
-
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-                startForeground(1, notification)
-                notificationManager.createNotificationChannel(channel)
-            } else {
-                startForeground(
-                    1,
-                    notification,
-                    ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION
-                )
-            }
-        } catch (e: SecurityException) {
-            e.logE(TAG)
-            stopSelf()
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            startForeground(1, notification)
+            notificationManager.createNotificationChannel(channel)
+        } else {
+            startForeground(
+                1,
+                notification,
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION
+            )
         }
     }
 
-    private fun initObserve() {
-        suspendViewVisibility.observe(alwaysActiveLifecycleOwner) { int ->
-            suspendViewManager.rootVisibility = (int ?: View.VISIBLE)
-        }
-    }
+//    private fun initObserve() {
+//        suspendViewVisibility.observe(alwaysActiveLifecycleOwner) { int ->
+//            suspendViewManager.rootVisibility = (int ?: View.VISIBLE)
+//        }
+//    }
 
     inner class SuspendServiceBinder : Binder() {
         val captureManager: ICaptureManager

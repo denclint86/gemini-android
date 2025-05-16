@@ -12,6 +12,7 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="30dp"
         android:layout_height="30dp"
+        android:alpha="0.3"
         android:background="@drawable/circle_background"
         android:theme="@style/ai">
 

@@ -9,6 +9,7 @@ import android.provider.Settings
 import android.view.Menu
 import android.view.MenuItem
 import android.view.MotionEvent
+import android.view.View
 import android.view.animation.DecelerateInterpolator
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
@@ -26,6 +27,7 @@ import com.tv.app.databinding.ActivityMainBinding
 import com.tv.app.view.EditTextActivity
 import com.tv.app.view.SettingsActivity
 import com.tv.app.view.suspendview.SuspendViewService
+import com.tv.app.view.suspendview.SuspendViewService.Companion.binder
 import com.tv.app.view.ui.ChatAdapter
 import com.tv.utils.Role
 import com.tv.utils.createViewModel
@@ -230,6 +232,9 @@ class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
                 registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
                     if (!hasOverlayPermission()) {
                         "悬浮窗权限未开启".toast()
+                    } else {
+                        binder?.suspendViewManager?.rootVisibility = View.VISIBLE
+//                        App.startSuspendService()
                     }
                 }
             overlayPermissionLauncher.launch(
@@ -238,5 +243,8 @@ class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
                 }
             )
         }
+//        else {
+//            App.startSuspendService()
+//        }
     }
 }

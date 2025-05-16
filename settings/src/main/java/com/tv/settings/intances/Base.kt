@@ -7,8 +7,6 @@ import com.tv.settings.parseAsT
 import com.tv.utils.toJsonClass
 import com.zephyr.datastore.getValue
 import com.zephyr.datastore.putValue
-import com.zephyr.global_values.TAG
-import com.zephyr.log.logE
 import com.zephyr.net.toJson
 import kotlinx.coroutines.runBlocking
 import kotlin.math.roundToInt
@@ -164,7 +162,7 @@ sealed class Setting<T> {
 
     protected open suspend fun get(): Bean<T> {
         val json = key.getValue("")
-        logE(TAG, json)
+//        logE(TAG, json)
 
         return if (json.isNotEmpty()) {
             val bean = json.toJsonClass<Bean<T>>()!!

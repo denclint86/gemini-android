@@ -8,8 +8,6 @@ import com.tv.settings.intances.LongSetting
 import com.tv.settings.intances.Setting
 import com.tv.settings.intances.StringSetting
 import com.tv.utils.castAs
-import com.zephyr.global_values.TAG
-import com.zephyr.log.logE
 
 inline fun <reified T : Setting<*>> getSetting(): T? =
     SettingManager[T::class]
@@ -57,6 +55,6 @@ fun <T> Setting<*>.parseAsT(v: Any): T? {
     else
         parseFromString(v)
 
-    logE(TAG, "$v 解析为: $value[${(value ?: Any())::class.java.simpleName}]")
+//    logE(TAG, "$v 解析为: $value[${(value ?: Any())::class.java.simpleName}]")
     return value as? T
 }

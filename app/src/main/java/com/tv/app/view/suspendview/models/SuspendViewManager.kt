@@ -14,6 +14,8 @@ import com.tv.app.view.suspendview.interfaces.ISuspendViewManager
 import com.tv.app.view.suspendview.interfaces.SuspendViewEventCallback
 import com.tv.utils.createLayoutParam
 import com.zephyr.extension.thread.runOnMain
+import com.zephyr.global_values.TAG
+import com.zephyr.log.logE
 
 /**
  * 悬浮窗视图管理器, 实现ISuspendView接口, 负责控制悬浮窗的显示和隐藏
@@ -26,7 +28,7 @@ class SuspendViewManager(private val context: Context) : ISuspendViewManager {
 
     private var floatRootView: View? = null
 
-    private var isShowing = false
+//    private var isShowing = false
     private var lastX = 0
     private var lastY = 0
 
@@ -50,9 +52,9 @@ class SuspendViewManager(private val context: Context) : ISuspendViewManager {
         get() = floatRootView?.visibility ?: View.GONE
         set(value) {
             runOnMain {
-                if (value == View.VISIBLE && !isShowing) {
+                if (value == View.VISIBLE ) {
                     show()
-                } else if (value == View.GONE && isShowing) {
+                } else if (value == View.GONE ) {
                     hide()
                 } else if (floatRootView != null) {
                     floatRootView?.visibility = value
@@ -71,24 +73,6 @@ class SuspendViewManager(private val context: Context) : ISuspendViewManager {
             }
         }
 
-    /**
-     * 悬浮窗显示的文本内容
-     */
-//    override var text: String
-//        get() = binding?.tvSuspendText?.text.toString()
-//        set(value) {
-//            SuspendViewService.setSuspendText(value)
-//        }
-
-    /**
-     * 观察LiveData数据源, 将其值设置为悬浮窗文本
-     */
-//    override fun observeTo(liveData: LiveData<String>) {
-//        liveData.observe(alwaysActiveLifecycleOwner) { text ->
-//            this.text = text
-//        }
-//    }
-
     override fun setOnTouchEventListener(l: SuspendViewEventCallback?) {
         touchListener = l
     }
@@ -106,8 +90,8 @@ class SuspendViewManager(private val context: Context) : ISuspendViewManager {
      * 显示悬浮窗
      */
     @SuppressLint("ClickableViewAccessibility")
-    private fun show() {
-        if (isShowing) return
+    private fun show(): Boolean {
+//        if (isShowing) return true
 
         // 限制位置在屏幕范围内
         val (safeX, safeY) = constrainPosition(lastX, lastY)
@@ -134,17 +118,25 @@ class SuspendViewManager(private val context: Context) : ISuspendViewManager {
                 touchListener
             )
         )
-        windowManager.addView(floatRootView, layoutParam)
-        isShowing = true
+
+        try {
+            windowManager.addView(floatRootView, layoutParam)
+//            isShowing = true
+            return true
+        } catch (t: Throwable) {
+            t.logE(TAG)
+//            isShowing = false
+            return false
+        }
     }
 
     /**
      * 隐藏悬浮窗
      */
-    private fun hide() {
-        if (!isShowing) return
+    private fun hide(): Boolean {
+//        if (!isShowing) return true
         floatRootView?.windowToken?.let {
-            runCatching {
+            try {
                 val lp = floatRootView?.layoutParams as? WindowManager.LayoutParams
                 lp?.let {
                     // 保存位置信息, 并确保位置在屏幕范围内
@@ -156,9 +148,13 @@ class SuspendViewManager(private val context: Context) : ISuspendViewManager {
                 floatRootView = null
                 binding?.unbind()
                 binding = null
-                isShowing = false
+//                isShowing = false
+                return true
+            } catch (t: Throwable) {
+                t.logE(TAG)
+                return false
             }
-        }
+        } ?: return false
     }
 
     /**
