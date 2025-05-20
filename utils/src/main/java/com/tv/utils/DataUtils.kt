@@ -3,8 +3,6 @@ package com.tv.utils
 import androidx.lifecycle.MutableLiveData
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
-import com.zephyr.global_values.TAG
-import com.zephyr.log.logE
 import kotlin.reflect.KClass
 import kotlin.reflect.full.createInstance
 
@@ -18,7 +16,7 @@ fun CharSequence?.contains(set: Set<String>): Boolean {
 
 inline fun <reified T> Any.castAs(onCast: (Any) -> T?): T? =
     if (this !is T) {
-        logE(TAG, "${this::class.java.simpleName} 不是 ${T::class.java.simpleName}")
+//        logE(TAG, "${this::class.java.simpleName} 不是 ${T::class.java.simpleName}")
         onCast(this)
     } else {
         this

@@ -15,6 +15,7 @@ import com.tv.app.view.suspendview.SuspendViewService
 import com.tv.app.view.suspendview.SuspendViewService.Companion.binder
 import com.tv.app.view.suspendview.SuspendViewService.Companion.setBinder
 import com.tv.tool.models.ShellExecutorModelImpl
+import com.tv.utils.accessibility.Accessibility
 import com.zephyr.extension.widget.toast
 import com.zephyr.global_values.TAG
 import com.zephyr.log.LogLevel
@@ -26,9 +27,16 @@ import kotlinx.coroutines.launch
 
 class App : Application() {
     companion object {
-        private const val ACCESSIBILITY_PATH = "com.tv.utils.accessibility.Accessibility"
-
         lateinit var app: App
+
+//        fun isAppRunning(): Boolean = binder?.service?.application?.run {
+//            val activityManager = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+//
+//            val runningProcesses = activityManager.runningAppProcesses ?: return false
+//            return runningProcesses.any { it.processName == this.packageName }.also {
+//                logE(TAG, "进程存活: $it")
+//            }
+//        } ?: false
 
         private val serviceConnection = object : ServiceConnection {
             override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
@@ -74,14 +82,13 @@ class App : Application() {
 
         // 尝试直接用 root 启动无障碍
         ProcessLifecycleOwner.get().lifecycleScope.launch(Dispatchers.IO) {
+            val accessibilityServiceClassPath = Accessibility::class.java.name
+
             model.runShell("pm grant $packageName android.permission.SYSTEM_ALERT_WINDOW")
             model.runShell("pm grant $packageName android.permission.WRITE_SECURE_SETTINGS")
-            model.runShell("settings put secure enabled_accessibility_services $packageName/$ACCESSIBILITY_PATH")
+            model.runShell("settings put secure enabled_accessibility_services $packageName/$accessibilityServiceClassPath")
             model.runShell("settings put secure accessibility_enabled 1")
             model.runShell("settings get secure enabled_accessibility_services")
         }
-
-//        if (hasOverlayPermission())
-        startSuspendService()
     }
 }

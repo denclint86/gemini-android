@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.media.projection.MediaProjectionManager
 import android.net.Uri
+import android.os.Bundle
 import android.provider.Settings
 import android.view.Menu
 import android.view.MenuItem
@@ -26,9 +27,9 @@ import com.tv.app.chat.mvi.observe
 import com.tv.app.databinding.ActivityMainBinding
 import com.tv.app.view.EditTextActivity
 import com.tv.app.view.SettingsActivity
-import com.tv.app.view.suspendview.SuspendViewService
 import com.tv.app.view.suspendview.SuspendViewService.Companion.binder
 import com.tv.app.view.ui.ChatAdapter
+import com.tv.utils.CallbackWaiter
 import com.tv.utils.Role
 import com.tv.utils.createViewModel
 import com.tv.utils.findViewAtPoint
@@ -49,16 +50,55 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+
+/**
+ * 示例：为自定义回调接口提供扩展
+ */
+interface CustomCallback<T> {
+    fun onSuccess(result: T)
+    fun onFailure(error: Throwable)
+}
+
+suspend fun <T> awaitCustomCallback(
+    timeoutMs: Long? = 30_000,
+    triggerAction: (CustomCallback<T>) -> Unit
+): T? {
+    return CallbackWaiter.await(timeoutMs) {
+        val callback = object : CustomCallback<T> {
+            override fun onSuccess(result: T) {
+                onResult(result)
+            }
+
+            override fun onFailure(error: Throwable) {
+                onError(error)
+            }
+        }
+
+        registerCallback {
+            triggerAction(callback)
+        }
+    }
+}
+
 class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
     private lateinit var viewModel: ChatViewModel
     private lateinit var chatAdapter: ChatAdapter
     private lateinit var preloadLayoutManager: PreloadLayoutManager
 
     private lateinit var overlayPermissionLauncher: ActivityResultLauncher<Intent>
+    private lateinit var screenCaptureLauncher: ActivityResultLauncher<Intent>
 
     private lateinit var keyboardUtil: IKeyboardUtil
 
     private var btnAnimator: ObjectAnimator? = null
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        // 避免在 application 实例化时启动服务, 导致服务自动复活
+        App.startSuspendService()
+        initLaunchers()
+
+        super.onCreate(savedInstanceState)
+    }
 
     override fun ActivityMainBinding.initBinding() {
         enableEdgeToEdge()
@@ -204,12 +244,34 @@ class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
     }
 
     private fun setUpScreenCapture() {
-        val screenCaptureLauncher =
+        val mediaProjectionManager =
+            getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
+        screenCaptureLauncher.launch(mediaProjectionManager.createScreenCaptureIntent())
+    }
+
+    private fun openOverlaySettingIfNeeded() {
+        if (hasOverlayPermission()) return
+        overlayPermissionLauncher.launch(
+            Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION).apply {
+                data = Uri.parse("package:$packageName")
+            }
+        )
+    }
+
+    private fun initLaunchers() {
+        overlayPermissionLauncher =
+            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+                if (!hasOverlayPermission()) {
+                    "悬浮窗权限未开启".toast()
+                } else {
+                    binder?.suspendViewManager?.rootVisibility = View.VISIBLE
+                }
+            }
+        screenCaptureLauncher =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
                 val captureManager =
-                    SuspendViewService.binder?.captureManager ?: return@registerForActivityResult
+                    binder?.captureManager ?: return@registerForActivityResult
                 if (captureManager.isAvailable) return@registerForActivityResult
-
 
                 if (result.resultCode == RESULT_OK) {
                     result.data?.let {
@@ -220,31 +282,5 @@ class MainActivity : ViewBindingActivity<ActivityMainBinding>() {
                     logE(TAG, "已拒绝屏幕获取")
                 }
             }
-
-        val mediaProjectionManager =
-            getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
-        screenCaptureLauncher.launch(mediaProjectionManager.createScreenCaptureIntent())
-    }
-
-    private fun openOverlaySettingIfNeeded() {
-        if (!hasOverlayPermission()) {
-            overlayPermissionLauncher =
-                registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-                    if (!hasOverlayPermission()) {
-                        "悬浮窗权限未开启".toast()
-                    } else {
-                        binder?.suspendViewManager?.rootVisibility = View.VISIBLE
-//                        App.startSuspendService()
-                    }
-                }
-            overlayPermissionLauncher.launch(
-                Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION).apply {
-                    data = Uri.parse("package:$packageName")
-                }
-            )
-        }
-//        else {
-//            App.startSuspendService()
-//        }
     }
 }

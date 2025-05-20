@@ -15,7 +15,7 @@ object Default {
     val MODEL_NAME = Model.GEMINI_2_5_FLASH_PREVIEW_04_17.string
     val LIVE_VOICE_NAME = Voice.Leda.string
     val LIVE_LANGUAGE = Language.ENGLISH_US.string
-    const val LIVE_PROMPT: String = MayaPrompt // NormalPrompt
+    const val LIVE_PROMPT: String = NormalPrompt // MayaPrompt
     val SYSTEM_PROMPT: String = AutoCtrlPrompt // SimplePrompt
 
     const val TEMPERATURE = 0.7f

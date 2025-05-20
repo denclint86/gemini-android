@@ -146,5 +146,7 @@ class SuspendViewService : Service() {
             get() = this@SuspendViewService.captureManager
         val suspendViewManager: ISuspendViewManager
             get() = this@SuspendViewService.suspendViewManager
+        val service: Service
+            get() = this@SuspendViewService
     }
 }
